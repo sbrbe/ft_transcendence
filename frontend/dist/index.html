@@ -1,0 +1,33 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Pong</title>
+  <script type="module" crossorigin src="/assets/index-wBx-KKwE.js"></script>
+</head>
+<body>
+	<nav>
+	  <button id="nav-home">Accueil</button>
+	  <button id="nav-game">Jouer en local</button>
+	</nav>
+  
+	<div id="view-home">
+	  <h1>Bienvenue sur Pong</h1>
+	  <p>Cliquer sur "Jouer" pour commencer.</p>
+	</div>
+  
+	<div id="view-game" style="display:none;">
+	  <canvas id="gameCanvas" width="800" height="600"></canvas>
+	</div>
+
+	<div id="view-register">
+		<h2>Inscription au tournoi</h2>
+		<input type="text" id="aliasInput" placeholder="Entrez votre pseudo" />
+		<button id="addPlayer">Ajouter</button>
+		<ul id="playerList"></ul>
+		<button id="startTournament">Lancer le tournoi</button>
+	  </div>	  
+  
+  </body>  
+</html>
+
