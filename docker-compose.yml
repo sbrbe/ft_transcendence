@@ -1,0 +1,36 @@
+
+version: '3.9'
+
+services:
+  users:
+    build: ./users
+    ports:
+      - "3001:3001"
+    networks:
+      - appnet
+
+  backend:
+    build: ./backend
+    ports:
+      - "3002:3002"
+    depends_on:
+      - users
+    networks:
+      - appnet
+
+  nginx:
+    image: nginx
+    ports:
+      - "443:443"
+    depends_on:
+      - backend
+      - users
+    volumes:
+      - ./nginx_conf:/etc/nginx/conf.d
+      - ./frontend:/usr/share/nginx/html
+      - ./ssl:/etc/nginx/ssl
+    networks:
+      - appnet
+
+networks:
+  appnet: {}
