@@ -1,5 +1,4 @@
-
-const socket = new WebSocket(`ws://${window.location.hostname}:3000`);
+const socket = new WebSocket(`ws://${window.location.hostname}:3002`);
 let role: 'left' | 'right' = 'left';
 let isLocalMode = false;
 let gamePausedLocal = true;
@@ -26,8 +25,8 @@ let stateLocal = {
   countdownText: null as string | null
 };
 
-const canvas = document.getElementById("gameCanvas") as HTMLCanvasElement;
-const ctx = canvas.getContext("2d")!;
+let canvas: HTMLCanvasElement;
+let ctx: CanvasRenderingContext2D;
 const messageBox = document.getElementById("messageBox");
 
 function showView(viewId: string) {
@@ -41,64 +40,78 @@ function displayMessage(msg: string) {
   if (messageBox) messageBox.textContent = msg;
 }
 
-document.getElementById('nav-home')?.addEventListener('click', () => {
-  isLocalMode = false;
-  gamePausedLocal = true;
-  gamePausedOnline = true;
-  gameWinnerText = null;
+document.addEventListener('DOMContentLoaded', () => {
+  // ✅ Init canvas et ctx SEULEMENT maintenant
+  canvas = document.getElementById("gameCanvas") as HTMLCanvasElement;
+  ctx = canvas.getContext("2d")!;
 
-  // Réinitialise les états locaux
-  stateLocal = {
-    paddles: {
-      left: { y: 250, dy: 0 },
-      right: { y: 250, dy: 0 }
-    },
-    ball: { x: 400, y: 300, dx: 0, dy: 0, radius: 8 },
-    score: { left: 0, right: 0 },
-    countdownText: null
-  };
+  document.getElementById('btn-register')?.addEventListener('click', () => {
+    showView('view-register');
+  });
 
-  // Réinitialise les états en ligne
-  stateOnline = {
-    paddles: {
-      left: { y: 250, dy: 0 },
-      right: { y: 250, dy: 0 }
-    },
-    ball: { x: 400, y: 300, radius: 8 },
-    score: { left: 0, right: 0 },
-    countdownText: null
-  };
+  document.getElementById('btn-login')?.addEventListener('click', () => {
+    showView('view-login');
+  });
 
-  // Ferme proprement le WebSocket
-  if (socket && socket.readyState === WebSocket.OPEN) {
-    socket.send(JSON.stringify({ type: 'forfeit' }));
-  }  
-  // Nettoie l'affichage et revient à l'accueil
-  ctx.clearRect(0, 0, canvas.width, canvas.height);
-  displayMessage("");
-  showView('view-home');
-});
+  document.getElementById('nav-home')?.addEventListener('click', () => {
+    isLocalMode = false;
+    gamePausedLocal = true;
+    gamePausedOnline = true;
+    gameWinnerText = null;
 
+    stateLocal = {
+      paddles: {
+        left: { y: 250, dy: 0 },
+        right: { y: 250, dy: 0 }
+      },
+      ball: { x: 400, y: 300, dx: 0, dy: 0, radius: 8 },
+      score: { left: 0, right: 0 },
+      countdownText: null
+    };
 
-document.getElementById('nav-game')?.addEventListener('click', () => {
-  console.log("✅ Bouton 'Jouer en local' cliqué !");
-  isLocalMode = true;
-  gamePausedOnline = true;
-  resetLocalGame();
-  showView('view-game');
-  history.pushState(null, '', '/game');
-  displayMessage("🎮 Jeu local (2 joueurs sur 1 clavier)");
-  startCountdownLocal(() => gamePausedLocal = false);
-});
+    stateOnline = {
+      paddles: {
+        left: { y: 250, dy: 0 },
+        right: { y: 250, dy: 0 }
+      },
+      ball: { x: 400, y: 300, radius: 8 },
+      score: { left: 0, right: 0 },
+      countdownText: null
+    };
 
-document.getElementById('nav-game-online')?.addEventListener('click', () => {
-  console.log("✅ Bouton 'Jouer en ligne' cliqué !");
-  isLocalMode = false;
-  gamePausedLocal = true;
-  showView('view-game');
-  history.pushState(null, '', '/game');
-  displayMessage("🕓 En attente d’un autre joueur...");
-  socket.send(JSON.stringify({ type: 'ready' }));
+    if (socket.readyState === WebSocket.OPEN) {
+      socket.send(JSON.stringify({ type: 'ready' }));
+    } else {
+      socket.addEventListener('open', () => {
+        socket.send(JSON.stringify({ type: 'ready' }));
+      });
+    }
+
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+    displayMessage("");
+    showView('view-home');
+  });
+
+  document.getElementById('nav-game')?.addEventListener('click', () => {
+    console.log("✅ Local click");
+    isLocalMode = true;
+    gamePausedOnline = true;
+    resetLocalGame();
+    showView('view-game');
+    history.pushState(null, '', '/game');
+    displayMessage("🎮 Jeu local (2 joueurs sur 1 clavier)");
+    startCountdownLocal(() => gamePausedLocal = false);
+  });
+
+  document.getElementById('nav-game-online')?.addEventListener('click', () => {
+    console.log("✅ Online click");
+    isLocalMode = false;
+    gamePausedLocal = true;
+    showView('view-game');
+    history.pushState(null, '', '/game');
+    displayMessage("🕓 En attente d’un autre joueur...");
+    socket.send(JSON.stringify({ type: 'ready' }));
+  });
 });
 
 function resetLocalGame() {
@@ -132,7 +145,6 @@ function startCountdownLocal(callback: () => void) {
 }
 
 document.addEventListener("keydown", e => {
-  const state = isLocalMode ? stateLocal : stateOnline;
   const isLeftKey = e.key === 'z' || e.key === 's';
   const isRightKey = e.key === 'ArrowUp' || e.key === 'ArrowDown';
   const dy = (e.key === 'z' || e.key === 'ArrowUp') ? -5 : 5;
@@ -141,17 +153,13 @@ document.addEventListener("keydown", e => {
     if (isLeftKey) stateLocal.paddles.left.dy = dy;
     if (isRightKey) stateLocal.paddles.right.dy = dy;
   } else {
-    // En ligne : uniquement les flèches
-    if (e.key === 'ArrowUp' || e.key === 'ArrowDown') {
-      const playerRole = role; // "left" ou "right"
-      socket.send(JSON.stringify({ type: 'paddleMove', role: playerRole, dy }));
+    if (isRightKey) {
+      socket.send(JSON.stringify({ type: 'paddleMove', role, dy }));
     }
   }
 });
 
-
 document.addEventListener("keyup", e => {
-  const state = isLocalMode ? stateLocal : stateOnline;
   const isLeftKey = e.key === 'z' || e.key === 's';
   const isRightKey = e.key === 'ArrowUp' || e.key === 'ArrowDown';
 
@@ -159,14 +167,11 @@ document.addEventListener("keyup", e => {
     if (isLeftKey) stateLocal.paddles.left.dy = 0;
     if (isRightKey) stateLocal.paddles.right.dy = 0;
   } else {
-    // En ligne : uniquement les flèches
-    if (e.key === 'ArrowUp' || e.key === 'ArrowDown') {
-      const playerRole = role;
-      socket.send(JSON.stringify({ type: 'paddleMove', role: playerRole, dy: 0 }));
+    if (isRightKey) {
+      socket.send(JSON.stringify({ type: 'paddleMove', role, dy: 0 }));
     }
   }
 });
-
 
 function updateLocalGame() {
   if (!isLocalMode || gamePausedLocal) return;
@@ -180,9 +185,9 @@ function updateLocalGame() {
   p.right.y = Math.max(0, Math.min(500, p.right.y));
   if (b.y <= 0 || b.y >= 600) b.dy *= -1;
   if ((b.x - b.radius < 20 && b.y > p.left.y && b.y < p.left.y + 100) ||
-    (b.x + b.radius > 780 && b.y > p.right.y && b.y < p.right.y + 100)) {
-  b.dx *= -1.05; // accélère légèrement à chaque rebond
-  b.dy *= 1.05;
+      (b.x + b.radius > 780 && b.y > p.right.y && b.y < p.right.y + 100)) {
+    b.dx *= -1.05;
+    b.dy *= 1.05;
   }
   if (b.x < 0) {
     stateLocal.score.right++;
@@ -200,7 +205,7 @@ function updateLocalGame() {
       resetLocalGame();
       startCountdownLocal(() => gamePausedLocal = false);
     }
-  }  
+  }
 }
 
 function draw() {
@@ -249,16 +254,10 @@ socket.addEventListener('message', event => {
   if (data.type === 'state') {
     stateOnline = data.state;
   }
-  console.log("🎯 Message reçu :", data);
-
   if (data.type === 'forfeit') {
-    console.log("💡 Victoire par forfait reçue :", data.message);
     gamePausedOnline = true;
     gameWinnerText = data.message;
-  
-    // On freeze visuellement la partie
     setTimeout(() => {
-      // Nettoyage visuel et état
       gameWinnerText = null;
       stateOnline.score.left = 0;
       stateOnline.score.right = 0;
@@ -266,7 +265,7 @@ socket.addEventListener('message', event => {
       stateOnline.paddles.left.y = 250;
       stateOnline.paddles.right.y = 250;
       showView('view-home');
-      displayMessage(""); // reset du message d’attente
+      displayMessage("");
     }, 5000);
   }
 });
@@ -274,7 +273,6 @@ socket.addEventListener('message', event => {
 function finishGame(winnerText: string) {
   gamePausedLocal = true;
   gameWinnerText = winnerText;
-
   setTimeout(() => {
     gameWinnerText = null;
     stateLocal.score.left = 0;

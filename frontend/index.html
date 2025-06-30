@@ -84,7 +84,7 @@
     <div id="nav-user" class="hidden space-x-4 items-center">
       <button id="nav-home" class="px-4 py-2 bg-gray-300 rounded hover:bg-gray-400" onclick="showOnly('view-home')">Accueil</button>
       <button id="nav-game-online" class="bg-blue-500 hover:bg-blue-600 text-white px-4 py-2 rounded" onclick="showOnly('view-home')">Jouer en ligne</button>
-      <button id="nav-game" class="bg-blue-500 hover:bg-blue-600 text-white px-4 py-2 rounded" onclick="showOnly('view-game')">Jouer en local</button>
+      <button id="nav-game" class="bg-blue-500 hover:bg-blue-600 text-white px-4 py-2 rounded" onclick="showView('view-game')">Jouer en local</button>
       <span id="nav-displayname" class="font-semibold"></span>
       <button onclick="openSettings()" class="text-sm underline text-blue-600">Paramètres</button>
       <button onclick="logout()" class="px-3 py-2 bg-red-500 text-white rounded hover:bg-red-600">Se déconnecter</button>
@@ -138,6 +138,15 @@
     <input id="param_email" type="email" placeholder="Email" class="w-full border px-3 py-2 rounded">
     <input id="param_display_name" type="text" placeholder="Nom de jeu" class="w-full border px-3 py-2 rounded">
     <input id="param_avatar_url" type="text" placeholder="Lien avatar (URL)" class="w-full border px-3 py-2 rounded">
+    <hr class="my-4">
+
+<h3 class="text-xl font-semibold text-gray-700">🔒 Changer le mot de passe</h3>
+<input id="param_old_password" type="password" placeholder="Mot de passe actuel" class="w-full border px-3 py-2 rounded">
+<input id="param_new_password" type="password" placeholder="Nouveau mot de passe" class="w-full border px-3 py-2 rounded">
+<input id="param_confirm_new_password" type="password" placeholder="Confirmer le nouveau mot de passe" class="w-full border px-3 py-2 rounded">
+<button onclick="updatePassword()" class="bg-red-500 hover:bg-red-600 text-white px-4 py-2 rounded w-full">Changer le mot de passe</button>
+<pre id="logUpdatePassword" class="text-sm text-green-600"></pre>
+
     <button onclick="updateUser()" class="bg-yellow-500 hover:bg-yellow-600 text-white px-4 py-2 rounded w-full">Enregistrer</button>
     <pre id="logUpdateUser" class="text-sm text-green-600"></pre>
   </div>
@@ -424,8 +433,53 @@ document.addEventListener('DOMContentLoaded', () => {
     card.classList.toggle('flipped');
   });
 });
+
+function updatePassword() {
+  const user = JSON.parse(localStorage.getItem('user'));
+  if (!user) return;
+
+  const oldPassword = document.getElementById('param_old_password').value;
+  const newPassword = document.getElementById('param_new_password').value;
+  const confirmNewPassword = document.getElementById('param_confirm_new_password').value;
+
+  if (newPassword !== confirmNewPassword) {
+    document.getElementById('logUpdatePassword').textContent = '❌ Les mots de passe ne correspondent pas.';
+    return;
+  }
+
+  fetch('/update-password', {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      // Si tu utilises JWT → ajoute `Authorization: Bearer <token>` ici !
+    },
+    body: JSON.stringify({
+      oldPassword: oldPassword,
+      newPassword: newPassword,
+      id: user.id // utile si tu veux vérifier côté backend
+    })
+  })
+  .then(async res => {
+    if (!res.ok) {
+      const text = await res.text();
+      throw new Error(`Erreur HTTP ${res.status} : ${text}`);
+    }
+    return res.json();
+  })
+  .then(data => {
+    document.getElementById('logUpdatePassword').textContent = '✅ Mot de passe modifié avec succès !';
+    // Réinitialise les champs
+    document.getElementById('param_old_password').value = '';
+    document.getElementById('param_new_password').value = '';
+    document.getElementById('param_confirm_new_password').value = '';
+  })
+  .catch(err => {
+    document.getElementById('logUpdatePassword').textContent = '❌ ' + err.message;
+  });
+}
+
   </script>
-  <script type="module" src="/src/main.ts"></script>
+  <script type="module" src="/dist/main.js"></script>
 </body>
 </html>
 
