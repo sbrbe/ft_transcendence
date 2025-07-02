@@ -1,6 +1,5 @@
 import { FastifyInstance, FastifyPluginOptions, FastifyRequest, FastifyReply } from 'fastify';
 import db from './db';
-import util from 'util';
 
 
 // db helpers typés :
@@ -106,8 +105,9 @@ const friendsRoutes = async (
       `, [userId, userId]);
       res.send(rows);
     } catch (err: any) {
-      res.status(500).send({ error: err.message });
-    }
+      console.error("❌ Erreur SQL /friends:", err.message);
+      res.send([]); // Renvoie un tableau vide au lieu d'un objet
+    }    
   });
 
   fastify.put('/accept/:id', async (req: FastifyRequest, res: FastifyReply) => {

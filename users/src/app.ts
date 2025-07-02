@@ -1,7 +1,6 @@
 import Fastify, { FastifyInstance, FastifyReply, FastifyRequest } from 'fastify';
 import sqlite3 from 'sqlite3';
 import bcrypt from 'bcrypt';
-import util from 'util';
 import validator from 'validator';
 import friendsRoutes from './friendsRoutes';
 import db from './db';
@@ -74,10 +73,10 @@ app.post('/', (request: FastifyRequest, reply: FastifyReply) => {
     bcrypt.hash(password, 10).then(hashedPassword => {
       const finalAvatar = avatar_url || '/default.png';
       const insertSQL = `INSERT INTO users (
-        first_name, last_name, username, password, email, display_name, avatar_url, is_online
-      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?)`;
+        first_name, last_name, username, password, email, display_name, avatar_url, is_online, last_seen
+      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`;
 
-      db.run(insertSQL, [first_name, last_name, username, hashedPassword, email, display_name, finalAvatar, 1], function (this: sqlite3.RunResult, err: Error | null) {
+      db.run(insertSQL, [first_name, last_name, username, hashedPassword, email, display_name, finalAvatar, 1,  new Date().toISOString()], function (this: sqlite3.RunResult, err: Error | null) {
         if (err) return reply.status(500).send({ error: err.message });
 
         const newUserId = this.lastID;

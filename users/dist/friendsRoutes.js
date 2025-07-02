@@ -89,7 +89,8 @@ const friendsRoutes = async (fastify, opts) => {
             res.send(rows);
         }
         catch (err) {
-            res.status(500).send({ error: err.message });
+            console.error("❌ Erreur SQL /friends:", err.message);
+            res.send([]); // Renvoie un tableau vide au lieu d'un objet
         }
     });
     fastify.put('/accept/:id', async (req, res) => {

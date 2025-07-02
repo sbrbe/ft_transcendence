@@ -68,9 +68,9 @@ app.post('/', (request, reply) => {
         bcrypt_1.default.hash(password, 10).then(hashedPassword => {
             const finalAvatar = avatar_url || '/default.png';
             const insertSQL = `INSERT INTO users (
-        first_name, last_name, username, password, email, display_name, avatar_url, is_online
-      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?)`;
-            db_1.default.run(insertSQL, [first_name, last_name, username, hashedPassword, email, display_name, finalAvatar, 1], function (err) {
+        first_name, last_name, username, password, email, display_name, avatar_url, is_online, last_seen
+      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`;
+            db_1.default.run(insertSQL, [first_name, last_name, username, hashedPassword, email, display_name, finalAvatar, 1, new Date().toISOString()], function (err) {
                 if (err)
                     return reply.status(500).send({ error: err.message });
                 const newUserId = this.lastID;
