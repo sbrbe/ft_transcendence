@@ -82,7 +82,7 @@ async function sendFriendRequest(addresseeId) {
   return;
 }
 
-    const res = await fetch('/friends/request', {
+    const res = await fetch('/users/request', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ requester_id: parseInt(requesterId), addressee_id: addresseeId })
@@ -99,13 +99,14 @@ async function sendFriendRequest(addresseeId) {
   }
 }
 async function refreshFriendData() {
-  const userId = document.getElementById('user-id').value;
+  const userId = Number(document.getElementById('user-id').value);
+
 
   
   // Demandes reçues
-  const res1 = await fetch(`/friends/incoming/${userId}`);
+  const res1 = await fetch(`/users/incoming/${userId}`);
 const incoming = await res1.json();
-console.log("📦 Résultat de /friends/incoming:", incoming);
+console.log("📦 Résultat de /users/incoming:", incoming);
 
 
 const incomingDiv = document.getElementById('incoming-requests');
@@ -132,7 +133,7 @@ incoming.forEach(d => {
 
       
       // Liste d’amis
-      const res2 = await fetch(`/friends/${userId}`);
+      const res2 = await fetch(`/users/friends/${userId}`);
       const friends = await res2.json();
       const friendsDiv = document.getElementById('friend-list');
       friendsDiv.innerHTML = '';
@@ -160,12 +161,12 @@ incoming.forEach(d => {
 }
 
 async function acceptFriend(id) {
-  await fetch(`/friends/accept/${id}`, { method: 'PUT' });
+  await fetch(`/users/accept/${id}`, { method: 'PUT' });
   refreshFriendData();
 }
 
 async function rejectFriend(id) {
-  await fetch(`/friends/reject/${id}`, { method: 'DELETE' });
+  await fetch(`/users/reject/${id}`, { method: 'DELETE' });
   refreshFriendData();
 }
 

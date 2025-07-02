@@ -84,7 +84,7 @@
     <div id="nav-user" class="hidden space-x-4 items-center">
       <button id="nav-home" class="px-4 py-2 bg-gray-300 rounded hover:bg-gray-400" onclick="showOnly('view-home')">Accueil</button>
       <button id="nav-game-online" class="bg-blue-500 hover:bg-blue-600 text-white px-4 py-2 rounded" onclick="showOnly('view-home')">Jouer en ligne</button>
-      <button id="nav-game" class="bg-blue-500 hover:bg-blue-600 text-white px-4 py-2 rounded" onclick="showView('view-game')">Jouer en local</button>
+      <button id="nav-game" class="bg-blue-500 hover:bg-blue-600 text-white px-4 py-2 rounded">Jouer en local</button>
       <span id="nav-displayname" class="font-semibold"></span>
       <button onclick="openSettings()" class="text-sm underline text-blue-600">Paramètres</button>
       <button onclick="logout()" class="px-3 py-2 bg-red-500 text-white rounded hover:bg-red-600">Se déconnecter</button>
@@ -196,7 +196,7 @@ function toggleRegister() {
         display_name: document.getElementById('display_name').value
       };
 
-      fetch('/sign-up', {
+      fetch('/users/sign-up', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(data)
@@ -237,7 +237,7 @@ function toggleRegister() {
   const user = JSON.parse(localStorage.getItem('user'));
   if (!user) return;
 
-  fetch('/logout', {
+  fetch('/users/logout', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({ id: user.id })
@@ -277,7 +277,7 @@ function loginUser() {
     password: document.getElementById('login_password').value
   };
 
-  fetch('/login', {
+  fetch('/users/login', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify(data)
@@ -447,7 +447,7 @@ function updatePassword() {
     return;
   }
 
-  fetch('/update-password', {
+  fetch('/users/update-password', {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json',

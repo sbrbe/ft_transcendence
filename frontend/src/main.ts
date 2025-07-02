@@ -78,7 +78,7 @@ document.addEventListener('DOMContentLoaded', () => {
       score: { left: 0, right: 0 },
       countdownText: null
     };
-
+    
     if (socket.readyState === WebSocket.OPEN) {
       socket.send(JSON.stringify({ type: 'ready' }));
     } else {
@@ -86,12 +86,12 @@ document.addEventListener('DOMContentLoaded', () => {
         socket.send(JSON.stringify({ type: 'ready' }));
       });
     }
-
+    
     ctx.clearRect(0, 0, canvas.width, canvas.height);
     displayMessage("");
     showView('view-home');
   });
-
+  
   document.getElementById('nav-game')?.addEventListener('click', () => {
     console.log("✅ Local click");
     isLocalMode = true;
@@ -102,7 +102,7 @@ document.addEventListener('DOMContentLoaded', () => {
     displayMessage("🎮 Jeu local (2 joueurs sur 1 clavier)");
     startCountdownLocal(() => gamePausedLocal = false);
   });
-
+  
   document.getElementById('nav-game-online')?.addEventListener('click', () => {
     console.log("✅ Online click");
     isLocalMode = false;
@@ -112,6 +112,7 @@ document.addEventListener('DOMContentLoaded', () => {
     displayMessage("🕓 En attente d’un autre joueur...");
     socket.send(JSON.stringify({ type: 'ready' }));
   });
+  renderLoop();
 });
 
 function resetLocalGame() {
@@ -243,7 +244,6 @@ function renderLoop() {
   draw();
   requestAnimationFrame(renderLoop);
 }
-renderLoop();
 
 socket.addEventListener('message', event => {
   const data = JSON.parse(event.data);

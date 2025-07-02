@@ -30,10 +30,10 @@ const dbAll = (sql: string, params?: any[]) =>
 const strongPasswordRegex = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[^A-Za-z0-9]).+$/;
 
 // Enregistre routes friends
-app.register(friendsRoutes, { prefix: '/friends' });
+app.register(friendsRoutes, { prefix: '/users' });
 
 // 🔎 GET /ma-route
-app.get('/ma-route', async (request: FastifyRequest, reply: FastifyReply) => {
+app.get('/users/ma-route', async (request: FastifyRequest, reply: FastifyReply) => {
   try {
     const users = await dbAll('SELECT * FROM users');
     const friendships = await dbAll('SELECT * FROM friendships');
@@ -46,7 +46,7 @@ app.get('/ma-route', async (request: FastifyRequest, reply: FastifyReply) => {
 });
 
 // ✅ POST /
-app.post('/', (request: FastifyRequest, reply: FastifyReply) => {
+app.post('/users/sign-up', (request: FastifyRequest, reply: FastifyReply) => {
   const { first_name, last_name, username, password, email, display_name, avatar_url } = request.body as Record<string, string>;
 
   if (!first_name || !last_name || !username || !password || !email || !display_name) {
@@ -97,7 +97,7 @@ app.post('/', (request: FastifyRequest, reply: FastifyReply) => {
 });
 
 // ✅ POST /login
-app.post('/login', (request: FastifyRequest, reply: FastifyReply) => {
+app.post('/users/login', (request: FastifyRequest, reply: FastifyReply) => {
   const { email, password } = request.body as Record<string, string>;
 
   if (!email || !password) {
@@ -186,7 +186,7 @@ app.get('/users/:id', async (request: FastifyRequest, reply: FastifyReply) => {
 });
 
 // ✅ POST /logout
-app.post('/logout', (request: FastifyRequest, reply: FastifyReply) => {
+app.post('/users/logout', (request: FastifyRequest, reply: FastifyReply) => {
   const { id } = request.body as { id: string };
   if (!id) return reply.status(400).send({ error: "ID requis" });
 
@@ -218,7 +218,7 @@ app.get('/users/search', async (request: FastifyRequest, reply: FastifyReply) =>
 });
 
 // ✅ POST /update-password
-app.post('/update-password', (request: FastifyRequest, reply: FastifyReply) => {
+app.post('/users/update-password', (request: FastifyRequest, reply: FastifyReply) => {
   const { oldPassword, newPassword, id } = request.body as { oldPassword: string, newPassword: string, id: string };
   const userId = id;
 
@@ -243,7 +243,7 @@ app.post('/update-password', (request: FastifyRequest, reply: FastifyReply) => {
 });
 
 // ✅ POST /matches
-app.post('/matches', (request: FastifyRequest, reply: FastifyReply) => {
+app.post('/users/matches', (request: FastifyRequest, reply: FastifyReply) => {
   const { user_id, opponent_id, result } = request.body as { user_id: string, opponent_id: string, result: string };
 
   if (!user_id || !opponent_id || !result) {

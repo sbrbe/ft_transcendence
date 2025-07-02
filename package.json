@@ -1,19 +1,16 @@
 {
+  "name": "ft_transcendence",
+  "version": "1.0.0",
+  "scripts": {
+    "start:backend": "node backend/server.js",
+    "start:users": "node users/dist/app.js"
+  },
   "dependencies": {
     "bcrypt": "^6.0.0",
-    "express": "^5.1.0",
+    "express": "^4.18.2",
     "fastify": "^5.4.0",
-    "sqlite3": "^5.1.7",
-    "validator": "^13.15.15"
-  },
-  "devDependencies": {
-    "@types/bcrypt": "^5.0.2",
-    "@types/node": "^24.0.4",
-    "@types/sqlite3": "^5.1.0",
-    "@types/validator": "^13.15.2",
-    "autoprefixer": "^10.4.21",
-    "postcss": "^8.5.6",
-    "tailwindcss": "^4.1.10",
-    "typescript": "^5.8.3"
+    "sqlite3": "^5.1.6",
+    "validator": "^13.15.15",
+    "ws": "^8.18.3"
   }
 }

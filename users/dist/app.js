@@ -30,9 +30,9 @@ const dbAll = (sql, params) => new Promise((resolve, reject) => {
 });
 const strongPasswordRegex = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[^A-Za-z0-9]).+$/;
 // Enregistre routes friends
-app.register(friendsRoutes_1.default, { prefix: '/friends' });
+app.register(friendsRoutes_1.default, { prefix: '/users' });
 // 🔎 GET /ma-route
-app.get('/ma-route', async (request, reply) => {
+app.get('/users/ma-route', async (request, reply) => {
     try {
         const users = await dbAll('SELECT * FROM users');
         const friendships = await dbAll('SELECT * FROM friendships');
@@ -44,7 +44,7 @@ app.get('/ma-route', async (request, reply) => {
     }
 });
 // ✅ POST /
-app.post('/', (request, reply) => {
+app.post('/users/sign-up', (request, reply) => {
     const { first_name, last_name, username, password, email, display_name, avatar_url } = request.body;
     if (!first_name || !last_name || !username || !password || !email || !display_name) {
         return reply.status(400).send({ error: "Champs requis manquants." });
@@ -90,7 +90,7 @@ app.post('/', (request, reply) => {
     });
 });
 // ✅ POST /login
-app.post('/login', (request, reply) => {
+app.post('/users/login', (request, reply) => {
     const { email, password } = request.body;
     if (!email || !password) {
         return reply.status(400).send({ error: "Champs requis manquants." });
@@ -186,7 +186,7 @@ app.get('/users/:id', async (request, reply) => {
     }
 });
 // ✅ POST /logout
-app.post('/logout', (request, reply) => {
+app.post('/users/logout', (request, reply) => {
     const { id } = request.body;
     if (!id)
         return reply.status(400).send({ error: "ID requis" });
@@ -215,7 +215,7 @@ app.get('/users/search', async (request, reply) => {
     }
 });
 // ✅ POST /update-password
-app.post('/update-password', (request, reply) => {
+app.post('/users/update-password', (request, reply) => {
     const { oldPassword, newPassword, id } = request.body;
     const userId = id;
     if (newPassword.length < 8 || !strongPasswordRegex.test(newPassword)) {
@@ -238,7 +238,7 @@ app.post('/update-password', (request, reply) => {
     });
 });
 // ✅ POST /matches
-app.post('/matches', (request, reply) => {
+app.post('/users/matches', (request, reply) => {
     const { user_id, opponent_id, result } = request.body;
     if (!user_id || !opponent_id || !result) {
         return reply.status(400).send({ error: "Champs requis manquants." });

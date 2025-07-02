@@ -89,6 +89,7 @@ document.addEventListener('DOMContentLoaded', () => {
         gamePausedOnline = true;
         resetLocalGame();
         showView('view-game');
+        console.log("✅ Local clickked");
         history.pushState(null, '', '/game');
         displayMessage("🎮 Jeu local (2 joueurs sur 1 clavier)");
         startCountdownLocal(() => gamePausedLocal = false);
@@ -102,6 +103,7 @@ document.addEventListener('DOMContentLoaded', () => {
         displayMessage("🕓 En attente d’un autre joueur...");
         socket.send(JSON.stringify({ type: 'ready' }));
     });
+    renderLoop();
 });
 function resetLocalGame() {
     stateLocal.ball = {
@@ -184,6 +186,7 @@ function updateLocalGame() {
     }
     if (b.x < 0) {
         stateLocal.score.right++;
+        console.log("✅ Nouveau round : le jeu LOCAL redémarre après but !");
         if (stateLocal.score.right === 3) {
             finishGame("🅿️ Droite a gagné !");
         }
@@ -194,6 +197,7 @@ function updateLocalGame() {
     }
     else if (b.x > 800) {
         stateLocal.score.left++;
+        console.log("✅ Nouveau round : le jeu LOCAL redémarre après but !");
         if (stateLocal.score.left === 3) {
             finishGame("🅿️ Gauche a gagné !");
         }
@@ -237,7 +241,6 @@ function renderLoop() {
     draw();
     requestAnimationFrame(renderLoop);
 }
-renderLoop();
 socket.addEventListener('message', event => {
     const data = JSON.parse(event.data);
     if (data.type === 'role') {
