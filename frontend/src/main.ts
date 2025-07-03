@@ -174,22 +174,94 @@ document.addEventListener("keyup", e => {
   }
 });
 
+//          IA GAUCHE ET DROITE
+
+// function updateLocalGame() {
+//   if (!isLocalMode || gamePausedLocal) return;
+
+//   const b = stateLocal.ball;
+//   const p = stateLocal.paddles;
+
+//   b.x += b.dx;
+//   b.y += b.dy;
+
+//   p.left.y += p.left.dy;
+//   p.right.y += p.right.dy;
+
+//   p.left.y = Math.max(0, Math.min(500, p.left.y));
+//   p.right.y = Math.max(0, Math.min(500, p.right.y));
+
+//   if (b.y <= 0 || b.y >= 600) b.dy *= -1;
+
+//   if ((b.x - b.radius < 20 && b.y > p.left.y && b.y < p.left.y + 100) ||
+//       (b.x + b.radius > 780 && b.y > p.right.y && b.y < p.right.y + 100)) {
+//     b.dx *= -1.05;
+//     b.dy *= 1.05;
+//   }
+
+//   if (b.x < 0) {
+//     stateLocal.score.right++;
+//     if (stateLocal.score.right === 3) {
+//       finishGame("🅿️ Droite a gagné !");
+//     } else {
+//       resetLocalGame();
+//       startCountdownLocal(() => gamePausedLocal = false);
+//     }
+//   } else if (b.x > 800) {
+//     stateLocal.score.left++;
+//     if (stateLocal.score.left === 3) {
+//       finishGame("🅿️ Gauche a gagné !");
+//     } else {
+//       resetLocalGame();
+//       startCountdownLocal(() => gamePausedLocal = false);
+//     }
+//   }
+
+//   const speed = 5;
+
+//   // IA GAUCHE ➜ pad gauche
+//   const leftCenter = p.left.y + 50;
+//   const leftDistance = aiTargetYLeft - leftCenter;
+//   if (Math.abs(leftDistance) > 5) {
+//     p.left.dy = leftDistance > 0 ? speed : -speed;
+//   } else {
+//     p.left.dy = 0;
+//   }
+
+//   // IA DROITE ➜ pad droit
+//   const rightCenter = p.right.y + 50;
+//   const rightDistance = aiTargetYRight - rightCenter;
+//   if (Math.abs(rightDistance) > 5) {
+//     p.right.dy = rightDistance > 0 ? speed : -speed;
+//   } else {
+//     p.right.dy = 0;
+//   }
+// }
+
+
 function updateLocalGame() {
   if (!isLocalMode || gamePausedLocal) return;
+
   const b = stateLocal.ball;
   const p = stateLocal.paddles;
+
   b.x += b.dx;
   b.y += b.dy;
+
   p.left.y += p.left.dy;
   p.right.y += p.right.dy;
+
   p.left.y = Math.max(0, Math.min(500, p.left.y));
   p.right.y = Math.max(0, Math.min(500, p.right.y));
+
   if (b.y <= 0 || b.y >= 600) b.dy *= -1;
+
   if ((b.x - b.radius < 20 && b.y > p.left.y && b.y < p.left.y + 100) ||
       (b.x + b.radius > 780 && b.y > p.right.y && b.y < p.right.y + 100)) {
     b.dx *= -1.05;
     b.dy *= 1.05;
   }
+
   if (b.x < 0) {
     stateLocal.score.right++;
     if (stateLocal.score.right === 3) {
@@ -207,7 +279,20 @@ function updateLocalGame() {
       startCountdownLocal(() => gamePausedLocal = false);
     }
   }
+
+  // ✅ === AJOUTE ÇA ===
+  // L'IA avance vers sa cible calculée (aiTargetY)
+  const paddleCenter = p.right.y + 50; // moitié de 100
+  const distance = aiTargetY - paddleCenter;
+  const speed = 5;
+
+  if (Math.abs(distance) > 5) {
+    p.right.dy = distance > 0 ? speed : -speed;
+  } else {
+    p.right.dy = 0; // bien aligné => plus de tremblements
+  }
 }
+
 
 function draw() {
   ctx.clearRect(0, 0, canvas.width, canvas.height);
@@ -280,4 +365,107 @@ function finishGame(winnerText: string) {
     resetLocalGame();
     startCountdownLocal(() => gamePausedLocal = false);
   }, 5000);
+}
+
+// === IA Local FRONT ===
+let aiInterval: number | null = null;
+
+document.getElementById('nav-game-vs-ia')?.addEventListener('click', () => {
+  console.log("✅ Local VS IA click");
+  isLocalMode = true; // Le match est local
+  gamePausedOnline = true; // Pas online
+  resetLocalGame();
+  showView('view-game');
+  history.pushState(null, '', '/game');
+  displayMessage("🤖 Match local contre l'IA");
+  startCountdownLocal(() => {
+    gamePausedLocal = false;
+
+    if (aiInterval) clearInterval(aiInterval);
+    aiInterval = window.setInterval(runLocalAI, 1000); // IA ajuste sa cible toutes les 1000ms
+  });
+});
+
+//                    IA GAUCHE ET DROITE
+
+// let aiInterval: number | null = null;
+
+// document.getElementById('nav-game-vs-ia')?.addEventListener('click', () => {
+//   console.log("✅ IA vs IA local");
+//   isLocalMode = true;
+//   gamePausedOnline = true;
+//   resetLocalGame();
+//   showView('view-game');
+//   history.pushState(null, '', '/game');
+//   displayMessage("🤖 IA contre IA");
+
+//   startCountdownLocal(() => {
+//     gamePausedLocal = false;
+//     if (aiInterval) clearInterval(aiInterval);
+//     aiInterval = window.setInterval(runBothAI, 1000); // met à jour les 2 cibles toutes les secondes
+//   });
+// });
+
+
+// let aiTargetYLeft = 300;  // IA côté gauche
+// let aiTargetYRight = 300; // IA côté droit
+
+// function runBothAI() {
+//   const ball = stateLocal.ball;
+  
+//   // === IA DROITE ===
+//   if (ball.dx > 0) {
+//     let timeToReachRight = (780 - ball.x) / ball.dx;
+//     if (timeToReachRight < 0) timeToReachRight = 0;
+
+//     let predictedYRight = ball.y + ball.dy * timeToReachRight;
+//     while (predictedYRight < 0 || predictedYRight > 600) {
+//       if (predictedYRight < 0) predictedYRight = -predictedYRight;
+//       if (predictedYRight > 600) predictedYRight = 1200 - predictedYRight;
+//     }
+//     aiTargetYRight = predictedYRight;
+//   } else {
+//     aiTargetYRight = 300; // centre si balle part à gauche
+//   }
+  
+//   // === IA GAUCHE ===
+//   if (ball.dx < 0) {
+//     let timeToReachLeft = (ball.x - 20) / -ball.dx; // vers la gauche => mur à ~20px
+//     if (timeToReachLeft < 0) timeToReachLeft = 0;
+    
+//     let predictedYLeft = ball.y + ball.dy * timeToReachLeft;
+//     while (predictedYLeft < 0 || predictedYLeft > 600) {
+//       if (predictedYLeft < 0) predictedYLeft = -predictedYLeft;
+//       if (predictedYLeft > 600) predictedYLeft = 1200 - predictedYLeft;
+//     }
+//     aiTargetYLeft = predictedYLeft;
+//   } else {
+//     aiTargetYLeft = 300; // centre si balle part à droite
+//   }
+// }
+
+let aiTargetY = 300; // Au départ : centre
+
+function runLocalAI() {
+  const ball = stateLocal.ball;
+  const paddle = stateLocal.paddles.right;
+  const paddleHeight = 100;
+  const tableHeight = 600;
+
+  if (ball.dx < 0) {
+    aiTargetY = tableHeight / 2; // se replace au centre
+    return;
+  }
+
+  let timeToReach = (780 - ball.x) / ball.dx;
+  if (timeToReach < 0) timeToReach = 0;
+
+  let predictedY = ball.y + ball.dy * timeToReach;
+
+  while (predictedY < 0 || predictedY > tableHeight) {
+    if (predictedY < 0) predictedY = -predictedY;
+    if (predictedY > tableHeight) predictedY = 2 * tableHeight - predictedY;
+  }
+
+  aiTargetY = predictedY;
 }

@@ -8,9 +8,6 @@ RUN npm install
 
 COPY backend ./backend
 COPY users ./users
-
-# Facultatif : build TS
-# COPY tsconfig.json ./
-# RUN npx tsc
+COPY ai ./ai
 
 CMD ["node"]

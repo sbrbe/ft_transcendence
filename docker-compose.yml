@@ -1,38 +1,3 @@
-
-# services:
-#   users:
-#     build: ./users
-#     ports:
-#       - "3001:3001"
-#     networks:
-#       - appnet
-
-#   backend:
-#     build: ./backend
-#     ports:
-#       - "3002:3002"
-#     depends_on:
-#       - users
-#     networks:
-#       - appnet
-
-#   nginx:
-#     image: nginx
-#     ports:
-#       - "443:443"
-#     depends_on:
-#       - backend
-#       - users
-#     volumes:
-#       - ./nginx_conf:/etc/nginx/conf.d
-#       - ./frontend:/usr/share/nginx/html
-#       - ./ssl:/etc/nginx/ssl
-#     networks:
-#       - appnet
-
-# networks:
-#   appnet: {}
-
 services:
   backend:
     build:
@@ -56,6 +21,17 @@ services:
     networks:
       - appnet
 
+  ai:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    working_dir: /app
+    command: npm run start:ai
+    ports:
+      - "3003:3003"
+    networks:
+      - appnet
+
   nginx:
     image: nginx
     ports:
@@ -63,6 +39,7 @@ services:
     depends_on:
       - backend
       - users
+      - ai
     volumes:
       - ./nginx_conf:/etc/nginx/conf.d
       - ./frontend:/usr/share/nginx/html

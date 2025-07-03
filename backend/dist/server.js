@@ -203,7 +203,7 @@ wss.on('connection', (ws) => {
                 gameIntervalOnline = null;
             }
             const remainingPlayer = players[0];
-            const winner = (remainingPlayer === null || remainingPlayer === void 0 ? void 0 : remainingPlayer.role) === 'left'
+            const winner = remainingPlayer?.role === 'left'
                 ? '🅿️ Gauche a gagné par forfait !'
                 : '🅿️ Droite a gagné par forfait !';
             console.log('🏁 Envoi message de forfait au joueur restant :', winner);
