@@ -21,17 +21,6 @@ services:
     networks:
       - appnet
 
-  ai:
-    build:
-      context: .
-      dockerfile: Dockerfile
-    working_dir: /app
-    command: npm run start:ai
-    ports:
-      - "3003:3003"
-    networks:
-      - appnet
-
   nginx:
     image: nginx
     ports:
@@ -39,7 +28,6 @@ services:
     depends_on:
       - backend
       - users
-      - ai
     volumes:
       - ./nginx_conf:/etc/nginx/conf.d
       - ./frontend:/usr/share/nginx/html

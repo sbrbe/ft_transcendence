@@ -3,7 +3,9 @@ let role: 'left' | 'right' = 'left';
 let isLocalMode = false;
 let gamePausedLocal = true;
 let gamePausedOnline = true;
+let  isAIMode = true;
 let gameWinnerText: string | null = null;
+let aiLastKey: 'ArrowUp' | 'ArrowDown' | null = null;
 
 let stateOnline = {
   paddles: {
@@ -96,6 +98,7 @@ document.addEventListener('DOMContentLoaded', () => {
     console.log("✅ Local click");
     isLocalMode = true;
     gamePausedOnline = true;
+    isAIMode = false;
     resetLocalGame();
     showView('view-game');
     history.pushState(null, '', '/game');
@@ -103,10 +106,28 @@ document.addEventListener('DOMContentLoaded', () => {
     startCountdownLocal(() => gamePausedLocal = false);
   });
   
+  document.getElementById('nav-game-vs-ia')?.addEventListener('click', () => {
+    console.log("✅ Local VS IA click");
+    isLocalMode = true; // Le match est local
+    gamePausedOnline = true; // Pas online
+    isAIMode = true;
+    resetLocalGame();
+    showView('view-game');
+    history.pushState(null, '', '/game');
+    displayMessage("🤖 Match local contre l'IA");
+    startCountdownLocal(() => {
+      gamePausedLocal = false;
+      
+      if (aiInterval) clearInterval(aiInterval);
+      aiInterval = window.setInterval(runLocalAI, 1000); // IA ajuste sa cible toutes les 1000ms
+    });
+  });
+
   document.getElementById('nav-game-online')?.addEventListener('click', () => {
     console.log("✅ Online click");
     isLocalMode = false;
     gamePausedLocal = true;
+    isAIMode = false;
     showView('view-game');
     history.pushState(null, '', '/game');
     displayMessage("🕓 En attente d’un autre joueur...");
@@ -152,9 +173,9 @@ document.addEventListener("keydown", e => {
 
   if (isLocalMode) {
     if (isLeftKey) stateLocal.paddles.left.dy = dy;
-    if (isRightKey) stateLocal.paddles.right.dy = dy;
+    if (isRightKey && (!isAIMode|| e.isTrusted === false)) stateLocal.paddles.right.dy = dy;
   } else {
-    if (isRightKey) {
+    if (isRightKey && (!isAIMode|| e.isTrusted === false)) {
       socket.send(JSON.stringify({ type: 'paddleMove', role, dy }));
     }
   }
@@ -166,99 +187,43 @@ document.addEventListener("keyup", e => {
 
   if (isLocalMode) {
     if (isLeftKey) stateLocal.paddles.left.dy = 0;
-    if (isRightKey) stateLocal.paddles.right.dy = 0;
+    if (isRightKey && (!isAIMode|| e.isTrusted === false)) stateLocal.paddles.right.dy = 0;
   } else {
-    if (isRightKey) {
+    if (isRightKey && (!isAIMode|| e.isTrusted === false)) {
       socket.send(JSON.stringify({ type: 'paddleMove', role, dy: 0 }));
     }
   }
 });
 
-//          IA GAUCHE ET DROITE
+const aiKeyboard = {
+  up: false,
+  down: false,
+};
 
-// function updateLocalGame() {
-//   if (!isLocalMode || gamePausedLocal) return;
 
-//   const b = stateLocal.ball;
-//   const p = stateLocal.paddles;
 
-//   b.x += b.dx;
-//   b.y += b.dy;
-
-//   p.left.y += p.left.dy;
-//   p.right.y += p.right.dy;
-
-//   p.left.y = Math.max(0, Math.min(500, p.left.y));
-//   p.right.y = Math.max(0, Math.min(500, p.right.y));
-
-//   if (b.y <= 0 || b.y >= 600) b.dy *= -1;
-
-//   if ((b.x - b.radius < 20 && b.y > p.left.y && b.y < p.left.y + 100) ||
-//       (b.x + b.radius > 780 && b.y > p.right.y && b.y < p.right.y + 100)) {
-//     b.dx *= -1.05;
-//     b.dy *= 1.05;
-//   }
-
-//   if (b.x < 0) {
-//     stateLocal.score.right++;
-//     if (stateLocal.score.right === 3) {
-//       finishGame("🅿️ Droite a gagné !");
-//     } else {
-//       resetLocalGame();
-//       startCountdownLocal(() => gamePausedLocal = false);
-//     }
-//   } else if (b.x > 800) {
-//     stateLocal.score.left++;
-//     if (stateLocal.score.left === 3) {
-//       finishGame("🅿️ Gauche a gagné !");
-//     } else {
-//       resetLocalGame();
-//       startCountdownLocal(() => gamePausedLocal = false);
-//     }
-//   }
-
-//   const speed = 5;
-
-//   // IA GAUCHE ➜ pad gauche
-//   const leftCenter = p.left.y + 50;
-//   const leftDistance = aiTargetYLeft - leftCenter;
-//   if (Math.abs(leftDistance) > 5) {
-//     p.left.dy = leftDistance > 0 ? speed : -speed;
-//   } else {
-//     p.left.dy = 0;
-//   }
-
-//   // IA DROITE ➜ pad droit
-//   const rightCenter = p.right.y + 50;
-//   const rightDistance = aiTargetYRight - rightCenter;
-//   if (Math.abs(rightDistance) > 5) {
-//     p.right.dy = rightDistance > 0 ? speed : -speed;
-//   } else {
-//     p.right.dy = 0;
-//   }
-// }
-
+let aiTargetY = 300; // Au départ : centre
 
 function updateLocalGame() {
   if (!isLocalMode || gamePausedLocal) return;
-
+  
   const b = stateLocal.ball;
   const p = stateLocal.paddles;
-
+  
   b.x += b.dx;
   b.y += b.dy;
-
+  
   p.left.y += p.left.dy;
   p.right.y += p.right.dy;
-
+  
   p.left.y = Math.max(0, Math.min(500, p.left.y));
   p.right.y = Math.max(0, Math.min(500, p.right.y));
-
+  
   if (b.y <= 0 || b.y >= 600) b.dy *= -1;
-
+  
   if ((b.x - b.radius < 20 && b.y > p.left.y && b.y < p.left.y + 100) ||
       (b.x + b.radius > 780 && b.y > p.right.y && b.y < p.right.y + 100)) {
-    b.dx *= -1.05;
+        b.dx *= -1.05;
     b.dy *= 1.05;
   }
 
@@ -279,18 +244,20 @@ function updateLocalGame() {
       startCountdownLocal(() => gamePausedLocal = false);
     }
   }
-
-  // ✅ === AJOUTE ÇA ===
-  // L'IA avance vers sa cible calculée (aiTargetY)
-  const paddleCenter = p.right.y + 50; // moitié de 100
-  const distance = aiTargetY - paddleCenter;
-  const speed = 5;
-
-  if (Math.abs(distance) > 5) {
-    p.right.dy = distance > 0 ? speed : -speed;
-  } else {
-    p.right.dy = 0; // bien aligné => plus de tremblements
+  if (isLocalMode && !gamePausedLocal && isAIMode) {
+    const paddleCenter = p.right.y + 50;
+    const distance = aiTargetY - paddleCenter;
+    const speed = 5;
+    
+    if (Math.abs(distance) <= speed) {
+      p.right.dy = 0;
+    } else {
+      p.right.dy = distance > 0 ? speed : -speed;
+    }
   }
+
+  
+
 }
 
 
@@ -370,21 +337,117 @@ function finishGame(winnerText: string) {
 // === IA Local FRONT ===
 let aiInterval: number | null = null;
 
-document.getElementById('nav-game-vs-ia')?.addEventListener('click', () => {
-  console.log("✅ Local VS IA click");
-  isLocalMode = true; // Le match est local
-  gamePausedOnline = true; // Pas online
-  resetLocalGame();
-  showView('view-game');
-  history.pushState(null, '', '/game');
-  displayMessage("🤖 Match local contre l'IA");
-  startCountdownLocal(() => {
-    gamePausedLocal = false;
 
-    if (aiInterval) clearInterval(aiInterval);
-    aiInterval = window.setInterval(runLocalAI, 1000); // IA ajuste sa cible toutes les 1000ms
-  });
-});
+function runLocalAI() {
+  const ball = stateLocal.ball;
+  const tableHeight = 600;
+
+  if (ball.dx < 0) {
+    aiTargetY = tableHeight / 2; // Recentre si balle part
+  } else {
+    let timeToReach = (780 - ball.x) / ball.dx;
+    if (timeToReach < 0) timeToReach = 0;
+
+    let predictedY = ball.y + ball.dy * timeToReach;
+
+    while (predictedY < 0 || predictedY > tableHeight) {
+      if (predictedY < 0) predictedY = -predictedY;
+      if (predictedY > tableHeight) predictedY = 2 * tableHeight - predictedY;
+    }
+
+    aiTargetY = predictedY;
+  }
+
+  // Décision : doit-on monter, descendre ou s'arrêter ?
+  const paddleCenter = stateLocal.paddles.right.y + 50;
+  const distance = aiTargetY - paddleCenter;
+
+  const speed = 5;
+  let desiredKey: 'ArrowUp' | 'ArrowDown' | null;
+
+  if (Math.abs(distance) <= speed) {
+    desiredKey = null; // Arrêt
+  } else {
+    desiredKey = distance > 0 ? 'ArrowDown' : 'ArrowUp';
+  }
+
+  // Simule le bon event
+  if (desiredKey !== aiLastKey) {
+    if (aiLastKey) {
+      const upEvent = new KeyboardEvent('keyup', { key: aiLastKey });
+      document.dispatchEvent(upEvent);
+    }
+    if (desiredKey) {
+      const downEvent = new KeyboardEvent('keydown', { key: desiredKey });
+      document.dispatchEvent(downEvent);
+    }
+    aiLastKey = desiredKey;
+  }
+}
+
+//          IA GAUCHE ET DROITE
+
+// function updateLocalGame() {
+//   if (!isLocalMode || gamePausedLocal) return;
+
+//   const b = stateLocal.ball;
+//   const p = stateLocal.paddles;
+
+//   b.x += b.dx;
+//   b.y += b.dy;
+
+//   p.left.y += p.left.dy;
+//   p.right.y += p.right.dy;
+
+//   p.left.y = Math.max(0, Math.min(500, p.left.y));
+//   p.right.y = Math.max(0, Math.min(500, p.right.y));
+
+//   if (b.y <= 0 || b.y >= 600) b.dy *= -1;
+
+//   if ((b.x - b.radius < 20 && b.y > p.left.y && b.y < p.left.y + 100) ||
+//       (b.x + b.radius > 780 && b.y > p.right.y && b.y < p.right.y + 100)) {
+//     b.dx *= -1.05;
+//     b.dy *= 1.05;
+//   }
+
+//   if (b.x < 0) {
+//     stateLocal.score.right++;
+//     if (stateLocal.score.right === 3) {
+//       finishGame("🅿️ Droite a gagné !");
+//     } else {
+//       resetLocalGame();
+//       startCountdownLocal(() => gamePausedLocal = false);
+//     }
+//   } else if (b.x > 800) {
+//     stateLocal.score.left++;
+//     if (stateLocal.score.left === 3) {
+//       finishGame("🅿️ Gauche a gagné !");
+//     } else {
+//       resetLocalGame();
+//       startCountdownLocal(() => gamePausedLocal = false);
+//     }
+//   }
+
+//   const speed = 5;
+
+//   // IA GAUCHE ➜ pad gauche
+//   const leftCenter = p.left.y + 50;
+//   const leftDistance = aiTargetYLeft - leftCenter;
+//   if (Math.abs(leftDistance) > 5) {
+//     p.left.dy = leftDistance > 0 ? speed : -speed;
+//   } else {
+//     p.left.dy = 0;
+//   }
+
+//   // IA DROITE ➜ pad droit
+//   const rightCenter = p.right.y + 50;
+//   const rightDistance = aiTargetYRight - rightCenter;
+//   if (Math.abs(rightDistance) > 5) {
+//     p.right.dy = rightDistance > 0 ? speed : -speed;
+//   } else {
+//     p.right.dy = 0;
+//   }
+// }
 
 //                    IA GAUCHE ET DROITE
 
@@ -443,29 +506,3 @@ document.getElementById('nav-game-vs-ia')?.addEventListener('click', () => {
 //     aiTargetYLeft = 300; // centre si balle part à droite
 //   }
 // }
-
-let aiTargetY = 300; // Au départ : centre
-
-function runLocalAI() {
-  const ball = stateLocal.ball;
-  const paddle = stateLocal.paddles.right;
-  const paddleHeight = 100;
-  const tableHeight = 600;
-
-  if (ball.dx < 0) {
-    aiTargetY = tableHeight / 2; // se replace au centre
-    return;
-  }
-
-  let timeToReach = (780 - ball.x) / ball.dx;
-  if (timeToReach < 0) timeToReach = 0;
-
-  let predictedY = ball.y + ball.dy * timeToReach;
-
-  while (predictedY < 0 || predictedY > tableHeight) {
-    if (predictedY < 0) predictedY = -predictedY;
-    if (predictedY > tableHeight) predictedY = 2 * tableHeight - predictedY;
-  }
-
-  aiTargetY = predictedY;
-}

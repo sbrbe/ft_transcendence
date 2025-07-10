@@ -8,6 +8,5 @@ RUN npm install
 
 COPY backend ./backend
 COPY users ./users
-COPY ai ./ai
 
 CMD ["node"]
