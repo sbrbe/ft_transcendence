@@ -21,6 +21,17 @@ services:
     networks:
       - appnet
 
+  chat:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    working_dir: /app
+    command: npm run start:chat
+    ports:
+      - "3004:3004"
+    networks:
+      - appnet
+
   nginx:
     image: nginx
     ports:
@@ -28,6 +39,7 @@ services:
     depends_on:
       - backend
       - users
+      - chat
     volumes:
       - ./nginx_conf:/etc/nginx/conf.d
       - ./frontend:/usr/share/nginx/html

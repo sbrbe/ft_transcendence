@@ -8,5 +8,6 @@ RUN npm install
 
 COPY backend ./backend
 COPY users ./users
+COPY chat ./chat
 
 CMD ["node"]

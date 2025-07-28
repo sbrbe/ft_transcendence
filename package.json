@@ -4,7 +4,7 @@
   "scripts": {
     "start:backend": "node backend/dist/server.js",
     "start:users": "node users/dist/app.js",
-    "start:ai": "node ai/dist/main.js"
+    "start:chat": "node chat/dist/chat.js"
   },
   "dependencies": {
     "bcrypt": "^6.0.0",

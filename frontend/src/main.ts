@@ -1,4 +1,5 @@
-const socket = new WebSocket(`ws://${window.location.hostname}:3002`);
+const socket = new WebSocket(`wss://${location.host}/ws/`);
+
 let role: 'left' | 'right' = 'left';
 let isLocalMode = false;
 let gamePausedLocal = true;
@@ -95,13 +96,18 @@ document.addEventListener('DOMContentLoaded', () => {
   });
   
   document.getElementById('nav-game')?.addEventListener('click', () => {
+
+    if (aiInterval) {
+      clearInterval(aiInterval);
+      aiInterval = null;
+    }    
     console.log("✅ Local click");
     isLocalMode = true;
     gamePausedOnline = true;
     isAIMode = false;
     resetLocalGame();
     showView('view-game');
-    history.pushState(null, '', '/game');
+    // history.pushState(null, '', '/game');
     displayMessage("🎮 Jeu local (2 joueurs sur 1 clavier)");
     startCountdownLocal(() => gamePausedLocal = false);
   });
@@ -113,7 +119,7 @@ document.addEventListener('DOMContentLoaded', () => {
     isAIMode = true;
     resetLocalGame();
     showView('view-game');
-    history.pushState(null, '', '/game');
+    // history.pushState(null, '', '/game');
     displayMessage("🤖 Match local contre l'IA");
     startCountdownLocal(() => {
       gamePausedLocal = false;
@@ -129,7 +135,7 @@ document.addEventListener('DOMContentLoaded', () => {
     gamePausedLocal = true;
     isAIMode = false;
     showView('view-game');
-    history.pushState(null, '', '/game');
+    // history.pushState(null, '', '/game');
     displayMessage("🕓 En attente d’un autre joueur...");
     socket.send(JSON.stringify({ type: 'ready' }));
   });
@@ -265,10 +271,11 @@ function draw() {
   ctx.clearRect(0, 0, canvas.width, canvas.height);
   const s = isLocalMode ? stateLocal : stateOnline;
   const b = isLocalMode ? stateLocal.ball : stateOnline.ball;
-  ctx.fillStyle = "#000";
+  ctx.fillStyle = "white";
   ctx.font = "24px Arial";
   ctx.fillText(s.score.left.toString(), canvas.width / 4, 30);
   ctx.fillText(s.score.right.toString(), (canvas.width * 3) / 4, 30);
+  ctx.fillStyle = "white";
   ctx.fillRect(10, s.paddles.left.y, 10, 100);
   ctx.fillRect(780, s.paddles.right.y, 10, 100);
   ctx.beginPath();
@@ -279,14 +286,14 @@ function draw() {
     ctx.font = "72px Arial";
     ctx.textAlign = "center";
     ctx.textBaseline = "middle";
-    ctx.fillStyle = "#000";
+    ctx.fillStyle = "white";
     ctx.fillText(s.countdownText, canvas.width / 2, canvas.height / 2);
   }
   if (gameWinnerText) {
     ctx.font = "72px Arial";
     ctx.textAlign = "center";
     ctx.textBaseline = "middle";
-    ctx.fillStyle = "#000";
+    ctx.fillStyle = "white";
     ctx.fillText(gameWinnerText, canvas.width / 2, canvas.height / 2);
   }
 }

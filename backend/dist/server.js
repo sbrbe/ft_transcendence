@@ -212,6 +212,6 @@ wss.on('connection', (ws) => {
     });
 });
 // === Lancement ===
-server.listen(3002, () => {
-    console.log('🚀 WebSocket server running on http://localhost:3002');
+server.listen(3002, '0.0.0.0', () => {
+    console.log('🚀 WebSocket server running on http://0.0.0.0:3002');
 });
