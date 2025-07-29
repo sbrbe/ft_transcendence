@@ -7,6 +7,10 @@ let gamePausedOnline = true;
 let  isAIMode = true;
 let gameWinnerText: string | null = null;
 let aiLastKey: 'ArrowUp' | 'ArrowDown' | null = null;
+let isJoiningOnlineGame = false;
+let pendingRoleMessage = false;
+
+
 
 let stateOnline = {
   paddles: {
@@ -134,12 +138,22 @@ document.addEventListener('DOMContentLoaded', () => {
     isLocalMode = false;
     gamePausedLocal = true;
     isAIMode = false;
+  
+    pendingRoleMessage = true; // ✅ on attend un message 'role'
     showView('view-game');
-    // history.pushState(null, '', '/game');
-    displayMessage("🕓 En attente d’un autre joueur...");
-    socket.send(JSON.stringify({ type: 'ready' }));
+    displayMessage("🕓 Connexion au serveur...");
+  
+    if (socket.readyState === WebSocket.OPEN) {
+      socket.send(JSON.stringify({ type: 'ready' }));
+    } else {
+      socket.addEventListener('open', () => {
+        socket.send(JSON.stringify({ type: 'ready' }));
+      }, { once: true });
+    }
   });
-  renderLoop();
+  
+  renderLoop(); 
+  
 });
 
 function resetLocalGame() {
@@ -308,8 +322,18 @@ socket.addEventListener('message', event => {
   const data = JSON.parse(event.data);
   if (data.type === 'role') {
     role = data.role;
-    displayMessage(`🎮 Connecté en tant que ${role === 'left' ? '🅿️ gauche' : '🅿️ droite'}`);
+  
+    if (pendingRoleMessage) {
+      if (role === 'left') {
+        displayMessage("🕓 En attente d’un autre joueur... Vous êtes joueur de gauche.");
+      } else {
+        displayMessage("✅ Partie prête. Vous êtes joueur de droite.");
+      }
+      pendingRoleMessage = false; // ✅ Reset après usage
+    }
   }
+  
+  
   if (data.type === 'state') {
     stateOnline = data.state;
   }

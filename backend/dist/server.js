@@ -36,25 +36,13 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-const http_1 = __importDefault(require("http"));
+const fastify_1 = __importDefault(require("fastify"));
 const ws_1 = __importStar(require("ws"));
-// === Création du serveur HTTP (pas de routes HTTP classiques ici) ===
-const server = http_1.default.createServer();
-// === Serveur WebSocket attaché ===
+const app = (0, fastify_1.default)();
+const server = app.server; // ← récupère le serveur Node intégré à Fastify
 const wss = new ws_1.WebSocketServer({ server });
-let players = [];
-let readyPlayers = 0;
-let gameIntervalOnline = null;
-let gamePausedOnline = true;
-let stateOnline = {
-    ball: { x: 400, y: 300, dx: 0, dy: 0, radius: 8 },
-    paddles: {
-        left: { y: 250, dy: 0 },
-        right: { y: 250, dy: 0 },
-    },
-    score: { left: 0, right: 0 },
-    countdownText: null,
-};
+let games = [];
+let nextGameId = 1;
 // === Fonctions de jeu ===
 function resetBall(state) {
     state.ball.x = 400;
@@ -62,34 +50,34 @@ function resetBall(state) {
     state.ball.dx = Math.random() < 0.5 ? 4 : -4;
     state.ball.dy = Math.random() < 0.5 ? 4 : -4;
 }
-function startCountdown(state, callback) {
+function startCountdown(game, callback) {
     let countdown = 3;
-    state.countdownText = countdown.toString();
-    gamePausedOnline = true;
-    broadcastState();
+    game.state.countdownText = countdown.toString();
+    game.paused = true;
+    broadcastState(game);
     const interval = setInterval(() => {
         countdown--;
         if (countdown > 0) {
-            state.countdownText = countdown.toString();
+            game.state.countdownText = countdown.toString();
         }
         else if (countdown === 0) {
-            state.countdownText = 'GO!';
+            game.state.countdownText = 'GO!';
         }
         else {
-            state.countdownText = null;
-            gamePausedOnline = false;
+            game.state.countdownText = null;
+            game.paused = false;
             clearInterval(interval);
             callback();
         }
-        broadcastState();
+        broadcastState(game);
     }, 1000);
 }
-function updateGame() {
-    if (gamePausedOnline)
+function updateGame(game) {
+    if (game.paused)
         return;
-    const b = stateOnline.ball;
-    const p = stateOnline.paddles;
-    const score = stateOnline.score;
+    const b = game.state.ball;
+    const p = game.state.paddles;
+    const s = game.state.score;
     p.left.y += p.left.dy;
     p.right.y += p.right.dy;
     p.left.y = Math.max(0, Math.min(500, p.left.y));
@@ -104,113 +92,132 @@ function updateGame() {
         b.dy *= 1.05;
     }
     if (b.x < 0) {
-        score.right++;
-        if (score.right === 3) {
-            finishOnlineGame('🅿️ Droite a gagné !');
-        }
+        s.right++;
+        if (s.right === 3)
+            finishOnlineGame(game, '🅿️ Droite a gagné !');
         else {
-            resetBall(stateOnline);
-            startCountdown(stateOnline, () => { });
+            resetBall(game.state);
+            startCountdown(game, () => { });
         }
     }
     else if (b.x > 800) {
-        score.left++;
-        if (score.left === 3) {
-            finishOnlineGame('🅿️ Gauche a gagné !');
-        }
+        s.left++;
+        if (s.left === 3)
+            finishOnlineGame(game, '🅿️ Gauche a gagné !');
         else {
-            resetBall(stateOnline);
-            startCountdown(stateOnline, () => { });
+            resetBall(game.state);
+            startCountdown(game, () => { });
         }
     }
-    broadcastState();
+    broadcastState(game);
 }
-function broadcastState() {
-    const msg = JSON.stringify({ type: 'state', state: stateOnline });
-    for (const client of wss.clients) {
-        if (client.readyState === ws_1.default.OPEN) {
-            client.send(msg);
+function broadcastState(game) {
+    const msg = JSON.stringify({ type: 'state', state: game.state });
+    for (const role of ['left', 'right']) {
+        const player = game.players[role];
+        if (player?.ws.readyState === ws_1.default.OPEN) {
+            player.ws.send(msg);
         }
     }
 }
-function finishOnlineGame(winnerText) {
-    gamePausedOnline = true;
-    stateOnline.countdownText = winnerText;
-    broadcastState();
+function finishOnlineGame(game, winnerText) {
+    game.paused = true;
+    game.state.countdownText = winnerText;
+    broadcastState(game);
     setTimeout(() => {
-        stateOnline.score.left = 0;
-        stateOnline.score.right = 0;
-        resetBall(stateOnline);
-        startCountdown(stateOnline, () => {
-            gamePausedOnline = false;
+        game.state.score.left = 0;
+        game.state.score.right = 0;
+        resetBall(game.state);
+        startCountdown(game, () => {
+            game.paused = false;
         });
     }, 5000);
 }
-function finishOnlineGameByForfeit(winnerText) {
-    gamePausedOnline = true;
-    stateOnline.countdownText = winnerText;
-    broadcastState();
+function finishOnlineGameByForfeit(game, winnerText) {
+    game.paused = true;
+    game.state.countdownText = winnerText;
+    broadcastState(game);
     const msg = JSON.stringify({ type: 'forfeit', message: winnerText });
-    for (const player of players) {
-        if (player.ws.readyState === ws_1.default.OPEN) {
+    for (const role of ['left', 'right']) {
+        const player = game.players[role];
+        if (player?.ws.readyState === ws_1.default.OPEN) {
             player.ws.send(msg);
         }
     }
     setTimeout(() => {
-        stateOnline.score.left = 0;
-        stateOnline.score.right = 0;
-        resetBall(stateOnline);
-        stateOnline.countdownText = null;
-        broadcastState();
+        game.state.score.left = 0;
+        game.state.score.right = 0;
+        resetBall(game.state);
+        game.state.countdownText = null;
+        broadcastState(game);
     }, 5000);
+}
+function createNewGame() {
+    const state = {
+        ball: { x: 400, y: 300, dx: 0, dy: 0, radius: 8 },
+        paddles: {
+            left: { y: 250, dy: 0 },
+            right: { y: 250, dy: 0 },
+        },
+        score: { left: 0, right: 0 },
+        countdownText: null
+    };
+    const game = {
+        id: nextGameId++,
+        players: {},
+        state,
+        paused: true
+    };
+    games.push(game);
+    return game;
 }
 // === Gestion des connexions WS ===
 wss.on('connection', (ws) => {
-    if (players.length >= 2) {
-        ws.close();
-        return;
+    let assigned = false;
+    // Nettoie les parties avec 0 joueur (au cas où)
+    games = games.filter(game => game.players.left || game.players.right);
+    for (const game of games) {
+        if (!game.players.left) {
+            game.players.left = { ws, role: 'left' };
+            ws.send(JSON.stringify({ type: 'role', role: 'left', gameId: game.id }));
+            assigned = true;
+        }
+        else if (!game.players.right) {
+            game.players.right = { ws, role: 'right' };
+            ws.send(JSON.stringify({ type: 'role', role: 'right', gameId: game.id }));
+            assigned = true;
+            resetBall(game.state);
+            startCountdown(game, () => {
+                game.paused = false;
+                game.interval = setInterval(() => updateGame(game), 1000 / 60);
+            });
+        }
+        if (assigned) {
+            setupGameCommunication(ws, game);
+            return;
+        }
     }
-    const role = players.length === 0 ? 'left' : 'right';
-    players.push({ ws, role });
-    ws.send(JSON.stringify({ type: 'role', role }));
-    readyPlayers++;
-    if (readyPlayers === 2) {
-        resetBall(stateOnline);
-        startCountdown(stateOnline, () => {
-            if (!gameIntervalOnline) {
-                gameIntervalOnline = setInterval(updateGame, 1000 / 60);
-            }
-        });
-    }
-    ws.on('message', (msg) => {
+    // Si aucun slot libre, on crée un nouveau jeu
+    const newGame = createNewGame();
+    newGame.players.left = { ws, role: 'left' };
+    ws.send(JSON.stringify({ type: 'role', role: 'left', gameId: newGame.id }));
+    setupGameCommunication(ws, newGame);
+});
+function setupGameCommunication(ws, game) {
+    ws.on('message', msg => {
         const data = JSON.parse(msg.toString());
         if (data.type === 'paddleMove') {
-            const role = data.role;
-            stateOnline.paddles[role].dy = data.dy;
-        }
-        if (data.type === 'forfeit') {
-            console.log('💡 Victoire par forfait reçue :', data.message);
-            gamePausedOnline = true;
-            finishOnlineGameByForfeit(data.message);
+            game.state.paddles[data.role].dy = data.dy;
         }
     });
     ws.on('close', () => {
-        players = players.filter(p => p.ws !== ws);
-        readyPlayers = players.length;
-        if (readyPlayers < 2) {
-            if (gameIntervalOnline) {
-                clearInterval(gameIntervalOnline);
-                gameIntervalOnline = null;
-            }
-            const remainingPlayer = players[0];
-            const winner = remainingPlayer?.role === 'left'
-                ? '🅿️ Gauche a gagné par forfait !'
-                : '🅿️ Droite a gagné par forfait !';
-            console.log('🏁 Envoi message de forfait au joueur restant :', winner);
-            finishOnlineGameByForfeit(winner);
-        }
+        if (game.interval)
+            clearInterval(game.interval);
+        finishOnlineGameByForfeit(game, `🅿️ ${game.players.left?.ws === ws ? 'Gauche' : 'Droite'} a quitté la partie`);
+        // Supprime la game de la liste globale
+        games = games.filter(g => g !== game);
     });
-});
+}
 // === Lancement ===
 server.listen(3002, '0.0.0.0', () => {
     console.log('🚀 WebSocket server running on http://0.0.0.0:3002');
