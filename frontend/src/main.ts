@@ -1,4 +1,4 @@
-const socket = new WebSocket(`wss://${location.host}/ws/`);
+let socket: WebSocket | null = null;
 
 let role: 'left' | 'right' = 'left';
 let isLocalMode = false;
@@ -86,14 +86,6 @@ document.addEventListener('DOMContentLoaded', () => {
       countdownText: null
     };
     
-    if (socket.readyState === WebSocket.OPEN) {
-      socket.send(JSON.stringify({ type: 'ready' }));
-    } else {
-      socket.addEventListener('open', () => {
-        socket.send(JSON.stringify({ type: 'ready' }));
-      });
-    }
-    
     ctx.clearRect(0, 0, canvas.width, canvas.height);
     displayMessage("");
     showView('view-home');
@@ -138,19 +130,57 @@ document.addEventListener('DOMContentLoaded', () => {
     isLocalMode = false;
     gamePausedLocal = true;
     isAIMode = false;
+    pendingRoleMessage = true;
   
-    pendingRoleMessage = true; // ✅ on attend un message 'role'
     showView('view-game');
     displayMessage("🕓 Connexion au serveur...");
   
-    if (socket.readyState === WebSocket.OPEN) {
-      socket.send(JSON.stringify({ type: 'ready' }));
-    } else {
-      socket.addEventListener('open', () => {
-        socket.send(JSON.stringify({ type: 'ready' }));
-      }, { once: true });
-    }
+    socket = new WebSocket(`wss://${location.host}/ws/`);
+  
+    socket.addEventListener('open', () => {
+      socket!.send(JSON.stringify({ type: 'ready' }));
+    });
+  
+    socket.addEventListener('message', event => {
+      const data = JSON.parse(event.data);
+      if (data.type === 'role') {
+        role = data.role;
+  
+        if (pendingRoleMessage) {
+          if (role === 'left') {
+            displayMessage("🕓 En attente d’un autre joueur... Vous êtes joueur de gauche.");
+          } else {
+            displayMessage("✅ Partie prête. Vous êtes joueur de droite.");
+            
+          }
+          pendingRoleMessage = false;
+        }
+      }
+  
+      if (data.type === 'state') {
+        stateOnline = data.state;
+      }
+      if (data.type === 'start' && role === 'left') {
+        displayMessage(data.message);
+      }      
+  
+      if (data.type === 'forfeit') {
+        gamePausedOnline = true;
+        gameWinnerText = data.message;
+        setTimeout(() => {
+          gameWinnerText = null;
+          stateOnline.score.left = 0;
+          stateOnline.score.right = 0;
+          stateOnline.ball = { x: 400, y: 300, radius: 8 };
+          stateOnline.paddles.left.y = 250;
+          stateOnline.paddles.right.y = 250;
+          showView('view-home');
+          displayMessage("");
+        }, 5000);
+      }
+    });
   });
+  
   
   renderLoop(); 
   
@@ -196,7 +226,10 @@ document.addEventListener("keydown", e => {
     if (isRightKey && (!isAIMode|| e.isTrusted === false)) stateLocal.paddles.right.dy = dy;
   } else {
     if (isRightKey && (!isAIMode|| e.isTrusted === false)) {
-      socket.send(JSON.stringify({ type: 'paddleMove', role, dy }));
+      if (socket?.readyState === WebSocket.OPEN) {
+        socket.send(JSON.stringify({ type: 'paddleMove', role, dy }));
+      }
+      
     }
   }
 });
@@ -210,7 +243,9 @@ document.addEventListener("keyup", e => {
     if (isRightKey && (!isAIMode|| e.isTrusted === false)) stateLocal.paddles.right.dy = 0;
   } else {
     if (isRightKey && (!isAIMode|| e.isTrusted === false)) {
-      socket.send(JSON.stringify({ type: 'paddleMove', role, dy: 0 }));
+      if (socket?.readyState === WebSocket.OPEN) {
+        socket.send(JSON.stringify({ type: 'paddleMove', role, dy: 0 }));
+      }     
     }
   }
 });
@@ -317,41 +352,6 @@ function renderLoop() {
   draw();
   requestAnimationFrame(renderLoop);
 }
-
-socket.addEventListener('message', event => {
-  const data = JSON.parse(event.data);
-  if (data.type === 'role') {
-    role = data.role;
-  
-    if (pendingRoleMessage) {
-      if (role === 'left') {
-        displayMessage("🕓 En attente d’un autre joueur... Vous êtes joueur de gauche.");
-      } else {
-        displayMessage("✅ Partie prête. Vous êtes joueur de droite.");
-      }
-      pendingRoleMessage = false; // ✅ Reset après usage
-    }
-  }
-  
-  
-  if (data.type === 'state') {
-    stateOnline = data.state;
-  }
-  if (data.type === 'forfeit') {
-    gamePausedOnline = true;
-    gameWinnerText = data.message;
-    setTimeout(() => {
-      gameWinnerText = null;
-      stateOnline.score.left = 0;
-      stateOnline.score.right = 0;
-      stateOnline.ball = { x: 400, y: 300, radius: 8 };
-      stateOnline.paddles.left.y = 250;
-      stateOnline.paddles.right.y = 250;
-      showView('view-home');
-      displayMessage("");
-    }, 5000);
-  }
-});
 
 function finishGame(winnerText: string) {
   gamePausedLocal = true;

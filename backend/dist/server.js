@@ -43,6 +43,7 @@ const server = app.server; // ← récupère le serveur Node intégré à Fastif
 const wss = new ws_1.WebSocketServer({ server });
 let games = [];
 let nextGameId = 1;
+const MAX_GAMES = 8;
 // === Fonctions de jeu ===
 function resetBall(state) {
     state.ball.x = 400;
@@ -186,6 +187,10 @@ wss.on('connection', (ws) => {
             game.players.right = { ws, role: 'right' };
             ws.send(JSON.stringify({ type: 'role', role: 'right', gameId: game.id }));
             assigned = true;
+            game.players.left?.ws.send(JSON.stringify({
+                type: 'start',
+                message: '✅ Partie prête. Vous êtes joueur de gauche.'
+            }));
             resetBall(game.state);
             startCountdown(game, () => {
                 game.paused = false;
@@ -196,6 +201,14 @@ wss.on('connection', (ws) => {
             setupGameCommunication(ws, game);
             return;
         }
+    }
+    if (games.length >= MAX_GAMES) {
+        ws.send(JSON.stringify({
+            type: 'error',
+            message: '❌ Toutes les parties sont actuellement pleines. Veuillez réessayer dans quelques instants.'
+        }));
+        ws.close(); // tu peux aussi l’enlever si tu préfères laisser le socket ouvert
+        return;
     }
     // Si aucun slot libre, on crée un nouveau jeu
     const newGame = createNewGame();

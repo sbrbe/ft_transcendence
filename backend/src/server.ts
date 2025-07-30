@@ -24,6 +24,7 @@ interface Game {
 
 let games: Game[] = [];
 let nextGameId = 1;
+const MAX_GAMES = 8;
 
 interface Ball {
   x: number;
@@ -213,6 +214,10 @@ games = games.filter(game => game.players.left || game.players.right);
       ws.send(JSON.stringify({ type: 'role', role: 'right', gameId: game.id }));
       assigned = true;
 
+      game.players.left?.ws.send(JSON.stringify({
+        type: 'start',
+        message: '✅ Partie prête. Vous êtes joueur de gauche.'
+      }));      
       resetBall(game.state);
       startCountdown(game, () => {
         game.paused = false;
@@ -225,6 +230,15 @@ games = games.filter(game => game.players.left || game.players.right);
       return;
     }
   }
+
+  if (games.length >= MAX_GAMES) {
+    ws.send(JSON.stringify({
+      type: 'error',
+      message: '❌ Toutes les parties sont actuellement pleines. Veuillez réessayer dans quelques instants.'
+    }));
+    ws.close(); // tu peux aussi l’enlever si tu préfères laisser le socket ouvert
+    return;
+  }  
 
   // Si aucun slot libre, on crée un nouveau jeu
   const newGame = createNewGame();

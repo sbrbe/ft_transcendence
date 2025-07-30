@@ -1,5 +1,5 @@
 "use strict";
-const socket = new WebSocket(`wss://${location.host}/ws/`);
+let socket = null;
 let role = 'left';
 let isLocalMode = false;
 let gamePausedLocal = true;
@@ -75,14 +75,6 @@ document.addEventListener('DOMContentLoaded', () => {
             score: { left: 0, right: 0 },
             countdownText: null
         };
-        if (socket.readyState === WebSocket.OPEN) {
-            socket.send(JSON.stringify({ type: 'ready' }));
-        }
-        else {
-            socket.addEventListener('open', () => {
-                socket.send(JSON.stringify({ type: 'ready' }));
-            });
-        }
         ctx.clearRect(0, 0, canvas.width, canvas.height);
         displayMessage("");
         showView('view-home');
@@ -123,17 +115,48 @@ document.addEventListener('DOMContentLoaded', () => {
         isLocalMode = false;
         gamePausedLocal = true;
         isAIMode = false;
-        pendingRoleMessage = true; // ✅ on attend un message 'role'
+        pendingRoleMessage = true;
         showView('view-game');
         displayMessage("🕓 Connexion au serveur...");
-        if (socket.readyState === WebSocket.OPEN) {
+        socket = new WebSocket(`wss://${location.host}/ws/`);
+        socket.addEventListener('open', () => {
             socket.send(JSON.stringify({ type: 'ready' }));
-        }
-        else {
-            socket.addEventListener('open', () => {
-                socket.send(JSON.stringify({ type: 'ready' }));
-            }, { once: true });
-        }
+        });
+        socket.addEventListener('message', event => {
+            const data = JSON.parse(event.data);
+            if (data.type === 'role') {
+                role = data.role;
+                if (pendingRoleMessage) {
+                    if (role === 'left') {
+                        displayMessage("🕓 En attente d’un autre joueur... Vous êtes joueur de gauche.");
+                    }
+                    else {
+                        displayMessage("✅ Partie prête. Vous êtes joueur de droite.");
+                    }
+                    pendingRoleMessage = false;
+                }
+            }
+            if (data.type === 'state') {
+                stateOnline = data.state;
+            }
+            if (data.type === 'start' && role === 'left') {
+                displayMessage(data.message);
+            }
+            if (data.type === 'forfeit') {
+                gamePausedOnline = true;
+                gameWinnerText = data.message;
+                setTimeout(() => {
+                    gameWinnerText = null;
+                    stateOnline.score.left = 0;
+                    stateOnline.score.right = 0;
+                    stateOnline.ball = { x: 400, y: 300, radius: 8 };
+                    stateOnline.paddles.left.y = 250;
+                    stateOnline.paddles.right.y = 250;
+                    showView('view-home');
+                    displayMessage("");
+                }, 5000);
+            }
+        });
     });
     renderLoop();
 });
@@ -179,7 +202,9 @@ document.addEventListener("keydown", e => {
     }
     else {
         if (isRightKey && (!isAIMode || e.isTrusted === false)) {
-            socket.send(JSON.stringify({ type: 'paddleMove', role, dy }));
+            if ((socket === null || socket === void 0 ? void 0 : socket.readyState) === WebSocket.OPEN) {
+                socket.send(JSON.stringify({ type: 'paddleMove', role, dy }));
+            }
         }
     }
 });
@@ -194,7 +219,9 @@ document.addEventListener("keyup", e => {
     }
     else {
         if (isRightKey && (!isAIMode || e.isTrusted === false)) {
-            socket.send(JSON.stringify({ type: 'paddleMove', role, dy: 0 }));
+            if ((socket === null || socket === void 0 ? void 0 : socket.readyState) === WebSocket.OPEN) {
+                socket.send(JSON.stringify({ type: 'paddleMove', role, dy: 0 }));
+            }
         }
     }
 });
@@ -288,38 +315,6 @@ function renderLoop() {
     draw();
     requestAnimationFrame(renderLoop);
 }
-socket.addEventListener('message', event => {
-    const data = JSON.parse(event.data);
-    if (data.type === 'role') {
-        role = data.role;
-        if (pendingRoleMessage) {
-            if (role === 'left') {
-                displayMessage("🕓 En attente d’un autre joueur... Vous êtes joueur de gauche.");
-            }
-            else {
-                displayMessage("✅ Partie prête. Vous êtes joueur de droite.");
-            }
-            pendingRoleMessage = false; // ✅ Reset après usage
-        }
-    }
-    if (data.type === 'state') {
-        stateOnline = data.state;
-    }
-    if (data.type === 'forfeit') {
-        gamePausedOnline = true;
-        gameWinnerText = data.message;
-        setTimeout(() => {
-            gameWinnerText = null;
-            stateOnline.score.left = 0;
-            stateOnline.score.right = 0;
-            stateOnline.ball = { x: 400, y: 300, radius: 8 };
-            stateOnline.paddles.left.y = 250;
-            stateOnline.paddles.right.y = 250;
-            showView('view-home');
-            displayMessage("");
-        }, 5000);
-    }
-});
 function finishGame(winnerText) {
     gamePausedLocal = true;
     gameWinnerText = winnerText;
