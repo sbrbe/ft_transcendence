@@ -83,7 +83,6 @@ function startCountdown(game: Game, callback: () => void) {
   }, 1000);
 }
 
-
 function updateGame(game: Game) {
   if (game.paused) return;
   const b = game.state.ball;
@@ -121,8 +120,8 @@ function updateGame(game: Game) {
       startCountdown(game, () => {});
     }
   }
+    broadcastState(game);
 
-  broadcastState(game);
 }
 
 function broadcastState(game: Game) {
