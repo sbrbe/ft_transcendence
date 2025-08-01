@@ -45,6 +45,7 @@ function displayMessage(msg: string) {
   if (messageBox) messageBox.textContent = msg;
 }
 
+
 document.addEventListener('DOMContentLoaded', () => {
   // ✅ Init canvas et ctx SEULEMENT maintenant
   canvas = document.getElementById("gameCanvas") as HTMLCanvasElement;
@@ -178,6 +179,31 @@ document.addEventListener('DOMContentLoaded', () => {
       }
     });
   });
+
+  function movePad(dy: number) {
+    if (!isLocalMode && socket?.readyState === WebSocket.OPEN) {
+      socket.send(JSON.stringify({ type: 'paddleMove', role, dy }));
+    } else if (isLocalMode && isAIMode) {
+      stateLocal.paddles.left.dy = dy; // 👈 contrôle la raquette de gauche
+    }
+  }  
+  
+  document.getElementById('btn-up')?.addEventListener('touchstart', (e) => {
+    e.preventDefault();
+    movePad(-5);
+  });
+  
+  document.getElementById('btn-down')?.addEventListener('touchstart', (e) => {
+    e.preventDefault();
+    movePad(5);
+  });
+  
+  ['btn-up', 'btn-down'].forEach(id => {
+    document.getElementById(id)?.addEventListener('touchend', (e) => {
+      e.preventDefault();
+      movePad(0);
+    });
+  });
   
   
   renderLoop(); 
@@ -223,7 +249,7 @@ document.addEventListener("keydown", e => {
     if (isLeftKey) stateLocal.paddles.left.dy = dy;
     if (isRightKey && (!isAIMode|| e.isTrusted === false)) stateLocal.paddles.right.dy = dy;
   } else {
-    if (isRightKey && (!isAIMode|| e.isTrusted === false)) {
+    if (isLeftKey && (!isAIMode|| e.isTrusted === false)) {
       if (socket?.readyState === WebSocket.OPEN) {
         socket.send(JSON.stringify({ type: 'paddleMove', role, dy }));
       }
@@ -240,7 +266,7 @@ document.addEventListener("keyup", e => {
     if (isLeftKey) stateLocal.paddles.left.dy = 0;
     if (isRightKey && (!isAIMode|| e.isTrusted === false)) stateLocal.paddles.right.dy = 0;
   } else {
-    if (isRightKey && (!isAIMode|| e.isTrusted === false)) {
+    if (isLeftKey && (!isAIMode|| e.isTrusted === false)) {
       if (socket?.readyState === WebSocket.OPEN) {
         socket.send(JSON.stringify({ type: 'paddleMove', role, dy: 0 }));
       }     

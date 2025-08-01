@@ -1,6 +1,7 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <script src="https://cdn.tailwindcss.com"></script>
 
 	<style>
@@ -67,6 +68,57 @@
   color: white;
 }
 
+#gameCanvas {
+  position: relative;
+  z-index: 20;
+}
+
+#mobile-controls {
+  display: none;
+  position: fixed;
+  bottom: 20px;
+  left: 50%;
+  transform: translateX(-50%);
+  gap: 10px;
+  z-index: 30;
+}
+
+#mobile-controls button {
+  touch-action: none;   /* ← bloque zoom, scroll, appui long */
+  user-select: none;    /* ← empêche la sélection de texte */
+  -webkit-user-select: none;
+  -webkit-touch-callout: none; /* ← bloque le menu "copier" sur iOS */
+}
+
+@media (max-width: 1200px) {
+  #mobile-controls {
+    display: flex !important;
+  }
+
+  #canvas-wrapper {
+  transform-origin: top left;
+  width: 800px;
+  height: 600px;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  position: relative;
+}
+
+/* 📱 Adapter automatiquement le zoom sur mobile */
+@media (max-width: 1024px) {
+  #canvas-wrapper {
+    transform: scale(0.8); /* ou 0.6 pour smartphone */
+  }
+}
+
+@media (max-width: 768px) {
+  #canvas-wrapper {
+    transform: scale(0.4); /* plus petit sur smartphone */
+  }
+}
+
+}
 
 
       </style>
@@ -101,7 +153,14 @@
   </div>
 
   <div id="view-game" class="flex justify-center items-center">
-    <canvas id="gameCanvas" width="800" height="600" class="rounded-lg shadow-lg"></canvas>
+    <div id="canvas-wrapper">
+      <canvas id="gameCanvas" width="800" height="600" class="rounded-lg shadow-lg"></canvas>
+    </div>    
+
+    <div id="mobile-controls">
+      <button id="btn-up" class="text-3xl p-4 bg-blue-500 text-white rounded-full shadow">⬆️</button>
+      <button id="btn-down" class="text-3xl p-4 bg-blue-500 text-white rounded-full shadow">⬇️</button>
+    </div>
   </div>
 
   <div id="view-register" class="hidden p-8 max-w-md mx-auto bg-white rounded shadow mt-8 space-y-4">
@@ -180,6 +239,9 @@
   
     </div>
   </div>
+
+  
+  
 
   <script >
 
@@ -477,6 +539,14 @@ function updatePassword() {
   .catch(err => {
     document.getElementById('logUpdatePassword').textContent = '❌ ' + err.message;
   });
+}
+
+function sendMove(dy) {
+  if (!isLocalMode && socket?.readyState === WebSocket.OPEN) {
+    socket.send(JSON.stringify({ type: 'paddleMove', role, dy }));
+  } else if (isAIMode) {
+    stateLocal.paddles.left.dy = dy;
+  }
 }
 
   </script>
