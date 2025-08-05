@@ -1,0 +1,40 @@
+services:
+
+  users-service:
+    build: ./backend/users-service
+    ports:
+      - "3001:3001"
+    volumes:
+      - user-db:/app/database
+    networks:
+      - transcendence
+
+  auth-service:
+    build: ./backend/auth-service
+    ports:
+    - "3002:3002"
+    volumes:
+    - auth-db:/app/database
+    networks:
+    - transcendence
+
+  nginx:
+    build: ./nginx
+    depends_on:
+      - users-service
+      - auth-service
+    ports:
+      - "443:443"
+      - "8080:80"
+    volumes:
+      - ./frontend:/usr/share/nginx/html
+    networks:
+      - transcendence
+
+networks:
+  transcendence:
+    driver: bridge
+
+volumes:
+  user-db:
+  auth-db:
