@@ -6,14 +6,27 @@
 
 	<style>
     @import "tailwindcss";
-		#view-game {
-		  background-image: url('/src/image.png');
-		  background-size: cover;
-		  background-position: center;
-		  background-repeat: no-repeat;
-		  height: 100vh; /* prend tout l'écran */
-		  display: none; /* par défaut masqué */
-		}
+
+    #view-game {
+  position: relative;
+  display: none;           /* tu veux le voir quand tu joues */
+  justify-content: center;
+  align-items: center;
+}
+
+/* Canvas tout devant */
+#gameCanvas {
+  display: block !important;
+  background: #000;
+  border: 2px solid red;
+  position: relative;      /* nécessaire pour z-index */
+  z-index: 10 !important;/* au-dessus de tout le reste */
+}
+
+/* Pour éviter qu’un menu flotte devant par erreur */
+.menu-game-config { z-index: 1; position: relative; }
+
+
       .perspective {
         perspective: 1000px;
       }
@@ -118,7 +131,49 @@
   }
 }
 
+
 }
+
+.menu-game-config {
+    background-color: #f8f8f8;
+    padding: 30px;
+    border-radius: 15px;
+    max-width: 400px;
+    margin: auto;
+    text-align: center;
+    color: #000;
+    font-family: "Segoe UI", sans-serif;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+  }
+
+  .select-style {
+    width: 70%;
+    padding: 8px;
+    margin: 10px 0 20px;
+    font-size: 16px;
+    border-radius: 8px;
+    border: 1px solid #ccc;
+  }
+
+  .btn-style {
+    background-color: #4CAF50;
+    color: white;
+    font-weight: bold;
+    border: none;
+    padding: 12px 24px;
+    font-size: 16px;
+    border-radius: 8px;
+    cursor: pointer;
+    transition: background-color 0.3s;
+  }
+
+  .btn-style:hover {
+    background-color: #45a049;
+  }
+
+  .config-section {
+    margin-top: 20px;
+  }
 
 
       </style>
@@ -135,15 +190,73 @@
   
     <div id="nav-user" class="hidden space-x-4 items-center">
       <button id="nav-home" class="px-4 py-2 bg-gray-300 rounded hover:bg-gray-400" onclick="showOnly('view-home')">Accueil</button>
+      <!-- <button id="nav-game-vs-ia" class="bg-blue-500 hover:bg-blue-600 text-white px-4 py-2 rounded">VS IA</button>
+      <button id="nav-game" class="bg-blue-500 hover:bg-blue-600 text-white px-4 py-2 rounded">Jouer en local</button> -->
+      <button id="nav-game-config" class="bg-blue-500 hover:bg-blue-600 text-white px-4 py-2 rounded">🎮 Jouer</button>
       <button id="nav-game-online" class="bg-blue-500 hover:bg-blue-600 text-white px-4 py-2 rounded" onclick="showOnly('view-home')">Jouer en ligne</button>
-      <button id="nav-game-vs-ia" class="bg-blue-500 hover:bg-blue-600 text-white px-4 py-2 rounded">VS IA</button>
-      <button id="nav-game" class="bg-blue-500 hover:bg-blue-600 text-white px-4 py-2 rounded">Jouer en local</button>
       <span id="nav-displayname" class="font-semibold"></span>
       <button onclick="openSettings()" class="text-sm underline text-blue-600">Paramètres</button>
       <button onclick="logout()" class="px-3 py-2 bg-red-500 text-white rounded hover:bg-red-600">Se déconnecter</button>
     </div>
   </nav>
-  
+    
+<!-- Bloc de configuration du jeu -->
+<div id="menu-game-config" style="display: none;" class="menu-game-config">
+  <h1>PONG</h1>
+
+  <label for="modeSelect">🎮 Mode de jeu :</label>
+  <select id="modeSelect" class="select-style">
+    <option value="2v2" selected>2 vs 2</option>
+    <option value="1v1">1 vs 1</option>
+  </select>
+
+  <!-- Configuration 2v2 -->
+  <div id="custom-config_2vs2" class="config-section">
+    <p>Configurer les paddles <strong>2 vs 2</strong> :</p>
+    <label>Paddle 1 :</label>
+    <select id="player1" class="select-style">
+      <option value="human" selected>Humain</option>
+      <option value="cpu">Bot</option>
+    </select><br />
+    <label>Paddle 2 :</label>
+    <select id="player2" class="select-style">
+      <option value="human">Humain</option>
+      <option value="cpu" selected>Bot</option>
+    </select><br />
+    <label>Paddle 3 :</label>
+    <select id="player3" class="select-style">
+      <option value="human">Humain</option>
+      <option value="cpu" selected>Bot</option>
+    </select><br />
+    <label>Paddle 4 :</label>
+    <select id="player4" class="select-style">
+      <option value="human">Humain</option>
+      <option value="cpu" selected>Bot</option>
+    </select>
+  </div>
+
+  <!-- Configuration 1v1 -->
+  <div id="custom-config_1vs1" class="config-section" style="display: none;">
+    <p>Configurer les paddles <strong>1 vs 1</strong> :</p>
+    <label>Paddle 1 :</label>
+    <select id="player1-1v1" class="select-style">
+      <option value="human" selected>Humain</option>
+      <option value="cpu">Bot</option>
+    </select><br />
+    <label>Paddle 2 :</label>
+    <select id="player2-1v1" class="select-style">
+      <option value="human">Humain</option>
+      <option value="cpu" selected>Bot</option>
+    </select>
+  </div>
+
+  <div style="margin-top: 20px;">
+    <button id="startBtn" class="btn-style">🚀 Lancer la partie</button>
+  </div>
+
+</div>
+
+
 
   <div id="messageBox"></div>
 
@@ -153,9 +266,7 @@
   </div>
 
   <div id="view-game" class="flex justify-center items-center">
-    <div id="canvas-wrapper">
       <canvas id="gameCanvas" width="800" height="600" class="rounded-lg shadow-lg"></canvas>
-    </div>    
 
     <div id="mobile-controls">
       <button id="btn-up" class="text-3xl p-4 bg-blue-500 text-white rounded-full shadow">⬆️</button>
