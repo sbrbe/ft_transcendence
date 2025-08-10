@@ -8,6 +8,11 @@ export function getUserByEmail(email: string) {
 	return stmt.get(email);
 }
 
+export function getUserById(user_id: string): { email: string, password: string } | undefined {
+	const stmt = db.prepare('SELECT * FROM auth WHERE user_id = ?');
+	return stmt.get(user_id) as { email: string, password: string } | undefined;
+}
+
 const strongPasswordRegex = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[^A-Za-z0-9]).{8,}$/;
 
 export async function createUser(email: string, password: string) {
@@ -17,32 +22,46 @@ export async function createUser(email: string, password: string) {
 	if (!strongPasswordRegex.test(password))
 		throw new Error ('Password too weak');
 
-	const userId = uuidv4();
+	const user_id = uuidv4();
 	const hash_password = await bcrypt.hash(password, 10);
 	const stmt = db.prepare('INSERT INTO auth (user_id, email, password) VALUES (?, ?, ?)');
-	const info = stmt.run(userId, email, hash_password);
+	const info = stmt.run(user_id, email, hash_password);
 	console.log(`CREATE_AUTH log : ${info.lastInsertRowid}`);
-	return (userId);
+	return (user_id);
 }
 
-export function deleteAuthUser(userId: string): boolean {
+export function deleteAuthUser(user_id: string): boolean {
 	const stmt = db.prepare('DELETE FROM auth WHERE user_id = ?');
-	const res = stmt.run(userId);
-
+	const res = stmt.run(user_id);
 	return res.changes > 0;
 }
 
 export async function userLogin(email: string, password: string) {
 	const stmt = db.prepare('SELECT * FROM auth WHERE email = ?');
 	const user = stmt.get(email) as authUser | undefined ;
-
 	if (!user)
 		return false;
-
 	const passwordMatch = await bcrypt.compare(password, user.password);
-
 	if (!passwordMatch)
 		throw new Error('Wrong password');
-
 	return (user.user_id)
+}
+
+export function updateEmailService(user_id: string, email: string) {
+	const stmt = db.prepare('UPDATE auth SET email = ? WHERE user_id = ?');
+	const res = stmt.run(email, user_id);
+	return res.changes > 0;
+}
+
+export async function updatePasswordService(user_id: string, oldPassword: string, newPassword: string) {
+	const user = getUserById(user_id);
+	if (!user)
+		return false;
+	const match = bcrypt.compare(oldPassword, user.password);
+	if (!match)
+		throw new Error('Old password incorrect');
+	const hash_new_pass = await bcrypt.hash(newPassword, 10);
+	const stmt = db.prepare('UPDATE auth SET password = ? WHERE user_id = ?');
+	const res = stmt.run(hash_new_pass, user_id);
+	return res.changes > 0;
 }

@@ -148,7 +148,7 @@
 <button onclick="updatePassword()" class="bg-red-500 hover:bg-red-600 text-white px-4 py-2 rounded w-full">Changer le mot de passe</button>
 <pre id="logUpdatePassword" class="text-sm text-green-600"></pre>
 
-    <button onclick="updateUser()" class="bg-yellow-500 hover:bg-yellow-600 text-white px-4 py-2 rounded w-full">Enregistrer</button>
+    <button onclick="updateProfile()" class="bg-yellow-500 hover:bg-yellow-600 text-white px-4 py-2 rounded w-full">Enregistrer</button>
     <pre id="logUpdateUser" class="text-sm text-green-600"></pre>
   </div>
   
@@ -197,19 +197,19 @@ async function registerUser() {
     display_name: document.getElementById('display_name').value
   }
 
-  let userId = "";
+  let user_id = "";
 
   try {
-    userId = await createAuthAccount(data.email, data.password);
-    await createUserProfile(userId, data);
-    updateUI(userId, data);
-    return { success: true, id: userId};
+    user_id = await createAuthAccount(data.email, data.password);
+    await createUserProfile(user_id, data);
+    updateUI(user_id, data);
+    return { success: true, user_id: user_id};
   } catch (error) {
-    if (userId)
-      await fetch(`auth/${userId}`, {method: 'DELETE'});
-
+    if (user_id) {
+      await fetch(`auth/delete/${user_id}`, {method: 'DELETE'});
+    }
     document.getElementById('logUser').textContent = 'Erreur : ' + error.message;
-    return { success: false, id: userId };
+    return { success: false, user_id: user_id };
   }
 }
 
@@ -229,16 +229,16 @@ async function createAuthAccount(email, password) {
       throw new Error(`Auth error: ${authData.error || authRes.statusText}`);
     }
 
-    console.log(`CreateAuth successfull: ${authData.userId}`);
-    return authData.userId;
+    console.log(`CreateAuth successfull: ${authData.user_id}`);
+    return authData.user_id;
 }
 
-async function createUserProfile(userId, data) {
+async function createUserProfile(user_id, data) {
   const profileRes = await fetch ('users/register', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({
-    user_id : userId,
+    user_id : user_id,
     first_name: data.first_name,
     last_name: data.last_name,
     username: data.username,
@@ -253,9 +253,9 @@ async function createUserProfile(userId, data) {
   console.log(profileData.message)
 }
 
-function updateUI(userId, data) {
+function updateUI(user_id, data) {
   const user = {
-    id: userId,
+    user_id,
     email: data.email,
     display_name: data.display_name,
     username: data.username,
@@ -264,9 +264,8 @@ function updateUI(userId, data) {
   };
 
   setLoggedInUser(user);
-  localStorage.setItem('userId', userId);
 
-  document.getElementById('logUser').textContent = JSON.stringify(json, null, 2);
+  document.getElementById('logUser').textContent = JSON.stringify(user, null, 2);
   document.getElementById('view-register').style.display = 'none';
 
   document.getElementById('first_name').value = '';
@@ -290,6 +289,10 @@ async function loginUser() {
     password: document.getElementById('login_password').value
   };
 
+  if (!data) {
+    console.log('Cant get data');
+    return ;
+  }
   try {
     const loginRes = await fetch('/auth/login', {
     method: 'POST',
@@ -304,11 +307,14 @@ async function loginUser() {
     if (!loginRes.ok) {
     throw new Error(`Login error: ${ loginData.error || loginRes.statusText }`);
     }
+
+    const user = await getUser(loginData.user_id);
+    console.log('user = ', user);
     setLoggedInUser(user);
     document.getElementById('view-login').style.display = 'none';
     document.getElementById('logLogin').textContent = '';
 
-    return { success: true, id: loginData.userId};
+    return { success: true, user_id: loginData.user_id};
 
   } catch (error) {
     document.getElementById('logLogin').textContent = 'Erreur : ' + error.message;
@@ -318,14 +324,17 @@ async function loginUser() {
 
 async function logout() {
   const user = JSON.parse(localStorage.getItem('user'));
-  if (!user) return;
+  if (!user) {
+    console.log('Cant get user from localStorage');
+    return;
+  }
 
   try {
     const logoutRes = await fetch('/users/logout', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({ 
-      id: user.id })
+      user_id: user.user_id })
     });
 
     const logoutData = await logoutRes.json();
@@ -338,7 +347,7 @@ async function logout() {
     document.getElementById('nav-displayname').textContent = '';
     showOnly('view-home');
 
-    return { success: true, id: logoutData.user_id};
+    return { success: true, user_id: logoutData.user_id};
   } catch (error) {
     console.error("Disconnection error: ", error);
     localStorage.removeItem('user');
@@ -363,66 +372,93 @@ function openSettings() {
 
 async function updateProfile() {
   const user = JSON.parse(localStorage.getItem('user'));
-  if (!user) return;
+  console.log('👤 Utilisateur chargé pour update:', user);
+
+  if (!user || !user.user_id) {
+    console.warn('❌ Aucun utilisateur valide en localStorage');
+    return;
+  }
 
   const data = {
-    first_name: document.getElementById('param_first_name').value,
-    last_name: document.getElementById('param_last_name').value,
-    email: document.getElementById('param_email').value,
-    display_name: document.getElementById('param_display_name').value,
-    avatar_url: document.getElementById('param_avatar_url').value
+    first_name: document.getElementById('param_first_name')?.value || '',
+    last_name: document.getElementById('param_last_name')?.value || '',
+    email: document.getElementById('param_email')?.value || '',
+    username: document.getElementById('param_username')?.value || '',
+    display_name: document.getElementById('param_display_name')?.value || '',
+    avatar_url: document.getElementById('param_avatar_url')?.value || user.avatar_url || '/default.png'
   };
 
+
+  console.log('🧪 updateUser - user:', user);
+
   try {
-    const updateData = updateUser(user, data);
-    const updateEmail = updateEmail(user, data.email);
+    const [updatedUser, updatedEmail] = await Promise.all([
+      updateUser(user, data),
+      updateEmail(user, data.email)
+    ]);
+    
     const updatedProfile = {
-      last_name: updateData.last_name,
-      first_name: updateData.first_name,
-      email: updateEmail.email,
-      username: updateData.username,
-      display_name: updateData.display_name,
-      avatar_url: updateData.avatar_url
+      user_id: user.user_id,
+      last_name: updatedUser.last_name,
+      first_name: updatedUser.first_name,
+      email: updatedEmail.email,
+      username: updatedUser.username,
+      display_name: updatedUser.display_name,
+      avatar_url: updatedUser.avatar_url
     };
+
+    console.log('Updated user: ', updatedProfile);
     localStorage.setItem('user', JSON.stringify(updatedProfile));
     document.getElementById('logUpdateUser').textContent = '✅ Modifications saved';
     setLoggedInUser(updatedProfile); // met à jour l'affichage du nom
 
-    return { success: true, user_id: user.id };
+    return { success: true, user_id: user.user_id };
 
   } catch (error) {
     document.getElementById('logUpdateUser').textContent = 'Erreur : ' + error.message;
-    return { success: false, user_id: user.id };
+    return { success: false, user_id: user?.user_id };
   }
 }
 
 async function updateUser(user, data) {
-  const updateRes = await fetch(`/users/${user.id}`, {
-  method: 'PUT',
-  headers: { 'Content-Type': 'application/json' },
-  body: JSON.stringify({
+
+   const rawData = {
+    user_id: user.user_id, // nécessaire pour le backend
     last_name: data.last_name,
     first_name: data.first_name,
     username: data.username,
     display_name: data.display_name,
     avatar_url: data.avatar_url
+  };
+
+  // Filtrage : on enlève tous les champs vides (ex: "")
+  const filteredData = Object.fromEntries(
+    Object.entries(rawData).filter(([_, value]) => value !== '')
+  );
+  console.log('🔄 Données envoyées au backend :', filteredData);
+
+
+  const updateRes = await fetch(`/users/${user.user_id}`, {
+  method: 'PUT',
+  headers: { 'Content-Type': 'application/json' },
+  body: JSON.stringify({
+    user_id: filteredData.user_id,
+    last_name: filteredData.last_name,
+    first_name: filteredData.first_name,
+    username: filteredData.username,
+    display_name: filteredData.display_name,
+    avatar_url: filteredData.avatar_url
   })
   });
   const updateData = await updateRes.json();
   if (!updateRes.ok) {
     throw new Error(`Update error: ${ updateData.error || updateRes.statusText }`);
   }
-  return {
-    last_name: updateData.last_name,
-    first_name: updateData.first_name,
-    username: updateData.username, 
-    display_name: updateData.display_name,
-    avatar_url: updateData.avatar_url
-};
+  return updateData;
 }
 
 async function updateEmail(user, email) {
-  const updateRes = await fetch(`/auth/${user.id}`, {
+  const updateRes = await fetch(`/auth/email/${user.user_id}`, {
     method: 'PUT',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({
@@ -434,7 +470,67 @@ async function updateEmail(user, email) {
   if (!updateRes.ok) {
     throw new Error(`Email update error: ${ updateData.error || updateRes.statusText }`);
   }
-  return { email: updateData.email };
+  return updateData;
+}
+
+async function getUser(user_id) {
+  console.log('USER_ID = ', user_id);
+  try {
+    const [userRes, authRes] = await Promise.all ([
+      fetch(`/users/getUser/${user_id}`),
+      fetch(`/auth/getEmail/${user_id}`)
+    ]);
+
+    if (!userRes.ok || !authRes.ok) {
+      throw new Error('Error while getting user profile');
+    }
+    
+    const [user, auth] = await Promise.all([
+      userRes.json(),
+      authRes.json()
+    ]);
+
+    return { ...user, email: auth.email, user_id: auth.user_id };
+  } catch (error) {
+    console.error('getUser error: ', error);
+    return null;
+  }
+}
+
+async function updatePassword() {
+  const user = JSON.parse(localStorage.getItem('user'));
+  if (!user) return;
+
+  const oldPassword = document.getElementById('param_old_password').value;
+  const newPassword = document.getElementById('param_new_password').value;
+  const confirmNewPassword = document.getElementById('param_confirm_new_password').value;
+
+  if (newPassword !== confirmNewPassword) {
+    document.getElementById('logUpdatePassword').textContent = '❌ Les mots de passe ne correspondent pas.';
+    return;
+  }
+
+  try {
+    const updateRes = await fetch(`auth/password/${user.user_id}`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        oldPassword,
+        newPassword
+      })    
+    });
+    
+    const updateData = await updateRes.json();
+    if (!updateRes.ok) {
+      throw new Error(`Email update error: ${ updateData.error || updateRes.statusText }`);
+    }
+    document.getElementById('logUpdatePassword').textContent = '✅ Mot de passe modifié avec succès !';
+    document.getElementById('param_old_password').value = '';
+    document.getElementById('param_new_password').value = '';
+    document.getElementById('param_confirm_new_password').value = '';
+  } catch (error) {
+    document.getElementById('logUpdatePassword').textContent = '❌ ' + error.message;
+  }
 }
 
 // 🔁 Au chargement de la page : afficher nav-user si déjà connecté
@@ -449,13 +545,6 @@ window.addEventListener('DOMContentLoaded', () => {
 function toggleLogin() {
   showOnly('view-login');
 }
-
-
-
-
-
-
-
 
 
 function showLocalGame() {
@@ -543,50 +632,6 @@ document.addEventListener('DOMContentLoaded', () => {
     card.classList.toggle('flipped');
   });
 });
-
-function updatePassword() {
-  const user = JSON.parse(localStorage.getItem('user'));
-  if (!user) return;
-
-  const oldPassword = document.getElementById('param_old_password').value;
-  const newPassword = document.getElementById('param_new_password').value;
-  const confirmNewPassword = document.getElementById('param_confirm_new_password').value;
-
-  if (newPassword !== confirmNewPassword) {
-    document.getElementById('logUpdatePassword').textContent = '❌ Les mots de passe ne correspondent pas.';
-    return;
-  }
-
-  fetch('/users/update-password', {
-    method: 'POST',
-    headers: {
-      'Content-Type': 'application/json',
-      // Si tu utilises JWT → ajoute `Authorization: Bearer <token>` ici !
-    },
-    body: JSON.stringify({
-      oldPassword: oldPassword,
-      newPassword: newPassword,
-      id: user.id // utile si tu veux vérifier côté backend
-    })
-  })
-  .then(async res => {
-    if (!res.ok) {
-      const text = await res.text();
-      throw new Error(`Erreur HTTP ${res.status} : ${text}`);
-    }
-    return res.json();
-  })
-  .then(data => {
-    document.getElementById('logUpdatePassword').textContent = '✅ Mot de passe modifié avec succès !';
-    // Réinitialise les champs
-    document.getElementById('param_old_password').value = '';
-    document.getElementById('param_new_password').value = '';
-    document.getElementById('param_confirm_new_password').value = '';
-  })
-  .catch(err => {
-    document.getElementById('logUpdatePassword').textContent = '❌ ' + err.message;
-  });
-}
 
   </script>
   <script type="module" src="/dist/main.js"></script>

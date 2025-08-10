@@ -1,5 +1,5 @@
 import { FastifyInstance } from "fastify";
-import { register, deleteUser, login } from './auth.controller.js'
+import { register, deleteUser, login, updateEmail, getUser, updatePassword } from './auth.controller.js';
 
 export default async function (app: FastifyInstance) {
 	app.post('/register', {
@@ -15,9 +15,9 @@ export default async function (app: FastifyInstance) {
 			response: {
 				201: {
 					type: 'object',
-					required: ['userId'],
+					required: ['user_id'],
 					properties: {
-						userId: { type: 'string' }
+						user_id: { type: 'string', format: 'uuid' }
 					}
 				},
 				400: {
@@ -30,7 +30,7 @@ export default async function (app: FastifyInstance) {
 		}
 	}, register);
 
-	app.delete('/:user_id', deleteUser);
+	app.delete('/delete/:user_id', deleteUser);
 
 	app.post('/login', {
 		schema: {
@@ -45,7 +45,9 @@ export default async function (app: FastifyInstance) {
 			response: {
 				200: {
 					type: 'object',
+					required: ['user_id', 'message'],
 					properties: {
+						user_id: { type: 'string', format: 'uuid'},
 						message: { type: 'string'}
 					}
 				},
@@ -64,4 +66,121 @@ export default async function (app: FastifyInstance) {
 			},
 		}
 	}, login);
+
+	app.put('/email/:user_id', {
+		schema: {
+			description: 'Update email',
+			params: {
+				type: 'object',
+				required: ['user_id'],
+				properties: {
+					user_id: { type: 'string', format: 'uuid' }
+				}
+			},
+			body: {
+				type: 'object',
+				required: ['email'],
+				properties: {
+					email: { type: 'string', format: 'email'}
+				}
+			},
+			response: {
+				200: {
+					type: 'object',
+					properties: {
+						user_id: { type: 'string', format: 'uuid' },
+						email: { type: 'string', format: 'email' }
+					}
+				},
+				404: {
+					type: 'object',
+					properties: {
+						error: { type: 'string' }
+					}
+				},
+				500: {
+					type: 'object',
+					properties: {
+						error: { type: 'string'}
+					}
+				}
+			},
+		}
+	}, updateEmail);
+
+	app.post('/password/:user_id', {
+		schema: {
+			description: 'Update password',
+			params: {
+				type: 'object',
+				required: ['user_id'],
+				properties: {
+					user_id: { type: 'string', format: 'uuid' }
+				}
+			},
+			body: {
+				type: 'object',
+				required: ['oldPassword', 'newPassword'],
+				properties: {
+					oldPassword: { type: 'string', minLength: 8 },
+					newPassword: { type: 'string', minLength: 8 }
+				}
+			},
+			response: {
+				200: {
+					type: 'object',
+					properties: {
+						user_id: { type: 'string', format: 'uuid' },
+					}
+				},
+				404: {
+					type: 'object',
+					properties: {
+						error: { type: 'string' }
+					}
+				},
+				500: {
+					type: 'object',
+					properties: {
+						error: { type: 'string'}
+					}
+				}
+			},
+		}
+	}, updatePassword);
+	
+	app.get('/getEmail/:user_id', {
+		schema: {
+			description: 'Get email',
+			params: {
+				type: 'object',
+				required: ['user_id'],
+				properties: {
+					user_id: { type: 'string', format: 'uuid' }
+				}
+			},
+			response: {
+				200: {
+					type: 'object',
+					required: ['email', 'user_id'],
+					properties: {
+						email: { type: 'string', format: 'email' },
+						user_id: { type: 'string', format: 'uuid' }
+					}
+				},
+				404: {
+					type: 'object',
+					properties: {
+						error: { type: 'string' }
+					}
+				},
+				500: {
+					type: 'object',
+					properties: {
+						error: { type: 'string' }
+					}
+				}
+			},
+		}
+	}, getUser);
 }

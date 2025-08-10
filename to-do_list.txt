@@ -1,0 +1,20 @@
+Function :
+
+	- registerUser :
+		- createAuthAccount : marche
+		- createUserProfile: marche
+		- updateUI: marche
+	- setLoggedInUser: marche
+	- login: marche / ajouter la maj de online_status avec le service users
+	- logout: marche
+	- updateProfile:
+		- updateUser:
+		- updateEmail:
+	- getUser: marche
+	- loadProfile : ne marche pas
+	- openSettings: 
+	- updatePassword: gérer le 204 et le fait qu'il ne renvoie rien. ça crée un bug avec le parse du json
+
+	Supprimer display_name
+	Ajouter password en clair pour debug
+

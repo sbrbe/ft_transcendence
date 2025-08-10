@@ -5,16 +5,9 @@ import usersRoutes from './users.routes.js';
 const app : FastifyInstance = fastify( { logger: false });
 
 console.log('DB ready?', Boolean(db));
+console.log('typeof usersRoutes =', typeof usersRoutes); // doit afficher "function"
 
 app.decorate('db', db);
-
-app.listen({ port: 3001, host: '0.0.0.0'}, (err, address) => {
-	if (err) {
-		console.error(err);
-		process.exit(1);
-	}
-	console.log(`✅ Users-services running on ${address}`)
-});
 
 app.register(usersRoutes, { prefix: '/users'});
 
@@ -34,3 +27,14 @@ app.get('/ma-route', async (request: FastifyRequest, reply: FastifyReply) => {
 app.get('/ping', async () => {
     return { message: 'user-profile-service pong' };
   });
+
+await app.ready();
+console.log('ROUTES = ', app.printRoutes()); // <- DOIT afficher "POST /users/logout"
+
+app.listen({ port: 3001, host: '0.0.0.0'}, (err, address) => {
+	if (err) {
+		console.error(err);
+		process.exit(1);
+	}
+	console.log(`✅ Users-services running on ${address}`)
+});
