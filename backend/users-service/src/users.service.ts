@@ -12,16 +12,16 @@ export function getUserById(user_id: string) {
 }
 
 export async function createUser(user_id: string, username: string, last_name: string,
-	first_name: string, display_name: string) {
+	first_name: string) {
 
 	const existingUser = getUserByUsername(username);
 	console.log(existingUser);
 	if (existingUser)
 		throw new Error('Username already used');
 	const avatar_url = '/default.png';
-	const stmt = db.prepare(`INSERT INTO users (user_id, last_name, first_name, username, display_name, avatar_url, is_online)
-		VALUES (?, ?, ?, ?, ?, ?, ?)`);
-	const info = stmt.run(user_id, last_name, first_name, username, display_name, avatar_url, 1);
+	const stmt = db.prepare(`INSERT INTO users (user_id, last_name, first_name, username, avatar_url, is_online)
+		VALUES (?, ?, ?, ?, ?, ?)`);
+	const info = stmt.run(user_id, last_name, first_name, username, avatar_url, 1);
 	console.log(`CREATE_USERS log : ${info.lastInsertRowid}`);
 	return (username);
 }
@@ -43,10 +43,9 @@ export function updateUser(user_id: string, data: UserUpdate) {
 		last_name = COALESCE(?, last_name),
 		first_name = COALESCE(?, first_name),
 		username = COALESCE(?, username),
-		display_name = COALESCE(?, display_name),
 		avatar_url = COALESCE(?, avatar_url)
 		WHERE user_id = ?`);
-	const res = stmt.run(data.last_name, data.first_name, data.username, data.display_name, data.avatar_url, user_id);
+	const res = stmt.run(data.last_name, data.first_name, data.username, data.avatar_url, user_id);
 	if (res.changes < 0) {
 		return false;
 	}

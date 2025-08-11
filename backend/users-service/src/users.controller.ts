@@ -8,15 +8,14 @@ interface registerBody {
 	username: string;
 	first_name: string;
 	last_name: string;
-	display_name: string;
 }
 
 export async function register(
 	req: FastifyRequest<{ Body: registerBody }>,
 	reply: FastifyReply) {
-		const { user_id, username, last_name, first_name, display_name } = req.body;
+		const { user_id, username, last_name, first_name } = req.body;
 		try {
-			const user_name = await createUser(user_id, username, last_name, first_name, display_name);
+			const user_name = await createUser(user_id, username, last_name, first_name);
 			return reply.code(201).send({ message: 'User created successfully !' });
 		} catch (error) {
 			if (error instanceof Error)
@@ -44,13 +43,13 @@ export async function updateProfile(
 	req: FastifyRequest<{ Body: UserUpdate }>,
 	reply: FastifyReply) {
 		const { user_id } = req.params as { user_id: string };
-		const { last_name, first_name, username, display_name, avatar_url } = req.body;
+		const { last_name, first_name, username, avatar_url } = req.body;
 
-		if (!last_name && !first_name && !username && !display_name && !avatar_url) {
+		if (!last_name && !first_name && !username && !avatar_url) {
 			return reply.status(400).send({ error: 'No fields to update' });
 		}
 		try {
-			const res = updateUser(user_id, { last_name, first_name, username, display_name, avatar_url });
+			const res = updateUser(user_id, { last_name, first_name, username, avatar_url });
 			if (!res) {
 				return reply.status(404).send( { error: 'User not found' });
 			}

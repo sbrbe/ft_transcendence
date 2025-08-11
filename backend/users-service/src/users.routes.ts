@@ -10,13 +10,12 @@ export default async function (app: FastifyInstance) {
 			description: 'Creating user profile',
 			body: {
 				type: 'object',
-				required: ['user_id', 'username', 'last_name', 'first_name', 'display_name'],
+				required: ['user_id', 'username', 'last_name', 'first_name'],
 				properties: {
 					user_id: { type: 'string', format: 'uuid' },
 					username: { type: 'string' },
 					last_name: { type: 'string' },
 					first_name: { type: 'string' },
-					display_name: { type: 'string' }
 				}
 			},
 			response: {
@@ -86,14 +85,12 @@ export default async function (app: FastifyInstance) {
 					last_name: { type: 'string' },
 					first_name: { type: 'string' },
 					username: { type: 'string' },
-					display_name: { type: 'string' },
 					avatar_url: { type: 'string' },
 				},
 				anyOf: [
 					{ required: ['last_name'] },
 					{ required: ['first_name'] },
 					{ required: ['username'] },
-					{ required: ['display_name'] },
 					{ required: ['avatar_url'] },
 				]
 			},
@@ -104,7 +101,6 @@ export default async function (app: FastifyInstance) {
 						last_name: { type: 'string' },
 						first_name: { type: 'string' },
 						username: { type: 'string' },
-						display_name: { type: 'string' },
 						avatar_url: { type: 'string' }
 					}
 				},
@@ -138,12 +134,11 @@ export default async function (app: FastifyInstance) {
 			response: {
 				200: {
 					type: 'object',
-					required: ['last_name', 'first_name', 'username', 'display_name', 'avatar_url'],
+					required: ['last_name', 'first_name', 'username', 'avatar_url'],
 					properties: {
 						last_name: { type: 'string' },
 						first_name: { type: 'string' },
 						username: { type: 'string' },
-						display_name: { type: 'string' },
 						avatar_url: { type: 'string' }
 					}
 				},

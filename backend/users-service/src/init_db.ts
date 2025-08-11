@@ -18,7 +18,6 @@ try {
 		first_name TEXT,
 		last_name TEXT,
 		username TEXT,
-		display_name TEXT,
 		avatar_url TEXT,
 		is_online BOOLEAN DEFAULT FALSE
 		)`

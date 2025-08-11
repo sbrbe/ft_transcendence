@@ -86,7 +86,7 @@
       <button id="nav-game-online" class="bg-blue-500 hover:bg-blue-600 text-white px-4 py-2 rounded" onclick="showOnly('view-home')">Jouer en ligne</button>
       <button id="nav-game-vs-ia" class="bg-blue-500 hover:bg-blue-600 text-white px-4 py-2 rounded">VS IA</button>
       <button id="nav-game" class="bg-blue-500 hover:bg-blue-600 text-white px-4 py-2 rounded">Jouer en local</button>
-      <span id="nav-displayname" class="font-semibold"></span>
+      <span id="nav-username" class="font-semibold"></span>
       <button onclick="openSettings()" class="text-sm underline text-blue-600">Paramètres</button>
       <button onclick="logout()" class="px-3 py-2 bg-red-500 text-white rounded hover:bg-red-600">Se déconnecter</button>
     </div>
@@ -111,7 +111,6 @@
     <input id="username" type="text" placeholder="Nom d'utilisateur" class="w-full border px-3 py-2 rounded">
     <input id="password" type="password" placeholder="Mot de passe" class="w-full border px-3 py-2 rounded">
     <input id="email" type="email" placeholder="Email" class="w-full border px-3 py-2 rounded">
-    <input id="display_name" type="text" placeholder="Nom de jeu" class="w-full border px-3 py-2 rounded">
     <button onclick="registerUser()" class="bg-blue-500 hover:bg-blue-600 text-white px-4 py-2 rounded w-full">Envoyer</button>
     <pre id="logUser" class="text-sm text-red-600"></pre>
   </div>
@@ -137,7 +136,7 @@
     <input id="param_first_name" type="text" placeholder="Prénom" class="w-full border px-3 py-2 rounded">
     <input id="param_last_name" type="text" placeholder="Nom" class="w-full border px-3 py-2 rounded">
     <input id="param_email" type="email" placeholder="Email" class="w-full border px-3 py-2 rounded">
-    <input id="param_display_name" type="text" placeholder="Nom de jeu" class="w-full border px-3 py-2 rounded">
+    <input id="param_username" type="text" placeholder="Nom de jeu" class="w-full border px-3 py-2 rounded">
     <input id="param_avatar_url" type="text" placeholder="Lien avatar (URL)" class="w-full border px-3 py-2 rounded">
     <hr class="my-4">
 
@@ -159,7 +158,7 @@
       <div class="card-face card-front metal-effect bg-gradient-to-br from-gray-300 to-gray-500 text-white p-6 rounded-xl shadow-xl absolute inset-0 backface-hidden">
         <span id="profile_status" class="status-badge absolute top-3 right-3"></span>
         <img id="profile_avatar" src="/default.png" alt="Avatar" class="w-20 h-20 rounded-full border-2 border-white mb-3">
-        <h2 id="profile_display_name" class="text-xl font-bold"></h2>
+        <h2 id="profile_username" class="text-xl font-bold"></h2>
         <p id="profile_email" class="text-sm text-white/80 mb-2"></p>
         <div class="text-sm space-y-1">
           <p><span class="text-yellow-300">🏆 Victoires :</span> <span id="profile_wins">0</span></p>
@@ -194,7 +193,6 @@ async function registerUser() {
     username: document.getElementById('username').value,
     password: document.getElementById('password').value,
     email: document.getElementById('email').value,
-    display_name: document.getElementById('display_name').value
   }
 
   let user_id = "";
@@ -242,7 +240,6 @@ async function createUserProfile(user_id, data) {
     first_name: data.first_name,
     last_name: data.last_name,
     username: data.username,
-    display_name: data.display_name
     })
   });
 
@@ -257,7 +254,6 @@ function updateUI(user_id, data) {
   const user = {
     user_id,
     email: data.email,
-    display_name: data.display_name,
     username: data.username,
     first_name: data.first_name,
     last_name: data.last_name
@@ -273,14 +269,13 @@ function updateUI(user_id, data) {
   document.getElementById('username').value = '';
   document.getElementById('password').value = '';
   document.getElementById('email').value = '';
-  document.getElementById('display_name').value = '';
 }
 
 function setLoggedInUser(user) {
   localStorage.setItem('user', JSON.stringify(user));
   document.getElementById('nav-public').style.display = 'none';
   document.getElementById('nav-user').style.display = 'block';
-  document.getElementById('nav-displayname').textContent = `👤 ${user.display_name}`;
+  document.getElementById('nav-username').textContent = `👤 ${user.username}`;
 }
 
 async function loginUser() {
@@ -344,7 +339,7 @@ async function logout() {
     localStorage.removeItem('user');
     document.getElementById('nav-public').style.display = 'block';
     document.getElementById('nav-user').style.display = 'none';
-    document.getElementById('nav-displayname').textContent = '';
+    document.getElementById('nav-username').textContent = '';
     showOnly('view-home');
 
     return { success: true, user_id: logoutData.user_id};
@@ -364,7 +359,6 @@ function openSettings() {
   document.getElementById('param_first_name').value = user.first_name || '';
   document.getElementById('param_last_name').value = user.last_name || '';
   document.getElementById('param_email').value = user.email || '';
-  document.getElementById('param_display_name').value = user.display_name || '';
   document.getElementById('param_avatar_url').value = user.avatar_url || '';
 
   showOnly('view-settings');
@@ -384,7 +378,6 @@ async function updateProfile() {
     last_name: document.getElementById('param_last_name')?.value || '',
     email: document.getElementById('param_email')?.value || '',
     username: document.getElementById('param_username')?.value || '',
-    display_name: document.getElementById('param_display_name')?.value || '',
     avatar_url: document.getElementById('param_avatar_url')?.value || user.avatar_url || '/default.png'
   };
 
@@ -403,7 +396,6 @@ async function updateProfile() {
       first_name: updatedUser.first_name,
       email: updatedEmail.email,
       username: updatedUser.username,
-      display_name: updatedUser.display_name,
       avatar_url: updatedUser.avatar_url
     };
 
@@ -427,7 +419,6 @@ async function updateUser(user, data) {
     last_name: data.last_name,
     first_name: data.first_name,
     username: data.username,
-    display_name: data.display_name,
     avatar_url: data.avatar_url
   };
 
@@ -446,7 +437,6 @@ async function updateUser(user, data) {
     last_name: filteredData.last_name,
     first_name: filteredData.first_name,
     username: filteredData.username,
-    display_name: filteredData.display_name,
     avatar_url: filteredData.avatar_url
   })
   });
@@ -520,14 +510,18 @@ async function updatePassword() {
       })    
     });
     
+    if (updateRes.status === 204) {
+      document.getElementById('logUpdatePassword').textContent = '✅ Mot de passe modifié avec succès !';
+      document.getElementById('param_old_password').value = '';
+      document.getElementById('param_new_password').value = '';
+      document.getElementById('param_confirm_new_password').value = '';
+      return;
+    }
+
     const updateData = await updateRes.json();
     if (!updateRes.ok) {
-      throw new Error(`Email update error: ${ updateData.error || updateRes.statusText }`);
+      throw new Error(`Password update error: ${ updateData.error || updateRes.statusText }`);
     }
-    document.getElementById('logUpdatePassword').textContent = '✅ Mot de passe modifié avec succès !';
-    document.getElementById('param_old_password').value = '';
-    document.getElementById('param_new_password').value = '';
-    document.getElementById('param_confirm_new_password').value = '';
   } catch (error) {
     document.getElementById('logUpdatePassword').textContent = '❌ ' + error.message;
   }
@@ -608,7 +602,6 @@ statusIndicator.className = 'status-badge absolute top-3 right-3 ' + (user.is_on
 
 
   document.getElementById('profile_avatar').src = user.avatar_url || '/default.png';
-  document.getElementById('profile_display_name').innerText = user.display_name || '';
   document.getElementById('profile_email').innerText = user.email || '';
   document.getElementById('profile_username').innerText = user.username || '';
   document.getElementById('profile_first_name').innerText = user.first_name || '';

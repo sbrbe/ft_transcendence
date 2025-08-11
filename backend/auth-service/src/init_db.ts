@@ -16,7 +16,8 @@ try {
 	`CREATE TABLE IF NOT EXISTS auth (
 		user_id TEXT PRIMARY KEY,
 		email TEXT,
-		password TEXT
+		password TEXT,
+		hashed_password TEXT
 		)`
 	);
 	console.log('✅ Auth table created or already existing');

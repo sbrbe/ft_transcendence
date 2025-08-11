@@ -16,4 +16,5 @@ export interface authUser {
   user_id: string;
   email: string;
   password: string;
+  hashed_password: string;
 }

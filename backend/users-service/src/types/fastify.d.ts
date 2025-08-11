@@ -12,7 +12,6 @@ export interface User {
   last_name: string;
   first_name: string;
   username: string;
-  display_name: string;
   avatar_url: string;
 }
 
@@ -20,6 +19,5 @@ export interface UserUpdate {
   last_name?: string;
   first_name?: string;
   username?: string;
-  display_name?: string;
   avatar_url?: string;
 }
