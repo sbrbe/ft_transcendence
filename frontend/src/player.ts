@@ -59,4 +59,13 @@ export class Player {
       this.paddle.moove(this.paddle.speed);
     }
   }
+
+  // + ajoute ceci dans Player
+public onHumanInput(key: string, isPressed: boolean) {
+  if (this.source !== 'human') return;            // ← refuse si IA
+  if (key === this.keys.up || key === this.keys.down) {
+    this.input[key] = isPressed;
+  }
+}
+
 }
