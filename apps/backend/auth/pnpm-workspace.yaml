@@ -1,0 +1,6 @@
+ignoredBuiltDependencies:
+  - bcrypt
+  - unrs-resolver
+
+onlyBuiltDependencies:
+  - better-sqlite3

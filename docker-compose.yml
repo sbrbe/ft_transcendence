@@ -1,0 +1,105 @@
+version: "3.8"
+
+services:
+  ssl-generator:
+    image: alpine:latest
+    container_name: ft_transcendence_ssl_gen
+    volumes:
+      - ssl-certs:/ssl
+    entrypoint: >
+      sh -c "
+        apk add --no-cache openssl &&
+        if [ ! -f /ssl/cert.pem ]; then
+          echo 'Génération des certificats SSL...';
+          openssl req -x509 -nodes -days 365 -newkey rsa:2048 \
+            -keyout /ssl/key.pem \
+            -out /ssl/cert.pem \
+            -subj '/C=FR/ST=Brittany/L=Rennes/O=42School/CN=localhost';
+          chmod 600 /ssl/key.pem;
+          chmod 644 /ssl/cert.pem;
+          echo 'Certificats SSL générés!';
+        else
+          echo 'Certificats SSL déjà présents.';
+        fi
+      "
+
+  auth-backend:
+    build:
+      context: ./apps/backend/auth
+      dockerfile: Dockerfile
+    container_name: ft_transcendence_auth
+    ports:
+      - "3443:3443"
+      - "3443:3443"
+    environment:
+      - NODE_ENV=production
+      - PORT=3443
+      - HTTPS_PORT=3443
+      - HOST=0.0.0.0
+      - JWT_SECRET=${JWT_SECRET:-your-super-secret-jwt-key-change-this-in-production}
+      - COOKIE_SECRET=${COOKIE_SECRET:-your-super-secret-cookie-key-change-this-in-production}
+      - SSL_KEY_PATH=/app/ssl/key.pem
+      - SSL_CERT_PATH=/app/ssl/cert.pem
+    volumes:
+      - ./apps/backend/auth/database:/app/database
+      - ssl-certs:/app/ssl:ro
+    depends_on:
+      ssl-generator:
+        condition: service_completed_successfully
+    networks:
+      - transcendence-network
+    restart: unless-stopped
+
+  game-backend:
+    build:
+      context: ./apps/backend/game
+      dockerfile: Dockerfile
+    container_name: ft_transcendence_game
+    ports:
+      - "4000:4000"
+      - "4443:4443"
+    environment:
+      - NODE_ENV=production
+      - PORT=4000
+      - HTTPS_PORT=4443
+      - HOST=0.0.0.0
+      - JWT_SECRET=${JWT_SECRET:-your-super-secret-jwt-key-change-this-in-production}
+      - COOKIE_SECRET=${COOKIE_SECRET:-your-super-secret-cookie-key-change-this-in-production}
+      - SSL_KEY_PATH=/app/ssl/key.pem
+      - SSL_CERT_PATH=/app/ssl/cert.pem
+    volumes:
+      - ./apps/backend/game/database:/app/database
+      - game-db:/app
+      - ssl-certs:/app/ssl:ro
+    networks:
+      - transcendence-network
+    restart: unless-stopped
+    depends_on:
+      - auth-backend
+
+  frontend:
+    build:
+      context: ./apps/frontend
+      dockerfile: Dockerfile
+    container_name: ft_transcendence_frontend
+    ports:
+      - "8080:80"
+      - "8443:443"
+    volumes:
+      - ssl-certs:/etc/nginx/ssl:ro
+    networks:
+      - transcendence-network
+    restart: unless-stopped
+    depends_on:
+      - auth-backend
+      - game-backend
+
+volumes:
+  game-db:
+    driver: local
+  ssl-certs:
+    driver: local
+
+networks:
+  transcendence-network:
+    driver: bridge

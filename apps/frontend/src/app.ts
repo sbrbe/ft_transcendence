@@ -1,0 +1,125 @@
+import { createDashboardPage } from "./pages/DashboardPage";
+import { createForgotPasswordPage } from "./pages/ForgotPasswordPage";
+import { createLoginPage } from "./pages/LoginPage";
+import { createLocalGamePage } from "./pages/PlayLocal";
+import { createPlayMenuPage } from "./pages/PlayMenu";
+import { createOnlineGamePage } from "./pages/PlayOnline";
+import { createProfileEditPage } from "./pages/ProfileEditPage";
+import { createProfileViewPage } from "./pages/ProfileViewPage";
+import { createRegisterPage } from "./pages/RegisterPage";
+import { createResetPasswordPage } from "./pages/ResetPasswordPage";
+import { createTournamentGamePage } from "./pages/TournamentGame";
+import { createTournamentPage } from "./pages/TournamentPage";
+import { createTwoFactorPage } from "./pages/TwoFactorPage";
+import { createVerifyEmailCodePage } from "./pages/VerifyEmailCodePage";
+import { createVerifyEmailPage } from "./pages/VerifyEmailPage";
+import { Router, ViewType } from "./router/Router";
+
+export class App {
+  private router: Router;
+
+  constructor() {
+    const appContainer = document.getElementById("app") as HTMLElement;
+    this.router = new Router(appContainer);
+    this.setupViews();
+  }
+
+  private setupViews(): void {
+    this.router.addViews([
+      {
+        type: ViewType.DASHBOARD,
+        component: createDashboardPage,
+        requiresAuth: true,
+        title: "Dashboard",
+      },
+      {
+        type: ViewType.LOGIN,
+        component: createLoginPage,
+        requiresAuth: false,
+        title: "Sign In",
+      },
+      {
+        type: ViewType.REGISTER,
+        component: createRegisterPage,
+        requiresAuth: false,
+        title: "Create Account",
+      },
+      {
+        type: ViewType.FORGOT_PASSWORD,
+        component: createForgotPasswordPage,
+        requiresAuth: false,
+        title: "Reset Password",
+      },
+      {
+        type: ViewType.RESET_PASSWORD,
+        component: createResetPasswordPage,
+        requiresAuth: false,
+        title: "Reset Password",
+      },
+      {
+        type: ViewType.VERIFY_EMAIL,
+        component: createVerifyEmailPage,
+        requiresAuth: false,
+        title: "Verify Email",
+      },
+      {
+        type: ViewType.VERIFY_EMAIL_CODE,
+        component: createVerifyEmailCodePage,
+        requiresAuth: false,
+        title: "Verify Email Code",
+      },
+      {
+        type: ViewType.TWO_FACTOR,
+        component: createTwoFactorPage,
+        requiresAuth: false,
+        title: "Two-Factor Authentication",
+      },
+      {
+        type: ViewType.PLAY_MENU,
+        component: createPlayMenuPage,
+        requiresAuth: false,
+        title: "Play",
+      },
+      {
+        type: ViewType.PLAY_LOCAL,
+        component: createLocalGamePage,
+        requiresAuth: false,
+        title: "Local Game",
+      },
+      {
+        type: ViewType.PLAY_ONLINE,
+        component: createOnlineGamePage,
+        requiresAuth: true,
+        title: "Online Game",
+      },
+      {
+        type: ViewType.TOURNAMENT,
+        component: createTournamentPage,
+        requiresAuth: false,
+        title: "Tournament",
+      },
+      {
+        type: ViewType.TOURNAMENT_GAME,
+        component: createTournamentGamePage,
+        requiresAuth: false,
+        title: "Tournament Game",
+      },
+      {
+        type: ViewType.PROFILE_VIEW,
+        component: createProfileViewPage,
+        requiresAuth: true,
+        title: "User Profile",
+      },
+      {
+        type: ViewType.PROFILE_EDIT,
+        component: createProfileEditPage,
+        requiresAuth: true,
+        title: "Edit Profile",
+      },
+    ]);
+  }
+
+  public start(): void {
+    this.router.start();
+  }
+}
