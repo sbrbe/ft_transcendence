@@ -25,4 +25,21 @@ try {
 	console.error('❌ Error SQL: ', error);
 }
 
+function createRefreshTable() {
+	db.exec(
+		`CREATE TABLE IF NOT EXISTS refresh_tokens (
+		tokenId TEXT PRIMARY KEY,
+		userId TEXT NOT NULL,
+		tokenHash TEXT NOT NULL,
+		revoked INTEGER NOT NULL DEFAULT 0,
+		expiresAt TEXT NOT NULL,
+		createdAt TEXT NOT NULL DEFAULT (datetime('now')),
+		replacedBy TEXT NULL
+		);
+		CREATE INDEX IF NOT EXISTS idx_rt_user ON refresh_tokens(userId);
+		CREATE INDEX IF NOT EXISTS idx_rt_revoked ON refrest_tokens(revoked);
+		CREATE INDEX IF NOT EXISTS idx_rt_expires ON refresh_tokens(expiresAt);
+	`);
+}
+
 export default db;

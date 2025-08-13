@@ -5,6 +5,7 @@ npm install fastify
 npm install typescript --save-dev
 npm install better-sqlite3
 npm install --save @types/better-sqlite3
+npm i @fastify/jwt
 
 AUTH-SERVICE
 npm install uuid 
@@ -12,6 +13,11 @@ npm install validator
 npm i --save-dev @types/validator
 npm install bcrypt
 npm i --save-dev @types/bcrypt
+npm i @fastify/cookie
+npm i @fastify/jwt
+
+
+Génération clé JWT : openssl rand -base64 48
 
     | Code    | Nom                   | Quand l’utiliser                                                        |
 | ------- | --------------------- | ----------------------------------------------------------------------- |

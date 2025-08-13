@@ -1,7 +1,6 @@
-import { FastifyRequest, FastifyReply } from "fastify";
+import fastify, {FastifyInstance, FastifyReply, FastifyRequest} from 'fastify';
 import { createUser, deleteAuthUser, userLogin, updateEmailService, getUserById, updatePasswordService } from "./auth.service.js";
 import { registerBody } from "./types/fastify.js";
-
 
 export async function register(
 	req: FastifyRequest<{ Body: registerBody }>,
@@ -30,12 +29,13 @@ export async function deleteUser(
 		}
 }
 
-export async function login(
+export async function login(app: FastifyInstance,
 	req: FastifyRequest<{ Body: registerBody }>,
 	reply: FastifyReply) {
 		const { email, password } = req.body;
 		try{
 			const user_id = await userLogin(email, password);
+			await app.usersClient.setOnlineStatus(user_id, true);
 			console.log('USER_ID IN LOGIN = ', user_id);
 			if (!user_id)
 				return reply.status(404).send({ error: 'User not found'} );
