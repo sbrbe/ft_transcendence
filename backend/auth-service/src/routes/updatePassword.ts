@@ -1,5 +1,5 @@
 import { FastifyInstance } from "fastify";
-import { updatePassword } from '../auth.controller.js';
+import { updatePassword } from "../lib/updatePassword.js";
 
 export default async function updatePasswordRoute(app: FastifyInstance)
 {

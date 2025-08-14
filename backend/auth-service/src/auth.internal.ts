@@ -1,4 +1,4 @@
-import fastify, {FastifyInstance, FastifyReply, FastifyRequest} from 'fastify';
+/*import fastify, {FastifyInstance, FastifyReply, FastifyRequest} from 'fastify';
 import db from './init_db.js';
 import jwt from '@fastify/jwt';
 
@@ -25,4 +25,4 @@ export function makeUsersClient(app: FastifyInstance) {
 			return res.json();
 		}
 	}
-}
+}*/

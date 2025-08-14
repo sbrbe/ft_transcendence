@@ -6,6 +6,9 @@ services:
       - "3001:3001"
     volumes:
       - user-db:/app/database
+      - ./nginx/pki/issued/users-service.crt:/run/certs/server.crt:ro
+      - ./nginx/pki/private/users-service.key:/run/certs/server.key:ro
+
     networks:
       - transcendence
 
@@ -15,6 +18,8 @@ services:
     - "3002:3002"
     volumes:
     - auth-db:/app/database
+    - ./nginx/pki/issued/auth-service.crt:/run/certs/server.crt:ro
+    - ./nginx/pki/private/auth-service.key:/run/certs/server.key:ro
     networks:
     - transcendence
 

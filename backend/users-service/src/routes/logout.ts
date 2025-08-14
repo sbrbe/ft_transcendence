@@ -1,11 +1,11 @@
 import { FastifyInstance } from "fastify";
-import { getEmail } from '../lib/getEmail.js';
+import { logout } from "../lib/logout.js";
 
-export default async function getEmailRoute(app: FastifyInstance) {
-	app.get('/getEmail/:user_id', {
+export default async function logoutRoute(app:FastifyInstance) {
+	app.post('/logout', {
 		schema: {
-			description: 'Get email',
-			params: {
+			description: 'Disconnect user',
+			body: {
 				type: 'object',
 				required: ['user_id'],
 				properties: {
@@ -15,13 +15,11 @@ export default async function getEmailRoute(app: FastifyInstance) {
 			response: {
 				200: {
 					type: 'object',
-					required: ['email', 'user_id'],
 					properties: {
-						email: { type: 'string', format: 'email' },
-						user_id: { type: 'string', format: 'uuid' }
+						message: { type: 'string' }
 					}
 				},
-				404: {
+				400: {
 					type: 'object',
 					properties: {
 						error: { type: 'string' }
@@ -35,5 +33,5 @@ export default async function getEmailRoute(app: FastifyInstance) {
 				}
 			},
 		}
-	}, getEmail);
+	}, logout);	
 }

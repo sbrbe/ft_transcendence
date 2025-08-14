@@ -1,4 +1,4 @@
-import fastify, {FastifyInstance, FastifyReply, FastifyRequest} from 'fastify';
+/*import fastify, {FastifyInstance, FastifyReply, FastifyRequest} from 'fastify';
 import db from './init_db.js';
 import jwt from '@fastify/jwt';
 
@@ -28,4 +28,4 @@ export default async function(app: FastifyInstance) {
 
 			return { success: true, user_id, online };
 		});
-}
+}*/

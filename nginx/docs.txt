@@ -18,50 +18,36 @@ sudo lsof -i -P -n
 	- email (momillio@student.42perpignan.fr)
 
 
-	    # FRONTEND SPA
-    location / {
-      proxy_pass http://frontend:5173;
-      proxy_http_version 1.1;
-      proxy_set_header Host $host;
-      proxy_set_header X-Real-IP $remote_addr;
+mkdir -p nginx/pki/{ca,issued,private,csr,ext}
 
-      try_files $uri /index.html;
-    }
+openssl genrsa -out nginx/pki/private/ca.key 4096
+openssl req -x509 -new -nodes -sha256 -days 3650 \
+  -key nginx/pki/private/ca.key \
+  -out nginx/pki/ca/ca.crt \
+  -subj "/CN=Transcendence-Internal-CA"
 
-    # API: AUTH
-    location /api/auth/ {
-      proxy_pass http://auth:3001/;
-      proxy_set_header Host $host;
-    }
+# AUTH
+openssl genrsa -out nginx/pki/private/auth-service.key 2048
+openssl req -new -sha256 -key nginx/pki/private/auth-service.key \
+  -out nginx/pki/csr/auth-service.csr -subj "/CN=auth-service"
+openssl x509 -req -sha256 -days 825 \
+  -in nginx/pki/csr/auth-service.csr \
+  -CA nginx/pki/ca/ca.crt -CAkey nginx/pki/private/ca.key -CAcreateserial \
+  -out nginx/pki/issued/auth-service.crt \
+  -extfile nginx/pki/ext/auth-service.san.cnf
 
-    # API: PROFILE
-    location /api/profile/ {
-      proxy_pass http://user-profile:3002/;
-      proxy_set_header Host $host;
-    }
+# USERS
+openssl genrsa -out nginx/pki/private/users-service.key 2048
+openssl req -new -sha256 -key nginx/pki/private/users-service.key \
+  -out nginx/pki/csr/users-service.csr -subj "/CN=users-service"
+openssl x509 -req -sha256 -days 825 \
+  -in nginx/pki/csr/users-service.csr \
+  -CA nginx/pki/ca/ca.crt -CAkey nginx/pki/private/ca.key -CAcreateserial \
+  -out nginx/pki/issued/users-service.crt \
+  -extfile nginx/pki/ext/users-service.san.cnf
 
-    # API: MATCHMAKING
-    location /api/matchmaking/ {
-      proxy_pass http://matchmaking:3005/;
-      proxy_set_header Host $host;
-    }
+openssl verify -CAfile nginx/pki/ca/ca.crt nginx/pki/issued/auth-service.crt
+openssl verify -CAfile nginx/pki/ca/ca.crt nginx/pki/issued/users-service.crt
 
-    # WEBSOCKET: GAME
-    location /ws/game/ {
-      proxy_pass http://game:3003;
-      proxy_http_version 1.1;
-      proxy_set_header Upgrade $http_upgrade;
-      proxy_set_header Connection "upgrade";
-      proxy_set_header Host $host;
-    }
-
-    # WEBSOCKET: CHAT
-    location /ws/chat/ {
-      proxy_pass http://chat:3004;
-      proxy_http_version 1.1;
-      proxy_set_header Upgrade $http_upgrade;
-      proxy_set_header Connection "upgrade";
-      proxy_set_header Host $host;
-    }
-
-
+Pour tester la connexion https:
+  -curl -vk https://localhost/users/health

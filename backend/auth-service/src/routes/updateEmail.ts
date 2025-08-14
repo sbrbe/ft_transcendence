@@ -1,5 +1,5 @@
 import { FastifyInstance } from "fastify";
-import { updateEmail } from '../auth.controller.js';
+import { updateEmail } from "../lib/updateEmail.js";
 
 
 export default async function updateEmailRoute(app: FastifyInstance){

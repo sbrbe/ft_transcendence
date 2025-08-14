@@ -1,5 +1,5 @@
 import { FastifyInstance } from "fastify";
-import { login } from '../auth.controller.js';
+import { login } from "../lib/login.js";
 
 export default async function loginRoute(app: FastifyInstance)
 {

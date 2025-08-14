@@ -1,4 +1,4 @@
- import db from './init_db.js';
+ /*import db from './init_db.js';
  import bcrypt from 'bcrypt';
  import { v4 as uuidv4} from 'uuid'
  import { authUser } from './types/fastify.js';
@@ -27,4 +27,4 @@ export function setReplacedBy(id: string, newId: string) {
 	createRefreshTable();
 	const stmt = db.prepare(`UPDATE refresh_tokens SET replacedBy = ? WHERE tokenId = ?`);
 	stmt.run(newId, id);
-}
+}*/
