@@ -3,14 +3,14 @@ import { updateEmail } from "../lib/updateEmail.js";
 
 
 export default async function updateEmailRoute(app: FastifyInstance){
-	app.put('/email/:user_id', {
+	app.put('/email/:userId', {
 		schema: {
 			description: 'Update email',
 			params: {
 				type: 'object',
-				required: ['user_id'],
+				required: ['userId'],
 				properties: {
-					user_id: { type: 'string', format: 'uuid' }
+					userId: { type: 'string', format: 'uuid' }
 				}
 			},
 			body: {
@@ -24,7 +24,7 @@ export default async function updateEmailRoute(app: FastifyInstance){
 				200: {
 					type: 'object',
 					properties: {
-						user_id: { type: 'string', format: 'uuid' },
+						userId: { type: 'string', format: 'uuid' },
 						email: { type: 'string', format: 'email' }
 					}
 				},

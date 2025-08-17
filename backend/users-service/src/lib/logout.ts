@@ -3,29 +3,29 @@ import db from '../init_db.js';
 import { getUserById } from "./utils.js";
 
 export async function logout(
-	req: FastifyRequest<{ Body: { user_id: string } }>,
+	req: FastifyRequest<{ Body: { userId: string } }>,
 	reply: FastifyReply) {
-		const { user_id } = req.body;
+		const { userId } = req.body;
 
 		try {
-			const user = await disconnectUser(user_id);
+			const user = await disconnectUser(userId);
 			if (!user)
 				return reply.status(404).send({ error: 'User not found' });
-			return reply.status(200).send({ user_id, message: 'User disconnected' });
+			return reply.status(200).send({ userId, message: 'User disconnected' });
 		} catch (error) {
 			if (error instanceof Error)
 				return reply.status(500).send({ error: error.message });
 		}
 }
 
-async function disconnectUser(user_id: string): Promise<boolean>
+async function disconnectUser(userId: string): Promise<boolean>
 {
-	const existingUser = getUserById(user_id);
+	const existingUser = getUserById(userId);
 	if (!existingUser)
 		return false;
 
-	const stmt = db.prepare('UPDATE users SET is_online = 0 WHERE user_id = ?');
-	const info = stmt.run(user_id);
+	const stmt = db.prepare('UPDATE users SET isOnline = 0 WHERE userId = ?');
+	const info = stmt.run(userId);
 	console.log(`LOGOUT : ${info.changes}`);
 	return true;
 }

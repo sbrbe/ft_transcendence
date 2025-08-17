@@ -3,12 +3,12 @@ import { getUserById } from './utils.js';
 
 
 export async function getUserProfile(
-	req: FastifyRequest<{ Params: { user_id: string } }>,
+	req: FastifyRequest<{ Params: { userId: string } }>,
 	reply: FastifyReply) {
-		const { user_id } = req.params;
+		const { userId } = req.params;
 
 		try {
-			const user = getUserById(user_id);
+			const user = getUserById(userId);
 			if (!user) {
 				return reply.status(404).send({ error: 'User not found'} );
 			}

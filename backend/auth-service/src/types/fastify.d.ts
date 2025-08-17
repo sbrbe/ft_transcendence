@@ -19,8 +19,8 @@ export interface registerBody {
 }
 
 export interface authUser {
-  user_id: string;
+  userId: string;
   email: string;
   password: string;
-  hashed_password: string;
+  hashedPassword: string;
 }

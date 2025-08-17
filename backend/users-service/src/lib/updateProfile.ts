@@ -6,14 +6,14 @@ import { UserUpdate } from "../types/fastify.js";
 export async function updateProfile(
 	req: FastifyRequest<{ Body: UserUpdate }>,
 	reply: FastifyReply) {
-		const { user_id } = req.params as { user_id: string };
-		const { last_name, first_name, username, avatar_url } = req.body;
+		const { userId } = req.params as { userId: string };
+		const { lastName, firstName, username, avatarUrl } = req.body;
 
-		if (!last_name && !first_name && !username && !avatar_url) {
+		if (!lastName && !firstName && !username && !avatarUrl) {
 			return reply.status(400).send({ error: 'No fields to update' });
 		}
 		try {
-			const res = await updateUser(user_id, { last_name, first_name, username, avatar_url });
+			const res = await updateUser(userId, { lastName, firstName, username, avatarUrl });
 			if (!res) {
 				return reply.status(404).send( { error: 'User not found' });
 			}
@@ -23,17 +23,17 @@ export async function updateProfile(
 		}
 }
 
-async function updateUser(user_id: string, data: UserUpdate) {
+async function updateUser(userId: string, data: UserUpdate) {
 	const stmt = db.prepare (`UPDATE users SET
-		last_name = COALESCE(?, last_name),
-		first_name = COALESCE(?, first_name),
+		lastName = COALESCE(?, lastName),
+		firstName = COALESCE(?, firstName),
 		username = COALESCE(?, username),
-		avatar_url = COALESCE(?, avatar_url)
-		WHERE user_id = ?`);
-	const res = stmt.run(data.last_name, data.first_name, data.username, data.avatar_url, user_id);
+		avatarUrl = COALESCE(?, avatarUrl)
+		WHERE userId = ?`);
+	const res = stmt.run(data.lastName, data.firstName, data.username, data.avatarUrl, userId);
 	if (res.changes < 0) {
 		return false;
 	}
-	const user = getUserById(user_id);
+	const user = getUserById(userId);
 	return user;
 }

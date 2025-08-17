@@ -3,18 +3,18 @@ import db from '../init_db.js';
 import { getUserByUsername } from "./utils.js";
 
 interface registerBody {
-	user_id: string;
+	userId: string;
 	username: string;
-	first_name: string;
-	last_name: string;
+	firstName: string;
+	lastName: string;
 }
 
 export async function register(
 	req: FastifyRequest<{ Body: registerBody }>,
 	reply: FastifyReply) {
-		const { user_id, username, last_name, first_name } = req.body;
+		const { userId, username, lastName, firstName } = req.body;
 		try {
-			const user_name = await createUser(user_id, username, last_name, first_name);
+			const user = await createUser(userId, username, lastName, firstName);
 			return reply.code(201).send({ message: 'User created successfully !' });
 		} catch (error) {
 			if (error instanceof Error)
@@ -22,17 +22,17 @@ export async function register(
 		}
 }
 
-async function createUser(user_id: string, username: string, last_name: string,
-	first_name: string) {
+async function createUser(userId: string, username: string, lastName: string,
+	firstName: string) {
 
 	const existingUser = getUserByUsername(username);
 	console.log(existingUser);
 	if (existingUser)
 		throw new Error('Username already used');
-	const avatar_url = '/default.png';
-	const stmt = db.prepare(`INSERT INTO users (user_id, last_name, first_name, username, avatar_url, is_online)
+	const avatarUrl = '/default.png';
+	const stmt = db.prepare(`INSERT INTO users (userId, lastName, firstName, username, avatarUrl, isOnline)
 		VALUES (?, ?, ?, ?, ?, ?)`);
-	const info = stmt.run(user_id, last_name, first_name, username, avatar_url, 1);
+	const info = stmt.run(userId, lastName, firstName, username, avatarUrl, 1);
 	console.log(`CREATE_USERS log : ${info.lastInsertRowid}`);
 	return (username);
 }

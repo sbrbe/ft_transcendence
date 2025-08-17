@@ -7,12 +7,12 @@ export default async function registerRoute(app:FastifyInstance){
 				description: 'Creating user profile',
 				body: {
 					type: 'object',
-					required: ['user_id', 'username', 'last_name', 'first_name'],
+					required: ['userId', 'username', 'lastName', 'firstName'],
 					properties: {
-						user_id: { type: 'string', format: 'uuid' },
+						userId: { type: 'string', format: 'uuid' },
 						username: { type: 'string' },
-						last_name: { type: 'string' },
-						first_name: { type: 'string' },
+						lastName: { type: 'string' },
+						firstName: { type: 'string' },
 					}
 				},
 				response: {

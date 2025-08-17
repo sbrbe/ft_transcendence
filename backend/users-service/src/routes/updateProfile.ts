@@ -2,24 +2,24 @@ import { FastifyInstance } from "fastify";
 import { updateProfile } from "../lib/updateProfile.js";
 
 export default async function updateProfileRoute(app: FastifyInstance) {
-	app.put('/:user_id', {
+	app.put('/:userId', {
 			schema: {
 				description: 'Updating user profile',
 				params: {
 					type: 'object',
-					required: ['user_id'],
+					required: ['userId'],
 					properties: {
-						user_id: { type: 'string', format: 'uuid'}
+						userId: { type: 'string', format: 'uuid'}
 					}
 				},
 				body: {
 					type: 'object',
 					properties: {
-						user_id: { type: 'string', format: 'uuid' },
-						last_name: { type: 'string' },
-						first_name: { type: 'string' },
+						userId: { type: 'string', format: 'uuid' },
+						lastName: { type: 'string' },
+						firstName: { type: 'string' },
 						username: { type: 'string' },
-						avatar_url: { type: 'string' },
+						avatarUrl: { type: 'string' },
 					},
 					anyOf: [
 						{ required: ['last_name'] },
@@ -32,10 +32,10 @@ export default async function updateProfileRoute(app: FastifyInstance) {
 					200: {
 						type: 'object',
 						properties: {
-							last_name: { type: 'string' },
-							first_name: { type: 'string' },
+							lastName: { type: 'string' },
+							firstName: { type: 'string' },
 							username: { type: 'string' },
-							avatar_url: { type: 'string' }
+							avatarUrl: { type: 'string' }
 						}
 					},
 					400: {

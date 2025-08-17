@@ -1,6 +1,6 @@
 import fastify, {FastifyInstance, FastifyReply, FastifyRequest} from 'fastify';
 import fs from 'node:fs';
-import db from './init_db.js';
+import { db, initDB } from './init_db.js';
 import registerAllRoutes from './routes/index.js';
 //import fastifyJwt from '@fastify/jwt';
 //import cookie from '@fastify/cookie';
@@ -12,6 +12,8 @@ const app : FastifyInstance = fastify( {
     cert: fs.readFileSync('/run/certs/server.crt')
   }
 });
+
+initDB();
 
 console.log('DB ready?', Boolean(db));
 app.decorate('db', db);
@@ -40,8 +42,9 @@ app.register(registerAllRoutes, { prefix: '/auth'});
 app.get('/auth/ma-route', async (request: FastifyRequest, reply: FastifyReply) => {
   try {
     const users = await app.db.prepare('SELECT * FROM auth').all();
+    const twoFa = await app.db.prepare('SELECT * FROM two_factor_codes').all();
 
-    return reply.send({ users });
+    return reply.send({ users, twoFa });
   } catch (err: any) {
     return reply.status(500).send({ error: err.message });
   }

@@ -16,9 +16,9 @@ export default async function loginRoute(app: FastifyInstance)
 			response: {
 				200: {
 					type: 'object',
-					required: ['user_id', 'message'],
+					required: ['userId', 'message'],
 					properties: {
-						user_id: { type: 'string', format: 'uuid'},
+						userId: { type: 'string', format: 'uuid'},
 						message: { type: 'string'}
 					}
 				},

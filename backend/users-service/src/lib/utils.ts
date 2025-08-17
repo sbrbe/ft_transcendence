@@ -6,7 +6,7 @@ export function getUserByUsername(username: string) {
 	return stmt.get(username);
 }
 
-export function getUserById(user_id: string) {
-	const stmt = db.prepare('SELECT * FROM users WHERE user_id = ?');
-	return stmt.get(user_id);
+export function getUserById(userId: string) {
+	const stmt = db.prepare('SELECT * FROM users WHERE userId = ?');
+	return stmt.get(userId);
 }

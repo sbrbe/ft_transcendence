@@ -106,8 +106,8 @@
 
   <div id="view-register" class="hidden p-8 max-w-md mx-auto bg-white rounded shadow mt-8 space-y-4">
     <h2 class="text-2xl font-semibold text-center text-gray-700">Créer un utilisateur</h2>
-    <input id="first_name" type="text" placeholder="Prénom" class="w-full border px-3 py-2 rounded">
-    <input id="last_name" type="text" placeholder="Nom" class="w-full border px-3 py-2 rounded">
+    <input id="firstName" type="text" placeholder="Prénom" class="w-full border px-3 py-2 rounded">
+    <input id="lastName" type="text" placeholder="Nom" class="w-full border px-3 py-2 rounded">
     <input id="username" type="text" placeholder="Nom d'utilisateur" class="w-full border px-3 py-2 rounded">
     <input id="password" type="password" placeholder="Mot de passe" class="w-full border px-3 py-2 rounded">
     <input id="email" type="email" placeholder="Email" class="w-full border px-3 py-2 rounded">
@@ -132,12 +132,12 @@
 </div>
 
   <div id="view-edit-settings" class="space-y-4 mt-6">
-  <!-- tes champs param_first_name, param_last_name... -->
-    <input id="param_first_name" type="text" placeholder="Prénom" class="w-full border px-3 py-2 rounded">
-    <input id="param_last_name" type="text" placeholder="Nom" class="w-full border px-3 py-2 rounded">
+  <!-- tes champs param_firstName, param_lastName... -->
+    <input id="param_firstName" type="text" placeholder="Prénom" class="w-full border px-3 py-2 rounded">
+    <input id="param_lastName" type="text" placeholder="Nom" class="w-full border px-3 py-2 rounded">
     <input id="param_email" type="email" placeholder="Email" class="w-full border px-3 py-2 rounded">
     <input id="param_username" type="text" placeholder="Nom de jeu" class="w-full border px-3 py-2 rounded">
-    <input id="param_avatar_url" type="text" placeholder="Lien avatar (URL)" class="w-full border px-3 py-2 rounded">
+    <input id="param_avatarUrl" type="text" placeholder="Lien avatar (URL)" class="w-full border px-3 py-2 rounded">
     <hr class="my-4">
 
 <h3 class="text-xl font-semibold text-gray-700">🔒 Changer le mot de passe</h3>
@@ -169,8 +169,8 @@
       <!-- Face arrière -->
       <div class="card-face card-back metal-effect bg-gray-800 text-white p-6 rounded-xl shadow-xl absolute inset-0 backface-hidden rotate-y-180">
         <div class="space-y-2 text-sm">
-          <p><strong>👤 Prénom :</strong> <span id="profile_first_name">-</span></p>
-          <p><strong>🧑 Nom :</strong> <span id="profile_last_name">-</span></p>
+          <p><strong>👤 Prénom :</strong> <span id="profile_firstName">-</span></p>
+          <p><strong>🧑 Nom :</strong> <span id="profile_lastName">-</span></p>
           <p><strong>📅 Créé le :</strong> <span id="profile_created_at">-</span></p>
           <p><strong>🕒 Dernière connexion :</strong> <span id="profile_last_seen">-</span></p>
           <p><strong>🔐 Username :</strong> <span id="profile_username">-</span></p>
@@ -188,26 +188,26 @@ function toggleRegister() {
 
 async function registerUser() {
   const data = {
-    first_name: document.getElementById('first_name').value,
-    last_name: document.getElementById('last_name').value,
+    firstName: document.getElementById('firstName').value,
+    lastName: document.getElementById('lastName').value,
     username: document.getElementById('username').value,
     password: document.getElementById('password').value,
     email: document.getElementById('email').value,
   }
 
-  let user_id = "";
+  let userId = "";
 
   try {
-    user_id = await createAuthAccount(data.email, data.password);
-    await createUserProfile(user_id, data);
-    updateUI(user_id, data);
-    return { success: true, user_id: user_id};
+    userId = await createAuthAccount(data.email, data.password);
+    await createUserProfile(userId, data);
+    updateUI(userId, data);
+    return { success: true, userId: userId};
   } catch (error) {
-    if (user_id) {
-      await fetch(`auth/delete/${user_id}`, {method: 'DELETE'});
+    if (userId) {
+      await fetch(`auth/delete/${userId}`, {method: 'DELETE'});
     }
     document.getElementById('logUser').textContent = 'Erreur : ' + error.message;
-    return { success: false, user_id: user_id };
+    return { success: false, userId: userId };
   }
 }
 
@@ -227,18 +227,18 @@ async function createAuthAccount(email, password) {
       throw new Error(`Auth error: ${authData.error || authRes.statusText}`);
     }
 
-    console.log(`CreateAuth successfull: ${authData.user_id}`);
-    return authData.user_id;
+    console.log(`CreateAuth successfull: ${authData.userId}`);
+    return authData.userId;
 }
 
-async function createUserProfile(user_id, data) {
+async function createUserProfile(userId, data) {
   const profileRes = await fetch ('users/register', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({
-    user_id : user_id,
-    first_name: data.first_name,
-    last_name: data.last_name,
+    userId : userId,
+    firstName: data.firstName,
+    lastName: data.lastName,
     username: data.username,
     })
   });
@@ -250,13 +250,13 @@ async function createUserProfile(user_id, data) {
   console.log(profileData.message)
 }
 
-function updateUI(user_id, data) {
+function updateUI(userId, data) {
   const user = {
-    user_id,
+    userId,
     email: data.email,
     username: data.username,
-    first_name: data.first_name,
-    last_name: data.last_name
+    firstName: data.firstName,
+    lastName: data.lastName
   };
 
   setLoggedInUser(user);
@@ -264,8 +264,8 @@ function updateUI(user_id, data) {
   document.getElementById('logUser').textContent = JSON.stringify(user, null, 2);
   document.getElementById('view-register').style.display = 'none';
 
-  document.getElementById('first_name').value = '';
-	document.getElementById('last_name').value = '';
+  document.getElementById('firstName').value = '';
+	document.getElementById('lastName').value = '';
   document.getElementById('username').value = '';
   document.getElementById('password').value = '';
   document.getElementById('email').value = '';
@@ -303,13 +303,13 @@ async function loginUser() {
     throw new Error(`Login error: ${ loginData.error || loginRes.statusText }`);
     }
 
-    const user = await getUser(loginData.user_id);
+    const user = await getUser(loginData.userId);
     console.log('user = ', user);
     setLoggedInUser(user);
     document.getElementById('view-login').style.display = 'none';
     document.getElementById('logLogin').textContent = '';
 
-    return { success: true, user_id: loginData.user_id};
+    return { success: true, userId: loginData.userId};
 
   } catch (error) {
     document.getElementById('logLogin').textContent = 'Erreur : ' + error.message;
@@ -329,7 +329,7 @@ async function logout() {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({ 
-      user_id: user.user_id })
+      userId: user.userId })
     });
 
     const logoutData = await logoutRes.json();
@@ -342,7 +342,7 @@ async function logout() {
     document.getElementById('nav-username').textContent = '';
     showOnly('view-home');
 
-    return { success: true, user_id: logoutData.user_id};
+    return { success: true, userId: logoutData.userId};
   } catch (error) {
     console.error("Disconnection error: ", error);
     localStorage.removeItem('user');
@@ -356,10 +356,10 @@ function openSettings() {
   const user = JSON.parse(localStorage.getItem('user'));
   if (!user) return;
 
-  document.getElementById('param_first_name').value = user.first_name || '';
-  document.getElementById('param_last_name').value = user.last_name || '';
+  document.getElementById('param_firstName').value = user.firstName || '';
+  document.getElementById('param_lastName').value = user.lastName || '';
   document.getElementById('param_email').value = user.email || '';
-  document.getElementById('param_avatar_url').value = user.avatar_url || '';
+  document.getElementById('param_avatarUrl').value = user.avatarUrl || '';
 
   showOnly('view-settings');
 }
@@ -368,17 +368,17 @@ async function updateProfile() {
   const user = JSON.parse(localStorage.getItem('user'));
   console.log('👤 Utilisateur chargé pour update:', user);
 
-  if (!user || !user.user_id) {
+  if (!user || !user.userId) {
     console.warn('❌ Aucun utilisateur valide en localStorage');
     return;
   }
 
   const data = {
-    first_name: document.getElementById('param_first_name')?.value || '',
-    last_name: document.getElementById('param_last_name')?.value || '',
+    firstName: document.getElementById('param_firstName')?.value || '',
+    lastName: document.getElementById('param_lastName')?.value || '',
     email: document.getElementById('param_email')?.value || '',
     username: document.getElementById('param_username')?.value || '',
-    avatar_url: document.getElementById('param_avatar_url')?.value || user.avatar_url || '/default.png'
+    avatarUrl: document.getElementById('param_avatarUrl')?.value || user.avatarUrl || '/default.png'
   };
 
 
@@ -391,12 +391,12 @@ async function updateProfile() {
     ]);
     
     const updatedProfile = {
-      user_id: user.user_id,
-      last_name: updatedUser.last_name,
-      first_name: updatedUser.first_name,
+      userId: user.userId,
+      lastName: updatedUser.lastName,
+      firstName: updatedUser.firstName,
       email: updatedEmail.email,
       username: updatedUser.username,
-      avatar_url: updatedUser.avatar_url
+      avatarUrl: updatedUser.avatarUrl
     };
 
     console.log('Updated user: ', updatedProfile);
@@ -404,22 +404,22 @@ async function updateProfile() {
     document.getElementById('logUpdateUser').textContent = '✅ Modifications saved';
     setLoggedInUser(updatedProfile); // met à jour l'affichage du nom
 
-    return { success: true, user_id: user.user_id };
+    return { success: true, userId: user.userId };
 
   } catch (error) {
     document.getElementById('logUpdateUser').textContent = 'Erreur : ' + error.message;
-    return { success: false, user_id: user?.user_id };
+    return { success: false, userId: user?.userId };
   }
 }
 
 async function updateUser(user, data) {
 
    const rawData = {
-    user_id: user.user_id, // nécessaire pour le backend
-    last_name: data.last_name,
-    first_name: data.first_name,
+    userId: user.userId, // nécessaire pour le backend
+    lastName: data.lastName,
+    firstName: data.firstName,
     username: data.username,
-    avatar_url: data.avatar_url
+    avatarUrl: data.avatarUrl
   };
 
   // Filtrage : on enlève tous les champs vides (ex: "")
@@ -429,15 +429,15 @@ async function updateUser(user, data) {
   console.log('🔄 Données envoyées au backend :', filteredData);
 
 
-  const updateRes = await fetch(`/users/${user.user_id}`, {
+  const updateRes = await fetch(`/users/${user.userId}`, {
   method: 'PUT',
   headers: { 'Content-Type': 'application/json' },
   body: JSON.stringify({
     user_id: filteredData.user_id,
-    last_name: filteredData.last_name,
-    first_name: filteredData.first_name,
+    lastName: filteredData.lastName,
+    firstName: filteredData.firstName,
     username: filteredData.username,
-    avatar_url: filteredData.avatar_url
+    avatarUrl: filteredData.avatarUrl
   })
   });
   const updateData = await updateRes.json();
@@ -601,11 +601,11 @@ statusIndicator.className = 'status-badge absolute top-3 right-3 ' + (user.is_on
 }
 
 
-  document.getElementById('profile_avatar').src = user.avatar_url || '/default.png';
+  document.getElementById('profile_avatar').src = user.avatarUrl || '/default.png';
   document.getElementById('profile_email').innerText = user.email || '';
   document.getElementById('profile_username').innerText = user.username || '';
-  document.getElementById('profile_first_name').innerText = user.first_name || '';
-  document.getElementById('profile_last_name').innerText = user.last_name || '';
+  document.getElementById('profile_firstName').innerText = user.firstName || '';
+  document.getElementById('profile_lastName').innerText = user.lastName || '';
   document.getElementById('profile_created_at').innerText = formatDate(user.created_at);
   document.getElementById('profile_last_seen').innerText = formatDate(user.last_seen);
   document.getElementById('profile_wins').innerText = user.wins ?? 0;

@@ -1,28 +1,21 @@
 import Database from 'better-sqlite3'
 import type { Database as Database_type} from 'better-sqlite3'
 
-let db: Database_type;
+export let db: Database_type;
 
-try {
-	db = new Database('./database/database.db', { verbose: console.log});
-	console.log('✅ SQLite AUTH_DB connected')
-} catch (err: any) {
-	console.error('❌ Error: database:', err.message);
-	process.exit(1);
-}
+export function initDB() {
+	try {
+		db = new Database('./database/database.db', { verbose: console.log});
+		console.log('Initializing database ...');
 
-try {
-	db.exec(
-	`CREATE TABLE IF NOT EXISTS auth (
-		user_id TEXT PRIMARY KEY,
-		email TEXT,
-		password TEXT,
-		hashed_password TEXT
-		)`
-	);
-	console.log('✅ Auth table created or already existing');
-} catch (error) {
-	console.error('❌ Error SQL: ', error);
+		db.exec(createAuthTable);
+		db.exec(create2FATable);
+
+		console.log('✅ SQLite AUTH_DB connected');
+	} catch (err: any) {
+		console.error('❌ Error: database:', err.message);
+		process.exit(1);
+	}
 }
 
 function createRefreshTable() {
@@ -42,4 +35,26 @@ function createRefreshTable() {
 	`);
 }
 
-export default db;
+const createAuthTable = 
+	`CREATE TABLE IF NOT EXISTS auth (
+		userId TEXT PRIMARY KEY,
+		email TEXT,
+		password TEXT,
+		hashedPassword TEXT
+		)`;
+
+const create2FATable = 
+	`CREATE TABLE IF NOT EXISTS two_factor_codes (
+		id INTEGER PRIMARY KEY AUTOINCREMENT,
+		userId TEXT NOT NULL,
+		code TEXT NOT NULL,
+		hashedCode TEXT NOT NULL,
+		nonce BLOB NOT NULL,
+		expiresAt DATETIME NOT NULL,
+		used BOOLEAN DEFAULT FALSE,
+		attempts INTEGER NOT NULL DEFAULT 0,
+		ipAddress TEXT,
+		userAgent TEXT,
+		createdAt DATETIME DEFAULT CURRENT_TIMESTAMP,
+		FOREIGN KEY (userId) REFERENCES auth (userId) ON DELETE CASCADE
+		)`;

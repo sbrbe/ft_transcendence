@@ -8,16 +8,16 @@ declare module 'fastify' {
 }
 
 export interface User {
-  user_id: string;
-  last_name: string;
-  first_name: string;
+  userId: string;
+  lastName: string;
+  firstName: string;
   username: string;
-  avatar_url: string;
+  avatarUrl: string;
 }
 
 export interface UserUpdate {
-  last_name?: string;
-  first_name?: string;
+  lastName?: string;
+  firstName?: string;
   username?: string;
-  avatar_url?: string;
+  avatarUrl?: string;
 }

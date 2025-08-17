@@ -1,14 +1,14 @@
 import { FastifyReply, FastifyRequest } from 'fastify';
-import db from '../init_db.js';
+import { db } from '../init_db.js';
 
 
 export async function deleteUser( 
-	req: FastifyRequest<{ Params: { user_id: string } }>,
+	req: FastifyRequest<{ Params: { userId: string } }>,
 	reply: FastifyReply) {
-		const { user_id } = req.params;
+		const { userId } = req.params;
 
 		try {
-			const deleted = deleteAuthUser(user_id);
+			const deleted = deleteAuthUser(userId);
 			if (!deleted)
 				return reply.status(404).send({ error: 'User not found'});
 			return reply.status(204).send();
@@ -17,8 +17,8 @@ export async function deleteUser(
 		}
 }
 
-function deleteAuthUser(user_id: string): boolean {
+function deleteAuthUser(userId: string): boolean {
 	const stmt = db.prepare('DELETE FROM auth WHERE user_id = ?');
-	const res = stmt.run(user_id);
+	const res = stmt.run(userId);
 	return res.changes > 0;
 }

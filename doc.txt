@@ -15,6 +15,7 @@ npm install bcrypt
 npm i --save-dev @types/bcrypt
 npm i @fastify/cookie
 npm i @fastify/jwt
+npm i resend
 
 
 Génération clé JWT : openssl rand -base64 48

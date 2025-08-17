@@ -15,9 +15,9 @@ export default async function registerRoute(app: FastifyInstance) {
 			response: {
 				201: {
 					type: 'object',
-					required: ['user_id'],
+					required: ['userId'],
 					properties: {
-						user_id: { type: 'string', format: 'uuid' }
+						userId: { type: 'string', format: 'uuid' }
 					}
 				},
 				400: {

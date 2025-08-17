@@ -2,7 +2,7 @@ import { FastifyInstance } from "fastify";
 import { deleteUser } from "../lib/deleteUser.js";
 
 export default async function deleteUserRoute(app: FastifyInstance) {
-	app.delete('/delete/:user_id', {
+	app.delete('/delete/:userId', {
 		schema: {
 			description: 'Delete user if register fail',
 			params: {

@@ -3,16 +3,16 @@ import { getUserById } from './utils.js';
 
 
 export async function getEmail(
-	req: FastifyRequest<{ Params: { user_id: string } }>,
+	req: FastifyRequest<{ Params: { userId: string } }>,
 	reply: FastifyReply) {
-		const { user_id } = req.params;
-		console.log('USER_ID IN GET_USER = ', user_id);
+		const { userId } = req.params;
+		console.log('USER_ID IN GET_USER = ', userId);
 		try {
-			const user = getUserById(user_id);
+			const user = getUserById(userId);
 			if (!user) {
 				return reply.status(404).send({ error: 'User not found' });
 			}
-			return reply.status(200).send({ email: user.email, user_id: user_id });
+			return reply.status(200).send({ userId: userId, email: user.email });
 		} catch (error) {
 			return reply.status(500).send({ error: 'Server error' });
 		}

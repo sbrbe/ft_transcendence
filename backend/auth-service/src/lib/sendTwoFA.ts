@@ -1,0 +1,31 @@
+import { Resend } from "resend";
+
+if (!process.env.RESEND_KEY) {
+	throw new Error("RESEND_KEY is not set");
+}
+
+const resend = new Resend(process.env.RESEND_KEY);
+
+export async function sendTwoFactorCode(email: string, code: string) {
+	try {
+		const { data, error } = await resend.emails.send({
+			from: "onboarding@resend.dev",
+			to: [email],
+			subject: "Your login verification code",
+			html:`
+			<p>Voici votre code 2FA :</p>
+			<p style="font-size:22px;font-weight:700;letter-spacing:2px">${code}</p>
+			<p>Il expire dans <b>5 minutes</b>.</p>`,
+		});
+
+		if (error) {
+			console.error("Resend error object:", error);
+			console.error("Resend error JSON", JSON?.stringify(error));
+			throw new Error(`Failed to send 2FA code : ${error.message}`);
+		}
+		return data;
+	} catch (error) {
+		console.error("Error sending 2FA code", error);
+		throw error;
+	}
+}

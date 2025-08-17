@@ -2,25 +2,25 @@ import { FastifyInstance } from "fastify";
 import { getUserProfile } from "../lib/getUser.js";
 
 export default async function getUserRoute(app: FastifyInstance) {
-	app.get('/getUser/:user_id', {
+	app.get('/getUser/:userId', {
 		schema: {
 			description: 'Get user profile',
 			params: {
 				type: 'object',
-				required: ['user_id'],
+				required: ['userId'],
 				properties: {
-					user_id: { type: 'string', format: 'uuid'}
+					userId: { type: 'string', format: 'uuid'}
 				}
 			},
 			response: {
 				200: {
 					type: 'object',
-					required: ['last_name', 'first_name', 'username', 'avatar_url'],
+					required: ['lastName', 'firstName', 'username', 'avatarUrl'],
 					properties: {
-						last_name: { type: 'string' },
-						first_name: { type: 'string' },
+						lastName: { type: 'string' },
+						firstName: { type: 'string' },
 						username: { type: 'string' },
-						avatar_url: { type: 'string' }
+						avatarUrl: { type: 'string' }
 					}
 				},
 				404: {

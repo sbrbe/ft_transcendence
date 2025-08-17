@@ -7,9 +7,9 @@ export default async function logoutRoute(app:FastifyInstance) {
 			description: 'Disconnect user',
 			body: {
 				type: 'object',
-				required: ['user_id'],
+				required: ['userId'],
 				properties: {
-					user_id: { type: 'string', format: 'uuid' }
+					userId: { type: 'string', format: 'uuid' }
 				}
 			},
 			response: {

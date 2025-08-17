@@ -2,23 +2,23 @@ import { FastifyInstance } from "fastify";
 import { getEmail } from '../lib/getEmail.js';
 
 export default async function getEmailRoute(app: FastifyInstance) {
-	app.get('/getEmail/:user_id', {
+	app.get('/getEmail/:userId', {
 		schema: {
 			description: 'Get email',
 			params: {
 				type: 'object',
-				required: ['user_id'],
+				required: ['userId'],
 				properties: {
-					user_id: { type: 'string', format: 'uuid' }
+					userId: { type: 'string', format: 'uuid' }
 				}
 			},
 			response: {
 				200: {
 					type: 'object',
-					required: ['email', 'user_id'],
+					required: ['email', 'userId'],
 					properties: {
 						email: { type: 'string', format: 'email' },
-						user_id: { type: 'string', format: 'uuid' }
+						userId: { type: 'string', format: 'uuid' }
 					}
 				},
 				404: {

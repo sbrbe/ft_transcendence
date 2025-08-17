@@ -14,12 +14,12 @@ try {
 try {
 	db.exec(
 	`CREATE TABLE IF NOT EXISTS users (
-		user_id TEXT PRIMARY KEY,
-		first_name TEXT,
-		last_name TEXT,
+		userId TEXT PRIMARY KEY,
+		firstName TEXT,
+		lastName TEXT,
 		username TEXT,
-		avatar_url TEXT,
-		is_online BOOLEAN DEFAULT FALSE
+		avatarUrl TEXT,
+		isOnline BOOLEAN DEFAULT FALSE
 		)`
 	);
 	console.log('✅ Users table created or already existing');
@@ -30,9 +30,9 @@ try {
 try {
 	db.exec(
 	`CREATE TABLE IF NOT EXISTS friendships (
-		user_id TEXT PRIMARY KEY,
-		requester_id TEXT NOT NULL,
-		addressee_id TEXT NOT NULL,
+		userId TEXT PRIMARY KEY,
+		requesterId TEXT NOT NULL,
+		addresseeId TEXT NOT NULL,
 		status TEXT NOT NULL DEFAULT 'pending'
 		)`
 	);
