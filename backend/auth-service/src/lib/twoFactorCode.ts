@@ -15,10 +15,10 @@ export interface TwoFactorCode {
 	createdAt: string;
 }
 
-if (!process.env.TWO_FA_SECRET)
+if (!process.env.TRANSCENDENCE_KEY)
 	throw new Error("TWO_FA_SECRET is not set");
 
-const TWO_FA_SECRET = process.env.TWO_FA_SECRET;
+const TWO_FA_SECRET = process.env.TRANSCENDENCE_KEY;
 const timeLimitMinutes = 5;
 const maxAttempts = 5;
 

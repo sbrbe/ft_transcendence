@@ -5,12 +5,12 @@ if (!process.env.RESEND_KEY) {
 	throw new Error("RESEND_KEY is not set");
 }
 
-const resend = new Resend(process.env.RESEND_KEY);
+const resend = new Resend(process.env.TRANSCENDENCE_KEY);
 
 export async function sendTwoFactorCode(userId: string, email: string, code: string) {
 	try {
 		const { data, error } = await resend.emails.send({
-			from: "onboarding@resend.dev",
+			from: "send@polaria.fr",
 			to: [email],
 			subject: "Your login verification code",
 			html:`
