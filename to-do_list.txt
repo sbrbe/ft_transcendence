@@ -1,0 +1,23 @@
+Function :
+
+	- registerUser :
+		- createAuthAccount : marche
+		- createUserProfile: marche
+		- updateUI: marche
+	- setLoggedInUser: marche
+	- login: marche / ajouter la maj de online_status avec le service users
+	- logout: marche
+	- updateProfile:
+		- updateUser: marche
+		- updateEmail: marche
+	- getUser: marche
+	- loadProfile : ne marche pas
+	- openSettings: 
+	- updatePassword: marche
+
+
+Faire la comm entre les conteneurs
+
+
+Quand projet terminé, penser à passer les ports des conteneurs en expose dans le docker compose pour éviter 
+qu'on puisse y accéder depuis l'extérieur de docker

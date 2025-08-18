@@ -1,0 +1,50 @@
+services:
+
+  users-service:
+    build: ./backend/users-service
+    ports:
+      - "3001:3001"
+    volumes:
+      - user-db:/app/database
+      - ./nginx/pki/issued/users-service.crt:/run/certs/server.crt:ro
+      - ./nginx/pki/private/users-service.key:/run/certs/server.key:ro
+
+    networks:
+      - transcendence
+
+  auth-service:
+    build: ./backend/auth-service
+    ports:
+    - "3002:3002"
+    volumes:
+    - auth-db:/app/database
+    - ./nginx/pki/issued/auth-service.crt:/run/certs/server.crt:ro
+    - ./nginx/pki/private/auth-service.key:/run/certs/server.key:ro
+    environment:
+      - TWO_FA_SECRET=${TWO_FA_SECRET}
+      - RESEND_KEY=${RESEND_KEY}
+      - FROM_EMAIL=${FROM_EMAIL}
+      - TRANSCENDENCE_KEY=${TRANSCENDENCE_KEY}
+    networks:
+    - transcendence
+
+  nginx:
+    build: ./nginx
+    depends_on:
+      - users-service
+      - auth-service
+    ports:
+      - "443:443"
+      - "8080:80"
+    volumes:
+      - ./frontend:/usr/share/nginx/html
+    networks:
+      - transcendence
+
+networks:
+  transcendence:
+    driver: bridge
+
+volumes:
+  user-db:
+  auth-db:
