@@ -16,26 +16,26 @@ export default async function updateProfileRoute(app: FastifyInstance) {
 					type: 'object',
 					properties: {
 						userId: { type: 'string', format: 'uuid' },
-						lastName: { type: 'string' },
-						firstName: { type: 'string' },
-						username: { type: 'string' },
-						avatarUrl: { type: 'string' },
+						lastName: { type: 'string', minLength: 1, maxLength: 20 },
+						firstName: { type: 'string', minLength: 1, maxLength: 20 },
+						username: { type: 'string', minLength: 1, maxLength: 20 },
+						avatarUrl: { type: 'string', minLength: 1, maxLength: 20 },
 					},
 					anyOf: [
-						{ required: ['last_name'] },
-						{ required: ['first_name'] },
+						{ required: ['lastName'] },
+						{ required: ['firstName'] },
 						{ required: ['username'] },
-						{ required: ['avatar_url'] },
+						{ required: ['avatarUrl'] },
 					]
 				},
 				response: {
 					200: {
 						type: 'object',
 						properties: {
-							lastName: { type: 'string' },
-							firstName: { type: 'string' },
-							username: { type: 'string' },
-							avatarUrl: { type: 'string' }
+							lastName: { type: 'string', minLength: 1, maxLength: 20 },
+							firstName: { type: 'string', minLength: 1, maxLength: 20 },
+							username: { type: 'string', minLength: 1, maxLength: 20 },
+							avatarUrl: { type: 'string', minLength: 1, maxLength: 20 }
 						}
 					},
 					400: {

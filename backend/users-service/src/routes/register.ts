@@ -10,9 +10,9 @@ export default async function registerRoute(app:FastifyInstance){
 					required: ['userId', 'username', 'lastName', 'firstName'],
 					properties: {
 						userId: { type: 'string', format: 'uuid' },
-						username: { type: 'string' },
-						lastName: { type: 'string' },
-						firstName: { type: 'string' },
+						username: { type: 'string', minLength: 1, maxLength: 20 },
+						lastName: { type: 'string', minLength: 1, maxLength: 20 },
+						firstName: { type: 'string', minLength: 1, maxLength: 20 },
 					}
 				},
 				response: {

@@ -123,6 +123,19 @@
     <pre id="logLogin" class="text-sm text-red-600"></pre>
   </div>
 
+<!-- Vue 2FA -->
+<div id="view-2fa" class="hidden p-8 max-w-md mx-auto bg-white rounded shadow mt-8 space-y-4">
+  <h2 class="text-2xl font-semibold text-center text-gray-700">Vérification 2FA</h2>
+  <input id="code_2fa" type="text" maxlength="6" placeholder="Code à 6 chiffres"
+    class="w-full border px-3 py-2 rounded text-center tracking-widest text-xl" />
+
+  <button onclick="verify2FA()" class="bg-indigo-600 hover:bg-indigo-700 text-white px-4 py-2 rounded w-full">
+    Vérifier
+  </button>
+
+  <pre id="log2FA" class="text-sm text-red-600"></pre>
+</div>
+
   <div id="view-settings" class="hidden p-8 max-w-md mx-auto bg-white rounded shadow mt-8 space-y-4">
     <h2 class="text-2xl font-semibold text-center text-gray-700">Paramètres</h2>
 <div class="flex justify-center gap-4">
@@ -185,6 +198,8 @@
 function toggleRegister() {
   showOnly('view-register');
 }
+
+let currentUserId = null;
 
 async function registerUser() {
   const data = {
@@ -302,13 +317,7 @@ async function loginUser() {
     if (!loginRes.ok) {
     throw new Error(`Login error: ${ loginData.error || loginRes.statusText }`);
     }
-
-    const user = await getUser(loginData.userId);
-    console.log('user = ', user);
-    setLoggedInUser(user);
-    document.getElementById('view-login').style.display = 'none';
-    document.getElementById('logLogin').textContent = '';
-
+    show2FA(loginData.userId);
     return { success: true, userId: loginData.userId};
 
   } catch (error) {
@@ -316,6 +325,43 @@ async function loginUser() {
     return { success: false };
   }
 }
+
+function show2FA(userId) {
+  currentUserId = userId
+  document.getElementById('view-login').classList.add('hidden');
+  document.getElementById('view-2fa').classList.remove('hidden');
+  document.getElementById('log2FA').textContent = '';
+  document.getElementById('code_2fa').value = '';
+  document.getElementById('code_2fa').focus();
+}
+
+async function verify2FA() {
+    const code = document.getElementById('code_2fa').value.trim();
+
+    if (!code || code.length !== 6) {
+      document.getElementById('log2FA').textContent = 'Veuillez entrer un code à 6 chiffres';
+      return;
+    }
+
+    try {
+      const res = await fetch('/auth/2fa/verify', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          userId: currentUserId,
+          code })
+      });
+
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || 'Vérification échouée');
+
+      const user = await getUser(currentUserId);
+      setLoggedInUser(user);
+      document.getElementById('view-2fa').classList.add('hidden');
+    } catch (err) {
+      document.getElementById('log2FA').textContent = 'Erreur : ' + err.message;
+    }
+  }
 
 async function logout() {
   const user = JSON.parse(localStorage.getItem('user'));
@@ -433,7 +479,7 @@ async function updateUser(user, data) {
   method: 'PUT',
   headers: { 'Content-Type': 'application/json' },
   body: JSON.stringify({
-    user_id: filteredData.user_id,
+    userId: filteredData.userId,
     lastName: filteredData.lastName,
     firstName: filteredData.firstName,
     username: filteredData.username,
@@ -448,7 +494,7 @@ async function updateUser(user, data) {
 }
 
 async function updateEmail(user, email) {
-  const updateRes = await fetch(`/auth/email/${user.user_id}`, {
+  const updateRes = await fetch(`/auth/email/${user.userId}`, {
     method: 'PUT',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({
@@ -463,12 +509,12 @@ async function updateEmail(user, email) {
   return updateData;
 }
 
-async function getUser(user_id) {
-  console.log('USER_ID = ', user_id);
+async function getUser(userId) {
+  console.log('userId = ', userId);
   try {
     const [userRes, authRes] = await Promise.all ([
-      fetch(`/users/getUser/${user_id}`),
-      fetch(`/auth/getEmail/${user_id}`)
+      fetch(`/users/getUser/${userId}`),
+      fetch(`/auth/getEmail/${userId}`)
     ]);
 
     if (!userRes.ok || !authRes.ok) {
@@ -480,7 +526,7 @@ async function getUser(user_id) {
       authRes.json()
     ]);
 
-    return { ...user, email: auth.email, user_id: auth.user_id };
+    return { ...user, email: auth.email, userId: auth.userId };
   } catch (error) {
     console.error('getUser error: ', error);
     return null;
@@ -501,7 +547,7 @@ async function updatePassword() {
   }
 
   try {
-    const updateRes = await fetch(`auth/password/${user.user_id}`, {
+    const updateRes = await fetch(`auth/password/${user.userId}`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({

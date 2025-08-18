@@ -6,6 +6,7 @@ import loginRoute from "./login.js";
 import registerRoute from "./register.js";
 import updateEmailRoute from "./updateEmail.js";
 import updatePasswordRoute from "./updatePassword.js";
+import loginVerifyRoute from "./login_verify.js";
 
 export default async function registerAllRoutes(app: FastifyInstance) {
 	await app.register(deleteUserRoute);
@@ -14,4 +15,5 @@ export default async function registerAllRoutes(app: FastifyInstance) {
 	await app.register(registerRoute);
 	await app.register(updateEmailRoute);
 	await app.register(updatePasswordRoute);
+	await app.register(loginVerifyRoute);
 }

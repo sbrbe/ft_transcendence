@@ -18,8 +18,8 @@ export async function updateProfile(
 				return reply.status(404).send( { error: 'User not found' });
 			}
 			return reply.status(200).send(res);
-		} catch (error) {
-			return reply.status(500).send({ error: 'Profile update failed' });
+		} catch (error: any) {
+			return reply.status(500).send({ error: error.message });
 		}
 }
 

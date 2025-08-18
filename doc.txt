@@ -32,3 +32,10 @@ Génération clé JWT : openssl rand -base64 48
 | **409** | Conflict              | ❌ Conflit de données (ex: email déjà utilisé)                           |
 | **422** | Unprocessable Entity  | ❌ Données valides mais sémantiquement incorrectes (ex: password faible) |
 | **500** | Internal Server Error | ❌ Erreur interne du serveur (bug, crash inattendu)                      |
+
+
+    const user = await getUser(loginData.userId);
+    console.log('user = ', user);
+    setLoggedInUser(user);
+    document.getElementById('view-login').style.display = 'none';
+    document.getElementById('logLogin').textContent = '';

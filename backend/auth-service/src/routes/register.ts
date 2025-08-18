@@ -9,7 +9,7 @@ export default async function registerRoute(app: FastifyInstance) {
 				required: ['email', 'password'],
 				properties: {
 					email: { type: 'string', format: 'email' },
-					password: { type: 'string', minLength: 8}
+					password: { type: 'string', minLength: 8, maxLength: 20 }
 				}
 			},
 			response: {

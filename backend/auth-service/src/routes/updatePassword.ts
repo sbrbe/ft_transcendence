@@ -17,8 +17,8 @@ export default async function updatePasswordRoute(app: FastifyInstance)
 				type: 'object',
 				required: ['oldPassword', 'newPassword'],
 				properties: {
-					oldPassword: { type: 'string', minLength: 8 },
-					newPassword: { type: 'string', minLength: 8 }
+					oldPassword: { type: 'string', minLength: 8, maxLength: 20 },
+					newPassword: { type: 'string', minLength: 8, maxLength: 20 }
 				}
 			},
 			response: {

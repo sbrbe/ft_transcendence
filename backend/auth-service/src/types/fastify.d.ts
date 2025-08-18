@@ -24,3 +24,8 @@ export interface authUser {
   password: string;
   hashedPassword: string;
 }
+
+export interface verify2FA {
+  userId: string;
+  code: string;
+}

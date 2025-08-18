@@ -37,8 +37,8 @@ try {
 		)`
 	);
 	console.log('✅ Users table created or already existing');
-} catch (error) {
-	console.error('❌ Error SQL: ', error);
+} catch (error: any) {
+	console.error('❌ Error SQL: ', error.message);
 }
 
 export default db;

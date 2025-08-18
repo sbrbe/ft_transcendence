@@ -1,4 +1,5 @@
 import { Resend } from "resend";
+import { deleteCode } from "./twoFactorCode.js";
 
 if (!process.env.RESEND_KEY) {
 	throw new Error("RESEND_KEY is not set");
@@ -6,7 +7,7 @@ if (!process.env.RESEND_KEY) {
 
 const resend = new Resend(process.env.RESEND_KEY);
 
-export async function sendTwoFactorCode(email: string, code: string) {
+export async function sendTwoFactorCode(userId: string, email: string, code: string) {
 	try {
 		const { data, error } = await resend.emails.send({
 			from: "onboarding@resend.dev",
@@ -21,6 +22,7 @@ export async function sendTwoFactorCode(email: string, code: string) {
 		if (error) {
 			console.error("Resend error object:", error);
 			console.error("Resend error JSON", JSON?.stringify(error));
+			deleteCode(userId);
 			throw new Error(`Failed to send 2FA code : ${error.message}`);
 		}
 		return data;

@@ -1,10 +1,11 @@
 import { db } from '../init_db.js';
-import crypto, { createHmac, randomBytes, randomInt } from 'node:crypto';
+import crypto, { createHmac, randomBytes, randomInt, timingSafeEqual } from 'node:crypto';
 
 export interface TwoFactorCode {
 	id: number;
 	userId: string;
 	code: string;
+	hashedCode: Buffer,
 	nonce: Buffer,
 	expiresAt: string;
 	used: boolean;
@@ -48,35 +49,34 @@ export function verifyTwoFactorCode(
 
 		const stmt = db.prepare(
 			`SELECT * FROM two_factor_codes
-			 WHERE userId = ? AND used IS NULL
+			 WHERE userId = ? AND used = 0
 			 ORDER BY id DESC LIMIT 1`)
 		const twoFactorCode = stmt.get(userId) as TwoFactorCode | undefined;
+		console.log('2FA row = ', twoFactorCode);
 		if (!twoFactorCode) {
-			return { success: false, error: "no code for this user" };
+			throw new Error('No code for this user');
 		}
 
 		const exp = new Date(twoFactorCode.expiresAt + "Z").getTime();
 		if (Date.now() > exp) {
-			return { success: false, error: "code expired" };
+			throw new Error('Code expired');
 		}
 
 		if (twoFactorCode.attempts >= maxAttempts) {
-			return { success: false, error: "too many attempts" };
+			throw new Error('Too many attempts');
 		}
 
 		const matchCode = hashCode(code, twoFactorCode.nonce as Buffer);
-		db.prepare(`UPDATE two_factor_codes SET attempts = + 1 WHERE id = ?`)
+		db.prepare(`UPDATE two_factor_codes SET attempts = attempts + 1 WHERE id = ?`)
 		.run( twoFactorCode.id);
-		if (!matchCode) {
-			return { success: false, error: "invalid code" };
+		if (!safeEqual(matchCode, twoFactorCode.hashedCode)) {
+			throw new Error('Invalid code');
 		}
-		db.prepare(`UPDATE two_factor_codes SET uset = TRUE WHERE id = ?`)
+		db.prepare(`UPDATE two_factor_codes SET used = TRUE WHERE id = ?`)
 		.run(twoFactorCode.id);
-		return { success: true, message: "valid code" };
 }
 
-
-function deleteCode(userId: string) {
+export function deleteCode(userId: string) {
 	const stmt = db.prepare(`DELETE FROM two_factor_codes WHERE userId = ? AND used = FALSE`);
 	return stmt.run(userId);
 }
@@ -89,4 +89,10 @@ function generateCode(): string {
 function hashCode(code: string, nonce: Buffer): Buffer {
 	return createHmac("sha256", TWO_FA_SECRET).update(Buffer.concat([nonce, Buffer.from(code, "utf8")]))
 		.digest();
+}
+
+function safeEqual(a: Buffer, b: Buffer): boolean {
+	if (a.length !== b.length)
+		return false;
+	return timingSafeEqual(a,b);
 }

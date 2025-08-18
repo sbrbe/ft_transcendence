@@ -13,7 +13,7 @@ export async function getUserProfile(
 				return reply.status(404).send({ error: 'User not found'} );
 			}
 			return reply.status(200).send(user);
-		} catch (error) {
-			return reply.status(500).send({ error: 'Server error' })
+		} catch (error: any) {
+			return reply.status(500).send({ error: error.message })
 		}
 	}

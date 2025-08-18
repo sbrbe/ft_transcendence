@@ -16,9 +16,8 @@ export async function register(
 		try {
 			const user = await createUser(userId, username, lastName, firstName);
 			return reply.code(201).send({ message: 'User created successfully !' });
-		} catch (error) {
-			if (error instanceof Error)
-				return reply.code(400).send({ error: error.message });
+		} catch (error: any) {
+			return reply.code(400).send({ error: error.message });
 		}
 }
 

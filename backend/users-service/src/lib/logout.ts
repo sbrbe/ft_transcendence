@@ -12,9 +12,8 @@ export async function logout(
 			if (!user)
 				return reply.status(404).send({ error: 'User not found' });
 			return reply.status(200).send({ userId, message: 'User disconnected' });
-		} catch (error) {
-			if (error instanceof Error)
-				return reply.status(500).send({ error: error.message });
+		} catch (error: any) {
+			return reply.status(500).send({ error: error.message });
 		}
 }
 

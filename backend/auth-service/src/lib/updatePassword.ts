@@ -15,8 +15,8 @@ export async function updatePassword(
 				return reply.status(404).send({ error: 'User not found' });
 			}
 			return reply.status(204).send();
-		} catch (error) {
-			return reply.status(400).send({ error: 'Wrong password' });
+		} catch (error: any) {
+			return reply.status(400).send({ error: error.message });
 		}
 }
 
@@ -24,6 +24,9 @@ async function updatePasswordService(userId: string, oldPassword: string, newPas
 	const user = getUserById(userId);
 	if (!user)
 		return false;
+	if (!strongPasswordRegex.test(newPassword))
+		throw new Error ('Password too weak');
+
 	const match = await bcrypt.compare(oldPassword, user.hashedPassword);
 	console.log('oldpassword_hashed = ', user.hashedPassword, 'oldpassword = ', oldPassword);
 	if (!match)
@@ -33,3 +36,5 @@ async function updatePasswordService(userId: string, oldPassword: string, newPas
 	const res = stmt.run(newPassword, hashNewPass, userId);
 	return res.changes > 0;
 }
+
+const strongPasswordRegex = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[^A-Za-z0-9]).{8,}$/;

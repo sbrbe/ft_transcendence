@@ -13,8 +13,8 @@ export async function updateEmail(
 				return reply.status(404).send({ error: 'User not found' });
 			}
 			return reply.status(200).send({ userId, email});
-		} catch (error) {
-			return reply.status(500).send({ error: 'Email update failed' });
+		} catch (error: any) {
+			return reply.status(500).send({ error: error.message });
 		}
 }
 
