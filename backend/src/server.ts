@@ -1,269 +1,141 @@
 import Fastify from 'fastify';
-import WebSocket, { WebSocketServer } from 'ws';
+import { WebSocketServer, WebSocket, RawData } from 'ws';
+import { gameConfig } from '../../frontend/engine_play/dist/types.js';
+import { GameLogic } from '../../frontend/engine_play/dist/game_logic.js';
+
+type Dir = 'up'|'down'|'stop';
+type Role = 'left'|'right';
+
+type ClientInfo = { ws: WebSocket; role: Role; lastDir: Dir };
 
 const app = Fastify();
-const server = app.server; // ← récupère le serveur Node intégré à Fastify
+const httpServer = app.server;
 
-const wss = new WebSocketServer({ server });
+// Taille logique du terrain (le rendu se fait côté client)
+const CANVAS_W = 800;
+const CANVAS_H = 600;
 
-// === Typage minimal pour ton joueur ===
-interface Player {
-  ws: WebSocket;
-  role: 'left' | 'right';
-}
+const wss = new WebSocketServer({ server: httpServer, path: '/ws' });
 
-type Role = 'left' | 'right';
+type Room = {
+  id: string;
+  engine: GameLogic;
+  clients: ClientInfo[];  // [left, right]
+  lastTick: number;
+};
 
-interface Game {
-  id: number;
-  players: { [key in Role]?: Player };
-  state: StateOnline;
-  interval?: NodeJS.Timeout;
-  paused: boolean;
-}
+const rooms: Room[] = [];
+let pending: ClientInfo | null = null;
 
-let games: Game[] = [];
-let nextGameId = 1;
-const MAX_GAMES = 8;
-
-interface Ball {
-  x: number;
-  y: number;
-  dx: number;
-  dy: number;
-  radius: number;
-}
-
-interface Paddle {
-  y: number;
-  dy: number;
-}
-
-interface StateOnline {
-  ball: Ball;
-  paddles: {
-    left: Paddle;
-    right: Paddle;
-  };
-  score: {
-    left: number;
-    right: number;
-  };
-  countdownText: string | null;
-}
-
-// === Fonctions de jeu ===
-
-function resetBall(state: StateOnline) {
-  state.ball.x = 400;
-  state.ball.y = 300;
-  state.ball.dx = Math.random() < 0.5 ? 4 : -4;
-  state.ball.dy = Math.random() < 0.5 ? 4 : -4;
-}
-
-function startCountdown(game: Game, callback: () => void) {
-  let countdown = 3;
-  game.state.countdownText = countdown.toString();
-  game.paused = true;
-  broadcastState(game);
-
-  const interval = setInterval(() => {
-    countdown--;
-    if (countdown > 0) {
-      game.state.countdownText = countdown.toString();
-    } else if (countdown === 0) {
-      game.state.countdownText = 'GO!';
-    } else {
-      game.state.countdownText = null;
-      game.paused = false;
-      clearInterval(interval);
-      callback();
-    }
-    broadcastState(game);
-  }, 1000);
-}
-
-function updateGame(game: Game) {
-  if (game.paused) return;
-  const b = game.state.ball;
-  const p = game.state.paddles;
-  const s = game.state.score;
-
-  p.left.y += p.left.dy;
-  p.right.y += p.right.dy;
-  p.left.y = Math.max(0, Math.min(500, p.left.y));
-  p.right.y = Math.max(0, Math.min(500, p.right.y));
-
-  b.x += b.dx;
-  b.y += b.dy;
-
-  if (b.y <= 0 || b.y >= 600) b.dy *= -1;
-
-  if ((b.x - b.radius < 20 && b.y > p.left.y && b.y < p.left.y + 100) ||
-      (b.x + b.radius > 780 && b.y > p.right.y && b.y < p.right.y + 100)) {
-    b.dx *= -1.05;
-    b.dy *= 1.05;
-  }
-
-  if (b.x < 0) {
-    s.right++;
-    if (s.right === 3) finishOnlineGame(game, '🅿️ Droite a gagné !');
-    else {
-      resetBall(game.state);
-      startCountdown(game, () => {});
-    }
-  } else if (b.x > 800) {
-    s.left++;
-    if (s.left === 3) finishOnlineGame(game, '🅿️ Gauche a gagné !');
-    else {
-      resetBall(game.state);
-      startCountdown(game, () => {});
-    }
-  }
-    broadcastState(game);
-
-}
-
-function broadcastState(game: Game) {
-  const msg = JSON.stringify({ type: 'state', state: game.state });
-  for (const role of ['left', 'right'] as const) {
-    const player = game.players[role];
-    if (player?.ws.readyState === WebSocket.OPEN) {
-      player.ws.send(msg);
-    }
-  }
-}
-
-function finishOnlineGame(game: Game, winnerText: string) {
-  game.paused = true;
-  game.state.countdownText = winnerText;
-  broadcastState(game);
-
-  setTimeout(() => {
-    game.state.score.left = 0;
-    game.state.score.right = 0;
-    resetBall(game.state);
-    startCountdown(game, () => {
-      game.paused = false;
-    });
-  }, 5000);
-}
-
-
-function finishOnlineGameByForfeit(game: Game, winnerText: string) {
-  game.paused = true;
-  game.state.countdownText = winnerText;
-  broadcastState(game);
-
-  const msg = JSON.stringify({ type: 'forfeit', message: winnerText });
-  for (const role of ['left', 'right'] as const) {
-    const player = game.players[role];
-    if (player?.ws.readyState === WebSocket.OPEN) {
-      player.ws.send(msg);
-    }
-  }
-
-  setTimeout(() => {
-    game.state.score.left = 0;
-    game.state.score.right = 0;
-    resetBall(game.state);
-    game.state.countdownText = null;
-    broadcastState(game);
-  }, 5000);
-}
-
-
-function createNewGame(): Game {
-  const state: StateOnline = {
-    ball: { x: 400, y: 300, dx: 0, dy: 0, radius: 8 },
-    paddles: {
-      left: { y: 250, dy: 0 },
-      right: { y: 250, dy: 0 },
-    },
-    score: { left: 0, right: 0 },
-    countdownText: null
+function createRoom(a: ClientInfo, b: ClientInfo): Room {
+  const config: gameConfig = {
+    mode: '1v1',
+    playerSetup: [
+      { type: 'human', playerId: 1 },
+      { type: 'human', playerId: 2 },
+      // P3/P4 absents → le moteur les mettra à null
+    ]
   };
 
-  const game: Game = {
-    id: nextGameId++,
-    players: {},
-    state,
-    paused: true
+  const engine = new GameLogic(CANVAS_W, CANVAS_H, config);
+  const room: Room = {
+    id: 'room_' + Date.now(),
+    engine,
+    clients: [a, b],
+    lastTick: Date.now(),
   };
+  rooms.push(room);
 
-  games.push(game);
-  return game;
+  a.ws.send(JSON.stringify({ type: 'start', role: 'left', w: CANVAS_W, h: CANVAS_H }));
+  b.ws.send(JSON.stringify({ type: 'start', role: 'right', w: CANVAS_W, h: CANVAS_H }));
+  return room;
 }
-
-
-// === Gestion des connexions WS ===
 
 wss.on('connection', (ws: WebSocket) => {
-  let assigned = false;
+  const client: ClientInfo = { ws, role: 'left', lastDir: 'stop' };
 
-  // Nettoie les parties avec 0 joueur (au cas où)
-games = games.filter(game => game.players.left || game.players.right);
-  for (const game of games) {
-    if (!game.players.left) {
-      game.players.left = { ws, role: 'left' };
-      ws.send(JSON.stringify({ type: 'role', role: 'left', gameId: game.id }));
-      assigned = true;
-    } else if (!game.players.right) {
-      game.players.right = { ws, role: 'right' };
-      ws.send(JSON.stringify({ type: 'role', role: 'right', gameId: game.id }));
-      assigned = true;
-
-      game.players.left?.ws.send(JSON.stringify({
-        type: 'start',
-        message: '✅ Partie prête. Vous êtes joueur de gauche.'
-      }));      
-      resetBall(game.state);
-      startCountdown(game, () => {
-        game.paused = false;
-        game.interval = setInterval(() => updateGame(game), 1000 / 60);
-      });
-    }
-
-    if (assigned) {
-      setupGameCommunication(ws, game);
-      return;
-    }
+  if (!pending) {
+    client.role = 'left';
+    pending = client;
+    ws.send(JSON.stringify({ type: 'waiting', role: 'left' }));
+  } else {
+    client.role = 'right';
+    const a = pending; pending = null;
+    createRoom(a, client);
   }
 
-  if (games.length >= MAX_GAMES) {
-    ws.send(JSON.stringify({
-      type: 'error',
-      message: '❌ Toutes les parties sont actuellement pleines. Veuillez réessayer dans quelques instants.'
-    }));
-    ws.close(); // tu peux aussi l’enlever si tu préfères laisser le socket ouvert
-    return;
-  }  
-
-  // Si aucun slot libre, on crée un nouveau jeu
-  const newGame = createNewGame();
-  newGame.players.left = { ws, role: 'left' };
-  ws.send(JSON.stringify({ type: 'role', role: 'left', gameId: newGame.id }));
-  setupGameCommunication(ws, newGame);
-});
-
-function setupGameCommunication(ws: WebSocket, game: Game) {
-  ws.on('message', msg => {
-    const data = JSON.parse(msg.toString());
-    if (data.type === 'paddleMove') {
-      game.state.paddles[data.role as Role].dy = data.dy;
-    }
+  ws.on('message', (raw: RawData) => {
+    try {
+      const msg = JSON.parse(raw.toString());
+      if (msg.type === 'input') {
+        // retrouve la room du client et note sa direction
+        for (const room of rooms) {
+          const ci = room.clients.find(c => c.ws === ws);
+          if (ci) { ci.lastDir = msg.dir as Dir; break; }
+        }
+      }
+    } catch { /* ignore */ }
   });
 
   ws.on('close', () => {
-    if (game.interval) clearInterval(game.interval);
-    finishOnlineGameByForfeit(game, `🅿️ ${game.players.left?.ws === ws ? 'Gauche' : 'Droite'} a quitté la partie`);
-    // Supprime la game de la liste globale
-games = games.filter(g => g !== game);
+    // Si c'était le "pending"
+    if (pending && pending.ws === ws) { pending = null; return; }
+    // Sinon enlève le client de sa room et "vide" la room
+    for (let i = rooms.length - 1; i >= 0; i--) {
+      const r = rooms[i];
+      if (r.clients.some(c => c.ws === ws)) {
+        // notifie l'autre client
+        for (const c of r.clients) {
+          if (c.ws !== ws && c.ws.readyState === WebSocket.OPEN) {
+            c.ws.send(JSON.stringify({ type: 'info', message: 'opponent disconnected' }));
+          }
+        }
+        rooms.splice(i, 1);
+      }
+    }
   });
-}
+});
 
+// Boucle: 60 Hz tick, 20 Hz snapshots
+const TICK_MS = Math.floor(1000 / 60);
+const SNAP_MS = Math.floor(1000 / 20);
+let lastSnap = Date.now();
 
-// === Lancement ===
-server.listen(3002, '0.0.0.0', () => {
-  console.log('🚀 WebSocket server running on http://0.0.0.0:3002');
+setInterval(() => {
+  const now = Date.now();
+
+  for (const room of rooms) {
+    room.lastTick = now;
+
+    // applique les inputs aux deux joueurs (left = index 0, right = index 1)
+    for (const ci of room.clients) {
+      const idx = (ci.role === 'left') ? 0 : 1;
+      room.engine.applyInput(idx, ci.lastDir);
+    }
+
+    // avance la simulation
+    room.engine.update();
+  }
+
+  // snapshots aux clients (20 Hz)
+  if (now - lastSnap >= SNAP_MS) {
+    lastSnap = now;
+    for (const room of rooms) {
+      const snapshot = room.engine.getSnapshot(); // alias de getGameState()
+      const payload = JSON.stringify({ type: 'state', snapshot });
+      for (const ci of room.clients) {
+        if (ci.ws.readyState === WebSocket.OPEN) {
+          ci.ws.send(payload);
+        }
+      }
+    }
+  }
+}, TICK_MS);
+
+// route ping
+app.get('/', async () => ({ ok: true }));
+
+const PORT = Number(process.env.PORT) || 3002;
+app.listen({ port: PORT, host: '0.0.0.0' }).then(() => {
+  console.log('🚀 Server + WS on', PORT);
 });

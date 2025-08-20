@@ -10,17 +10,39 @@
 //     "skipLibCheck": true
 //   }
 // }
+// {
+//   "compilerOptions": {
+//     "target": "ES6",
+//     "module": "ES6",
+//     "rootDir": "../", 
+//     "outDir": "./dist",
+//     "strict": true,
+//     "esModuleInterop": true,
+//     "forceConsistentCasingInFileNames": true,
+//     "skipLibCheck": true,
+//     "moduleResolution": "node"
+//   },
+//   "include": [
+//     "src/**/*",              // le frontend/src
+//     "../engine_play/src/**/*" // l'engine_play/src, depuis frontend/
+//   ],
+//   "exclude": [
+//     "dist"
+//   ]
+// }
 
 {
   "compilerOptions": {
-    "target": "ES6",                       // ou "ES2017" ou plus si besoin
-    "module": "ES6",                       // <-- le plus important
-    "rootDir": "./src",
-    "outDir": "./dist",
+    "target": "ES2020",
+    "module": "ESNext",
+    "moduleResolution": "Bundler",
+    "rootDir": "src",
+    "outDir": "dist",
     "strict": true,
     "esModuleInterop": true,
-    "forceConsistentCasingInFileNames": true,
-    "skipLibCheck": true,
-    "moduleResolution": "node"            // <-- ajoute ceci
-  }
+    "skipLibCheck": true
+  },
+  "references": [{ "path": "engine_play" }],
+  "include": ["src/**/*", "engine_play/src/game_logic.ts", "engine_play/src/CPU.ts", "engine_play/src/player.ts"],
+  "exclude": ["dist"]
 }

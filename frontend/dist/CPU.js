@@ -1,16 +1,34 @@
 export class CPU {
-    constructor(paddle, keys) {
+    constructor(paddle, mode, indexPaddle, canvasHeight, keys, keyboardAdapter) {
+        this.keyboardAdapter = keyboardAdapter;
+        this.name = "CPU";
         this.lastKey = null;
         this.nextDecisionMs = 0;
-        this.decideEveryMs = 1000;
-        // 🔹 NEW: on garde la cible et une deadline
+        this.decideEveryMs = 1000; // ← on garde 1 seconde
         this.cachedTargetY = null;
         this.cachedDeadlineMs = 0;
         this.paddle = paddle;
         this.keys = keys;
-        // DÉCISION IMMÉDIATE
         this.nextDecisionMs = performance.now();
+        this.gameMode = mode;
+        if (mode == '2v2') {
+            if (indexPaddle == 0 || indexPaddle == 3) {
+                this.limitTop = 0;
+                this.limitBot = (canvasHeight / 2) - paddle.height;
+            }
+            else {
+                this.limitTop = canvasHeight / 2;
+                this.limitBot = canvasHeight - paddle.height;
+            }
+        }
+        else {
+            this.limitTop = 0;
+            this.limitBot = canvasHeight - paddle.height;
+        }
     }
+    // helpers limites demi-terrain (ajout minimal)
+    canMoveUp() { return this.paddle.y > this.limitTop; }
+    canMoveDown() { return this.paddle.y < this.limitBot; }
     triangleFold(y, H) {
         let m = y % (2 * H);
         if (m < 0)
@@ -31,69 +49,108 @@ export class CPU {
     }
     release() {
         if (this.lastKey) {
-            const prev = this.lastKey === 'up' ? this.keys.up : this.keys.down;
-            window.dispatchEvent(new KeyboardEvent('keyup', { key: prev }));
+            this.keyboardAdapter.pressSynthetic(this.lastKey, false);
             this.lastKey = null;
         }
     }
     update(ball, canvasHeight) {
         const now = performance.now();
-        // 1) Tick 1 Hz (horaire fixe)
         if (now >= this.nextDecisionMs) {
             do {
                 this.nextDecisionMs += this.decideEveryMs;
             } while (now >= this.nextDecisionMs);
-            console.log('1seconde');
-            // === Décision ===
-            const impact = this.predictBall(ball, canvasHeight); // -1 si balle s'éloigne
+            const impact = this.predictBall(ball, canvasHeight); // -1 si s'éloigne
             let desired = null;
-            // Choix de la cible même si impact === -1
-            let targetY = null;
+            let targetY;
             if (impact !== -1) {
                 targetY = impact;
-                this.cachedTargetY = impact; // mémoriser la cible “utile”
+                this.cachedTargetY = impact;
             }
             else {
-                // OPTION 1 : recentrage
                 targetY = canvasHeight / 2;
-                // OPTION 2 (au lieu de recentrage) :
-                // targetY = this.cachedTargetY ?? canvasHeight / 2;
             }
-            // Deadline
-            const distX = Math.abs(this.paddle.x - (ball.x + ball.width / 2));
-            const timeToReachMs = (ball.vx !== 0) ? Math.max(0, (distX / Math.abs(ball.vx)) * 1000) : 0;
-            // limite entre 300 ms et 1000 ms pour éviter des maintiens trop longs
-            this.cachedDeadlineMs = now + Math.min(this.decideEveryMs, Math.max(300, timeToReachMs + 120));
-            // Calcul de la touche à maintenir vs targetY (même algo qu’avant)
             const paddleCenter = this.paddle.y + this.paddle.height / 2;
+            // blocs d’origine conservés (simulation clavier inchangée)
+            if (impact != -1) {
+                const speed = 7;
+                const ballCenter = impact + ball.height / 2;
+                if (ballCenter < this.paddle.y) {
+                    if (desired !== this.lastKey) {
+                        if (this.lastKey)
+                            this.keyboardAdapter.pressSynthetic(this.lastKey, false);
+                        if (desired)
+                            this.keyboardAdapter.pressSynthetic(desired, true);
+                        this.lastKey = desired;
+                    }
+                }
+                else if (ballCenter > paddleCenter + 10) {
+                    if (desired !== this.lastKey) {
+                        if (this.lastKey)
+                            this.keyboardAdapter.pressSynthetic(this.lastKey, false);
+                        if (desired)
+                            this.keyboardAdapter.pressSynthetic(desired, true);
+                        this.lastKey = desired;
+                    }
+                }
+            }
+            else {
+                const speed = 1;
+                const base = (this.limitBot + this.limitTop) / 2;
+                if (paddleCenter == base)
+                    return;
+                if (paddleCenter < base)
+                    if (desired !== this.lastKey) {
+                        if (this.lastKey)
+                            this.keyboardAdapter.pressSynthetic(this.lastKey, false);
+                        if (desired)
+                            this.keyboardAdapter.pressSynthetic(desired, true);
+                        this.lastKey = desired;
+                    }
+                    else if (paddleCenter > base)
+                        if (desired !== this.lastKey) {
+                            if (this.lastKey)
+                                this.keyboardAdapter.pressSynthetic(this.lastKey, false);
+                            if (desired)
+                                this.keyboardAdapter.pressSynthetic(desired, true);
+                            this.lastKey = desired;
+                        }
+            }
             const dead = Math.max(6, this.paddle.speed);
-            const dist = (targetY - paddleCenter);
+            const dist = targetY - paddleCenter;
             desired = (Math.abs(dist) > dead) ? (dist > 0 ? 'down' : 'up') : null;
-            // Appliquer changement de touche
+            // 🔒 garde la raquette dans sa moitié
+            if (desired === 'up' && !this.canMoveUp())
+                desired = null;
+            if (desired === 'down' && !this.canMoveDown())
+                desired = null;
+            // ✅ on réactive le press/release proprement (simulation clavier)
             if (desired !== this.lastKey) {
-                if (this.lastKey) {
-                    const prev = this.lastKey === 'up' ? this.keys.up : this.keys.down;
-                    window.dispatchEvent(new KeyboardEvent('keyup', { key: prev }));
-                }
-                if (desired) {
-                    const next = desired === 'up' ? this.keys.up : this.keys.down;
-                    window.dispatchEvent(new KeyboardEvent('keydown', { key: next }));
-                }
+                if (this.lastKey)
+                    this.keyboardAdapter.pressSynthetic(this.lastKey, false);
+                if (desired)
+                    this.keyboardAdapter.pressSynthetic(desired, true);
                 this.lastKey = desired;
             }
+            // deadline de sécu (inchangé)
+            const distX = Math.abs(this.paddle.x - (ball.x + ball.width / 2));
+            const timeToReachMs = (ball.vx !== 0) ? Math.max(0, (distX / Math.abs(ball.vx)) * 1000) : 0;
+            this.cachedDeadlineMs = now + Math.min(this.decideEveryMs, Math.max(300, timeToReachMs + 120));
         }
-        // 2) Entre deux ticks : stops locaux (dead‑zone / deadline)
+        // stops locaux (inchangés) + relâche si bord atteint
         if (this.lastKey) {
             const paddleCenter = this.paddle.y + this.paddle.height / 2;
-            // Si on a une cible mémorisée, on s’arrête en arrivant dans la fenêtre
             const dead = Math.max(6, this.paddle.speed);
             if (this.cachedTargetY !== null) {
                 const dist = this.cachedTargetY - paddleCenter;
                 if (Math.abs(dist) <= dead)
                     this.release();
             }
-            // Sécurité temps
             if (now >= this.cachedDeadlineMs)
+                this.release();
+            // relâche si on touche le bord de la moitié
+            if (this.paddle.y <= this.limitTop && this.lastKey === 'up')
+                this.release();
+            if (this.paddle.y >= this.limitBot && this.lastKey === 'down')
                 this.release();
         }
     }
