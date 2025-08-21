@@ -6,21 +6,68 @@
 
 	<style>
     @import "tailwindcss";
+    :root { --canvas-scale: 0.90; } /* 90% */
+
+    /* caché par défaut */
+/* caché par défaut */
+#mobile-controls { display: none; }
+
+/* visible seulement si l’élément a .active ET que l’appareil est tactile */
+@media (hover: none) and (pointer: coarse) {
+  #mobile-controls.active { display: flex; }
+}
+
+
+
 
     #view-game {
   position: relative;
-  display: none;           /* tu veux le voir quand tu joues */
+  display: none;            /* tu l’affiches quand tu joues */
+  min-height: 100dvh;       /* plein écran mobile, notch-friendly */
   justify-content: center;
   align-items: center;
+  padding: 12px;
+  box-sizing: border-box;
+  overflow: hidden;
+}
+/* Le wrapper sert à contraindre la taille du canvas */
+#canvas-wrapper {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  max-width: 100vw;
+  max-height: 100dvh;
 }
 
-/* Canvas tout devant */
+/* Canvas responsive : garde le ratio 4:3 et rentre dans l’écran */
 #gameCanvas {
-  display: block !important;
   background: #000;
   border: 2px solid red;
-  position: relative;      /* nécessaire pour z-index */
-  z-index: 10 !important;/* au-dessus de tout le reste */
+  z-index: 20;
+  aspect-ratio: 4 / 3;
+
+  /* 90% de l’espace utile, en respectant 4:3 */
+  width: min(calc(100vw * var(--canvas-scale)),
+             calc(100dvh * var(--canvas-scale) * 4 / 3));
+  height: auto;
+  max-height: calc(100dvh * var(--canvas-scale));
+}
+
+/* Contrôles mobiles flottants au-dessus (inchangés) */
+#mobile-controls {
+/* display: none;*/
+  position: fixed;
+  bottom: 20px;
+  left: 50%;
+  transform: translateX(-50%);
+  gap: 10px;
+  z-index: 30;
+}
+#mobile-controls button {
+  touch-action: none;
+  user-select: none;
+  -webkit-user-select: none;
+  -webkit-touch-callout: none;
 }
 
 /* Pour éviter qu’un menu flotte devant par erreur */
@@ -84,54 +131,6 @@
 #gameCanvas {
   position: relative;
   z-index: 20;
-}
-
-#mobile-controls {
-  display: none;
-  position: fixed;
-  bottom: 20px;
-  left: 50%;
-  transform: translateX(-50%);
-  gap: 10px;
-  z-index: 30;
-}
-
-#mobile-controls button {
-  touch-action: none;   /* ← bloque zoom, scroll, appui long */
-  user-select: none;    /* ← empêche la sélection de texte */
-  -webkit-user-select: none;
-  -webkit-touch-callout: none; /* ← bloque le menu "copier" sur iOS */
-}
-
-@media (max-width: 1200px) {
-  #mobile-controls {
-    display: flex !important;
-  }
-
-  #canvas-wrapper {
-  transform-origin: top left;
-  width: 800px;
-  height: 600px;
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  position: relative;
-}
-
-/* 📱 Adapter automatiquement le zoom sur mobile */
-@media (max-width: 1024px) {
-  #canvas-wrapper {
-    transform: scale(0.8); /* ou 0.6 pour smartphone */
-  }
-}
-
-@media (max-width: 768px) {
-  #canvas-wrapper {
-    transform: scale(0.4); /* plus petit sur smartphone */
-  }
-}
-
-
 }
 
 .menu-game-config {
@@ -266,7 +265,9 @@
   </div>
 
   <div id="view-game" class="flex justify-center items-center">
+    <div id="canvas-wrapper">  
       <canvas id="gameCanvas" width="800" height="600" class="rounded-lg shadow-lg"></canvas>
+    </div>
 
     <div id="mobile-controls">
       <button id="btn-up" class="text-3xl p-4 bg-blue-500 text-white rounded-full shadow">⬆️</button>

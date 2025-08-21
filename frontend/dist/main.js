@@ -82,9 +82,48 @@ class GameRenderer {
     }
 }
 class GameApp {
+    isOnlineMode() {
+        return !!this.online;
+    }
+    setMobileControlsActive(active) {
+        const el = document.getElementById('mobile-controls');
+        if (el)
+            el.classList.toggle('active', active);
+    }
+    attachMobileTouch() {
+        if (this.mobileTouchAttached)
+            return;
+        if (this.btnUp) {
+            this.btnUp.addEventListener('touchstart', this.btnUpDownHandler, { passive: false });
+            this.btnUp.addEventListener('touchend', this.btnUpUpHandler, { passive: false });
+            this.btnUp.addEventListener('touchcancel', this.btnUpUpHandler, { passive: false });
+        }
+        if (this.btnDown) {
+            this.btnDown.addEventListener('touchstart', this.btnDownDownHandler, { passive: false });
+            this.btnDown.addEventListener('touchend', this.btnDownUpHandler, { passive: false });
+            this.btnDown.addEventListener('touchcancel', this.btnDownUpHandler, { passive: false });
+        }
+        this.mobileTouchAttached = true;
+    }
+    detachMobileTouch() {
+        if (!this.mobileTouchAttached)
+            return;
+        if (this.btnUp) {
+            this.btnUp.removeEventListener('touchstart', this.btnUpDownHandler);
+            this.btnUp.removeEventListener('touchend', this.btnUpUpHandler);
+            this.btnUp.removeEventListener('touchcancel', this.btnUpUpHandler);
+        }
+        if (this.btnDown) {
+            this.btnDown.removeEventListener('touchstart', this.btnDownDownHandler);
+            this.btnDown.removeEventListener('touchend', this.btnDownUpHandler);
+            this.btnDown.removeEventListener('touchcancel', this.btnDownUpHandler);
+        }
+        this.mobileTouchAttached = false;
+    }
     constructor() {
         // en haut de la classe
         this.online = null;
+        this.mobileTouchAttached = false;
         // Jeu / rendu / boucle
         this.game = null;
         this.renderer = null;
@@ -114,22 +153,30 @@ class GameApp {
                 this.game?.setPlayerInput(e.key, false);
             }
         };
-        // Boutons : handlers souris/tactile
+        // Boutons : handlers tactile
         this.btnUpDownHandler = (ev) => {
             ev.preventDefault();
-            this.game?.setPlayerInput('ArrowUp', true);
+            if (!this.online)
+                return;
+            this.online.sendDir('up');
         };
         this.btnUpUpHandler = (ev) => {
             ev.preventDefault();
-            this.game?.setPlayerInput('ArrowUp', false);
+            if (!this.online)
+                return;
+            this.online.sendDir('stop');
         };
         this.btnDownDownHandler = (ev) => {
             ev.preventDefault();
-            this.game?.setPlayerInput('ArrowDown', true);
+            if (!this.online)
+                return;
+            this.online.sendDir('down');
         };
         this.btnDownUpHandler = (ev) => {
             ev.preventDefault();
-            this.game?.setPlayerInput('ArrowDown', false);
+            if (!this.online)
+                return;
+            this.online.sendDir('stop');
         };
         this.canvas = document.getElementById('gameCanvas');
         this.menu = document.getElementById('menu-game-config');
@@ -197,6 +244,7 @@ class GameApp {
         // UI
         this.menu.style.display = 'none';
         this.showView('view-game');
+        this.canvas.style.display = 'block';
         // renderer seul (le serveur envoie l'état)
         this.renderer = new GameRenderer(this.canvas);
         // client WS
@@ -229,51 +277,30 @@ class GameApp {
         }));
     }
     attachInputListeners() {
-        // Clavier
         window.addEventListener('keydown', this.keyDownHandler, { passive: false });
         window.addEventListener('keyup', this.keyUpHandler, { passive: false });
-        // Boutons mobiles (si présents)
-        if (this.btnUp) {
-            this.btnUp.addEventListener('mousedown', this.btnUpDownHandler);
-            this.btnUp.addEventListener('mouseup', this.btnUpUpHandler);
-            this.btnUp.addEventListener('mouseleave', this.btnUpUpHandler);
-            this.btnUp.addEventListener('touchstart', this.btnUpDownHandler, { passive: false });
-            this.btnUp.addEventListener('touchend', this.btnUpUpHandler, { passive: false });
-            this.btnUp.addEventListener('touchcancel', this.btnUpUpHandler, { passive: false });
+        const isTouch = window.matchMedia('(hover: none) and (pointer: coarse)').matches;
+        const smallScreen = window.matchMedia('(max-width: 820px)').matches;
+        if (this.isOnlineMode() && isTouch && smallScreen) {
+            this.attachMobileTouch();
+            this.setMobileControlsActive(true);
         }
-        if (this.btnDown) {
-            this.btnDown.addEventListener('mousedown', this.btnDownDownHandler);
-            this.btnDown.addEventListener('mouseup', this.btnDownUpHandler);
-            this.btnDown.addEventListener('mouseleave', this.btnDownUpHandler);
-            this.btnDown.addEventListener('touchstart', this.btnDownDownHandler, { passive: false });
-            this.btnDown.addEventListener('touchend', this.btnDownUpHandler, { passive: false });
-            this.btnDown.addEventListener('touchcancel', this.btnDownUpHandler, { passive: false });
+        else {
+            this.detachMobileTouch();
+            this.setMobileControlsActive(false);
         }
     }
     detachInputListeners() {
         window.removeEventListener('keydown', this.keyDownHandler);
         window.removeEventListener('keyup', this.keyUpHandler);
-        if (this.btnUp) {
-            this.btnUp.removeEventListener('mousedown', this.btnUpDownHandler);
-            this.btnUp.removeEventListener('mouseup', this.btnUpUpHandler);
-            this.btnUp.removeEventListener('mouseleave', this.btnUpUpHandler);
-            this.btnUp.removeEventListener('touchstart', this.btnUpDownHandler);
-            this.btnUp.removeEventListener('touchend', this.btnUpUpHandler);
-            this.btnUp.removeEventListener('touchcancel', this.btnUpUpHandler);
-        }
-        if (this.btnDown) {
-            this.btnDown.removeEventListener('mousedown', this.btnDownDownHandler);
-            this.btnDown.removeEventListener('mouseup', this.btnDownUpHandler);
-            this.btnDown.removeEventListener('mouseleave', this.btnDownUpHandler);
-            this.btnDown.removeEventListener('touchstart', this.btnDownDownHandler);
-            this.btnDown.removeEventListener('touchend', this.btnDownUpHandler);
-            this.btnDown.removeEventListener('touchcancel', this.btnDownUpHandler);
-        }
+        this.detachMobileTouch();
+        this.setMobileControlsActive(false);
     }
     launchLocalGame(config) {
         // UI
         this.menu.style.display = 'none';
         this.showView('view-game');
+        this.canvas.style.display = 'block';
         // Crée moteur + renderer
         this.game = new GameLogic(this.canvas.width, this.canvas.height, config);
         this.renderer = new GameRenderer(this.canvas);

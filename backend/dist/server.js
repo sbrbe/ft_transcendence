@@ -189,7 +189,13 @@ setInterval(() => {
         }
     }
     // 3) cleanup des rooms finies (envoie 'end' + ferme sockets + retire la room)
+    // 3) cleanup des rooms finies (envoie 1 dernier state + end + close)
     for (const r of endedRooms) {
+        try {
+            const finalSnap = r.engine.getSnapshot(); // doit contenir running:false
+            broadcast(r, { type: 'state', snapshot: finalSnap }); // ← dernier frame
+        }
+        catch { }
         endAndCleanupRoom(r, 'game_over');
     }
 }, TICK_MS);
