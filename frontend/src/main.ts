@@ -40,6 +40,20 @@ class GameRenderer {
     ctx.fillText(`Rallye max : ${state.tracker?.maxRally ?? 0}`, centerX, y);
   }
 
+  public clearRender()
+  {
+    this.ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);
+    // this.ctx.fillText('Matchmaking...', (this.canvas.width / 2), (this.canvas.height / 2));
+  }
+
+  drawMessage(text: string) {
+    this.ctx.fillStyle = "white";
+    this.ctx.font = "32px Arial";
+    this.ctx.textAlign = "center";
+    this.ctx.fillText(text, this.canvas.width / 2, this.canvas.height / 2);
+  }
+  
+
   draw(state: ReturnType<GameLogic["getGameState"]>) {
     this.ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);
     this.drawDashedLine([10, 10]);
@@ -186,7 +200,9 @@ private online: OnlineClient | null = null;
     });
 
     document.getElementById('nav-game-online')
-    ?.addEventListener('click', () => this.startOnline());
+    ?.addEventListener('click', () => {
+      this.stopAndReturnToMenu();
+      this.startOnline()});
 
     // switch 1v1 / 2v2
     this.modeSelect.addEventListener('change', () => {
@@ -234,8 +250,11 @@ private online: OnlineClient | null = null;
       },
       // onInfo (optionnel)
       (msg) => {
-        // tu peux afficher "waiting..." ou "role: left/right" si tu veux
-        // console.log(msg);
+
+        if (msg.type === "waiting") {
+          this.renderer?.clearRender();
+          this.renderer?.drawMessage("Matchmaking...");
+        }
       }
     );
   
@@ -346,6 +365,9 @@ private online: OnlineClient | null = null;
     this.online?.dispose?.();
   this.online = null;
   
+  if (this.renderer)
+    this.renderer.clearRender();
+
     this.renderer = null;
 
     // UI

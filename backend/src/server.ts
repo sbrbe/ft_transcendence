@@ -24,6 +24,37 @@ type Room = {
   lastTick: number;
 };
 
+function broadcast(room: Room, obj: any) {
+  const s = JSON.stringify(obj);
+  for (const ci of room.clients) {
+    if (ci.ws.readyState === WebSocket.OPEN) {
+      ci.ws.send(s);
+    }
+  }
+}
+
+// Nettoie TOUTE la room: notifie, stoppe moteur, retire la room, ferme sockets
+function endAndCleanupRoom(room: Room, reason: 'game_over'|'opponent_disconnected'|'server_stop') {
+  try {
+    // informe clients (le client doit capter 'end' et retourner au menu)
+    broadcast(room, { type: 'end', reason });
+
+    // stop moteur (si ton GameLogic expose une méthode)
+    try { (room.engine as any)?.dispose?.(); } catch {}
+    try { room.engine.changeStatus(false); } catch {}
+
+    // retire la room de la liste
+    const idx = rooms.indexOf(room);
+    if (idx !== -1) rooms.splice(idx, 1);
+
+    // ferme les sockets de la room (propre retour côté client)
+    for (const ci of room.clients) {
+      try { ci.ws.close(); } catch {}
+    }
+  } catch {}
+}
+
+
 const rooms: Room[] = [];
 let pending: ClientInfo | null = null;
 
@@ -50,6 +81,27 @@ function createRoom(a: ClientInfo, b: ClientInfo): Room {
   b.ws.send(JSON.stringify({ type: 'start', role: 'right', w: CANVAS_W, h: CANVAS_H }));
   return room;
 }
+
+// Helpers
+function safeSend(ws: WebSocket, obj: any) {
+  try { ws.send(JSON.stringify(obj)); } catch {}
+}
+
+function requeue(client: ClientInfo) {
+  client.lastDir = 'stop';
+  if (!pending) {
+    client.role = 'left';
+    pending = client;
+    safeSend(client.ws, { type: 'waiting', role: 'left' });
+  } else {
+    client.role = 'right';
+    const a = pending; pending = null;
+    createRoom(a, client);
+  }
+}
+
+
+
 
 wss.on('connection', (ws: WebSocket) => {
   const client: ClientInfo = { ws, role: 'left', lastDir: 'stop' };
@@ -78,36 +130,51 @@ wss.on('connection', (ws: WebSocket) => {
   });
 
   ws.on('close', () => {
-    // Si c'était le "pending"
+    // 1) si c’était le pending, on libère juste
     if (pending && pending.ws === ws) { pending = null; return; }
-    // Sinon enlève le client de sa room et "vide" la room
+  
+    // 2) sinon, trouve la room et requeue le survivant
     for (let i = rooms.length - 1; i >= 0; i--) {
       const r = rooms[i];
-      if (r.clients.some(c => c.ws === ws)) {
-        // notifie l'autre client
-        for (const c of r.clients) {
-          if (c.ws !== ws && c.ws.readyState === WebSocket.OPEN) {
-            c.ws.send(JSON.stringify({ type: 'info', message: 'opponent disconnected' }));
-          }
-        }
+      const idx = r.clients.findIndex(c => c.ws === ws);
+      if (idx !== -1) {
+        const survivor = r.clients[1 - idx];
+  
+        // informe le survivant
+        safeSend(survivor.ws, { type: 'info', code: 'opponent_disconnected' });
+  
+        // stoppe le jeu côté serveur sans fermer le survivant
+        try { r.engine.changeStatus(false); } catch {}
+  
+        // retire la room
         rooms.splice(i, 1);
+  
+        // requeue immédiat du survivant (comme une nouvelle connexion)
+        requeue(survivor);
+        break;
       }
     }
   });
+  
+  
+  // Bonus: route les erreurs vers close (déclenche le même cleanup)
+  ws.on('error', () => ws.emit('close')); 
 });
 
 // Boucle: 60 Hz tick, 20 Hz snapshots
 const TICK_MS = Math.floor(1000 / 60);
-const SNAP_MS = Math.floor(1000 / 20);
+const SNAP_MS = Math.floor(1000 / 60);
 let lastSnap = Date.now();
 
 setInterval(() => {
   const now = Date.now();
+  const endedRooms: Room[] = [];
 
+  // 1) update de chaque room
   for (const room of rooms) {
     room.lastTick = now;
 
-    // applique les inputs aux deux joueurs (left = index 0, right = index 1)
+    // applique les inputs aux deux joueurs
     for (const ci of room.clients) {
       const idx = (ci.role === 'left') ? 0 : 1;
       room.engine.applyInput(idx, ci.lastDir);
@@ -115,13 +182,19 @@ setInterval(() => {
 
     // avance la simulation
     room.engine.update();
+
+    // si la partie est finie (GameLogic.running = false), marque-la pour cleanup
+    if (!room.engine.getStatus()) {
+      endedRooms.push(room);
+    }
   }
 
-  // snapshots aux clients (20 Hz)
+  // 2) snapshots (seulement pour les rooms encore actives)
   if (now - lastSnap >= SNAP_MS) {
     lastSnap = now;
     for (const room of rooms) {
-      const snapshot = room.engine.getSnapshot(); // alias de getGameState()
+      if (!room.engine.getStatus()) continue; // ignore rooms finies
+      const snapshot = room.engine.getSnapshot();
       const payload = JSON.stringify({ type: 'state', snapshot });
       for (const ci of room.clients) {
         if (ci.ws.readyState === WebSocket.OPEN) {
@@ -130,7 +203,13 @@ setInterval(() => {
       }
     }
   }
+
+  // 3) cleanup des rooms finies (envoie 'end' + ferme sockets + retire la room)
+  for (const r of endedRooms) {
+    endAndCleanupRoom(r, 'game_over');
+  }
 }, TICK_MS);
+
 
 // route ping
 app.get('/', async () => ({ ok: true }));

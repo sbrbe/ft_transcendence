@@ -16,6 +16,8 @@ export declare class GameLogic {
     isEnd(): boolean;
     setPlayerInput(key: string, isPressed: boolean): void;
     update(): void;
+    getStatus(): boolean;
+    changeStatus(x: boolean): void;
     getGameState(): GameState;
     applyInput(playerIndex: number, dir: 'up' | 'down' | 'stop'): void;
     getSnapshot(): GameState;

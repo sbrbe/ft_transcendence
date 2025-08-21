@@ -16,7 +16,7 @@ export class GameLogic {
         this.config = conf;
         this.canvasH = H;
         this.canvasW = W;
-        this.ball = new Ball(W / 2, H / 2, W / 80, W / 80, 'white', 'right');
+        this.ball = new Ball((W / 2) - (W / 160), H / 2, W / 80, W / 80, 'white', 'right');
         this.initPlayers();
         setTimeout(() => {
             this.ball.spawn();
@@ -83,6 +83,8 @@ export class GameLogic {
     }
     ;
     update() {
+        if (!this.running)
+            return;
         this.players.forEach((player, i) => {
             if (player && this.paddles[i]) {
                 player.update(this.ball, this.canvasH);
@@ -99,13 +101,19 @@ export class GameLogic {
             this.tracker.resetExchange();
             if (this.isEnd() == true)
                 return;
-            this.ball.x = this.canvasW / 2;
+            this.ball.x = (this.canvasW / 2) - (this.ball.width / 2);
             if ((this.scoreA + this.scoreB) % 2 == 0)
                 this.ball.y = this.canvasH - this.canvasH / 4;
             else
                 this.ball.y = this.canvasH / 4;
             this.ball.spawn();
         }
+    }
+    getStatus() {
+        return (this.running);
+    }
+    changeStatus(x) {
+        this.running = x;
     }
     getGameState() {
         return {

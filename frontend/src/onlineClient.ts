@@ -6,8 +6,7 @@ export class OnlineClient {
   constructor(private onState: (snap:any)=>void, private onInfo?: (msg:any)=>void) {}
 
   connect() {
-    const proto = location.protocol === 'https:' ? 'wss' : 'ws';
-    this.ws = new WebSocket(`${proto}://${location.host}/ws`); // ← sans slash final
+    this.ws = new WebSocket(`wss://${location.host}/ws`); // ← sans slash final
     
     this.ws.addEventListener('message', (e) => {
       const msg = JSON.parse(e.data);
@@ -32,5 +31,10 @@ export class OnlineClient {
 
   getSnapshot() { return this.lastSnapshot; }
   getRole() { return this.role; }
-  dispose() { try { this.ws?.close(); } catch {} this.ws = null; }
+  dispose() {
+    try { this.ws?.close(); } catch {}
+    this.ws = null;
+    this.lastSnapshot = null;   // ⬅️ important
+  }
+  
 }

@@ -7,8 +7,7 @@ export class OnlineClient {
         this.role = 'left';
     }
     connect() {
-        const proto = location.protocol === 'https:' ? 'wss' : 'ws';
-        this.ws = new WebSocket(`${proto}://${location.host}/ws`); // ← sans slash final
+        this.ws = new WebSocket(`wss://${location.host}/ws`); // ← sans slash final
         this.ws.addEventListener('message', (e) => {
             const msg = JSON.parse(e.data);
             if (msg.type === 'waiting') {
@@ -32,8 +31,12 @@ export class OnlineClient {
     }
     getSnapshot() { return this.lastSnapshot; }
     getRole() { return this.role; }
-    dispose() { try {
-        this.ws?.close();
+    dispose() {
+        try {
+            this.ws?.close();
+        }
+        catch { }
+        this.ws = null;
+        this.lastSnapshot = null; // ⬅️ important
     }
-    catch { } this.ws = null; }
 }
