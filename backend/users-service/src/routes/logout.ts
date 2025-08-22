@@ -2,9 +2,14 @@ import { FastifyInstance } from "fastify";
 import { logout } from "../lib/logout.js";
 
 export default async function logoutRoute(app:FastifyInstance) {
-	app.post('/logout', {
+	app.post<{
+		Body: { userId: string };
+		Reply:
+			| { message: string }
+			| { error: string };}>
+	('/logout', {
+		preHandler: app.authenticate,
 		schema: {
-			description: 'Disconnect user',
 			body: {
 				type: 'object',
 				required: ['userId'],
@@ -33,5 +38,6 @@ export default async function logoutRoute(app:FastifyInstance) {
 				}
 			},
 		}
-	}, logout);	
+	},
+	logout);	
 }

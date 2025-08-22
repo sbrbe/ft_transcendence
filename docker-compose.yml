@@ -8,6 +8,9 @@ services:
       - user-db:/app/database
       - ./nginx/pki/issued/users-service.crt:/run/certs/server.crt:ro
       - ./nginx/pki/private/users-service.key:/run/certs/server.key:ro
+    environment:
+      - JWT_ACCESS_SECRET=${JWT_ACCESS_SECRET}
+      - COOKIE_SECRET=${COOKIE_SECRET}
 
     networks:
       - transcendence
@@ -25,6 +28,9 @@ services:
       - RESEND_KEY=${RESEND_KEY}
       - FROM_EMAIL=${FROM_EMAIL}
       - TRANSCENDENCE_KEY=${TRANSCENDENCE_KEY}
+      - JWT_ACCESS_SECRET=${JWT_ACCESS_SECRET}
+      - JWT_REFRESH_SECRET=${JWT_REFRESH_SECRET}
+      - COOKIE_SECRET=${COOKIE_SECRET}
     networks:
     - transcendence
 

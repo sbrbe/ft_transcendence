@@ -21,3 +21,15 @@ export interface UserUpdate {
   username?: string;
   avatarUrl?: string;
 }
+
+declare module 'fastify' {
+	interface FastifyRequest {
+		accessJwtVerify: <T = unknown>(opts?: { onlyCookie?: boolean }) => Promise<T>
+	}
+	interface FastifyReply {
+		accessJwtSign(payload: { sub: string }): Promise<string>;
+	}
+	interface FastifyInstance {
+		authenticate: (this: FastifyInstance, req: FastifyRequest, reply: FastifyReply) => Promise<void>;
+	}
+}

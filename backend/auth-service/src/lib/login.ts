@@ -1,8 +1,9 @@
 import { FastifyInstance, FastifyReply, FastifyRequest } from 'fastify';
-import { getUserByEmail } from './utils.js';
+import { getUserByEmail, getUserById } from './utils.js';
 import { registerBody, authUser, verify2FA } from "../types/fastify.js";
 import { sendTwoFactorCode } from './sendTwoFA.js';
 import { createTwoFactorCode, verifyTwoFactorCode } from './twoFactorCode.js';
+import { setAuthCookies } from './createToken.js';
 import bcrypt from 'bcrypt';
 
 
@@ -10,8 +11,17 @@ export async function loginVerify(
 	req: FastifyRequest<{ Body: verify2FA }>,
 	reply: FastifyReply) {
 		const { userId, code } = req.body;
+		const app = req.server as FastifyInstance;
+
 		try {
 			await verifyTwoFactorCode(userId, code);
+			const user = getUserById(userId)
+			if (!user) {
+				return reply.status(404).send({ error: 'User not found' });
+			}
+//			console.log('BEFORE SETAUTHCOOKIE');
+			await setAuthCookies(reply, user.userId);
+	
 			return reply.status(200).send({ message: 'Vérification réussite' });
 		} catch (error: any) {
 			return reply.status(401).send({ error: error.message });
@@ -31,7 +41,7 @@ export async function login(
 			const code = await createTwoFactorCode(user.userId);
 			await sendTwoFactorCode(user.userId, user.email, code);
 		//	await req.server.usersClient.setOnlineStatus(user_id, true);
-			console.log('USER_ID IN LOGIN = ', user.userId);
+		//	console.log('USER_ID IN LOGIN = ', user.userId);
 			return reply.status(200).send({ userId: user.userId, message: 'Code de vérification envoyé par mail'} );
 		} catch (error: any) {
 			return reply.status(400).send({ error: error.message } );

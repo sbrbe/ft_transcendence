@@ -219,7 +219,7 @@ async function registerUser() {
     return { success: true, userId: userId};
   } catch (error) {
     if (userId) {
-      await fetch(`auth/delete/${userId}`, {method: 'DELETE'});
+      await fetch(`auth/delete/${userId}`, { method: 'DELETE', credentials: 'include' });
     }
     document.getElementById('logUser').textContent = 'Erreur : ' + error.message;
     return { success: false, userId: userId };
@@ -229,6 +229,7 @@ async function registerUser() {
 async function createAuthAccount(email, password) {
   const authRes = await fetch('/auth/register', {
     method: 'POST',
+    credentials:"include",
     headers: { 'Content-Type': 'application/json'},
     body: JSON.stringify({
     email: email,
@@ -249,6 +250,7 @@ async function createAuthAccount(email, password) {
 async function createUserProfile(userId, data) {
   const profileRes = await fetch ('users/register', {
     method: 'POST',
+    credentials:"include",
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({
     userId : userId,
@@ -306,6 +308,7 @@ async function loginUser() {
   try {
     const loginRes = await fetch('/auth/login', {
     method: 'POST',
+    credentials: "include",
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({
       email: data.email,
@@ -346,6 +349,7 @@ async function verify2FA() {
     try {
       const res = await fetch('/auth/2fa/verify', {
         method: 'POST',
+        credentials: "include",
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           userId: currentUserId,
@@ -373,6 +377,7 @@ async function logout() {
   try {
     const logoutRes = await fetch('/users/logout', {
     method: 'POST',
+    credentials: "include",
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({ 
       userId: user.userId })
@@ -477,6 +482,7 @@ async function updateUser(user, data) {
 
   const updateRes = await fetch(`/users/${user.userId}`, {
   method: 'PUT',
+  credentials:"include",
   headers: { 'Content-Type': 'application/json' },
   body: JSON.stringify({
     userId: filteredData.userId,
@@ -496,6 +502,7 @@ async function updateUser(user, data) {
 async function updateEmail(user, email) {
   const updateRes = await fetch(`/auth/email/${user.userId}`, {
     method: 'PUT',
+    credentials:"include",
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({
       email: email
@@ -513,8 +520,8 @@ async function getUser(userId) {
   console.log('userId = ', userId);
   try {
     const [userRes, authRes] = await Promise.all ([
-      fetch(`/users/getUser/${userId}`),
-      fetch(`/auth/getEmail/${userId}`)
+      fetch(`/users/getUser/${userId}`, { method: 'GET', credentials:"include" }),
+      fetch(`/auth/getEmail/${userId}`, { method: 'GET', credentials:"include" })
     ]);
 
     if (!userRes.ok || !authRes.ok) {
@@ -549,6 +556,7 @@ async function updatePassword() {
   try {
     const updateRes = await fetch(`auth/password/${user.userId}`, {
       method: 'POST',
+      credentials:"include",
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
         oldPassword,
