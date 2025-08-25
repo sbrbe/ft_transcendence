@@ -37,13 +37,11 @@ export async function setAuthCookies(reply: FastifyReply, userId: string) {
 	]);
 	reply.setCookie('accessToken', access, {
 		...cookieOptions('/'),
-		maxAge: Number(2) * 60,
-		//maxAge: Number(15) * 60,
+		maxAge: Number(15) * 60,
 	});
 	reply.setCookie('refreshToken', refresh.token, {
 		...cookieOptions('/auth'),
-		maxAge: Number(5) * 60,
-		//maxAge: Number(7) * 24 * 60 * 60,
+		maxAge: Number(7) * 24 * 60 * 60,
 	});
 	return { accessToken: access, refreshToken: refresh };
 }
