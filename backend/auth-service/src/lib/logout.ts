@@ -1,6 +1,7 @@
 import { FastifyRequest, FastifyReply } from "fastify";
-import db from '../init_db.js';
+import { db } from '../init_db.js';
 import { getUserById } from "./utils.js";
+import { deleteRefreshToken, clearAuthCookies } from "./createToken.js";
 
 export async function logout(
 	req: FastifyRequest<{ Body: { userId: string } }>,
@@ -8,9 +9,11 @@ export async function logout(
 		const { userId } = req.body;
 
 		try {
-			const user = await disconnectUser(userId);
-			if (!user)
-				return reply.status(404).send({ error: 'User not found' });
+		//	const user = await disconnectUser(userId);
+		//	if (!user)
+		//		return reply.status(404).send({ error: 'User not found' });
+			deleteRefreshToken(userId);
+			clearAuthCookies(reply);
 			return reply.status(200).send({ userId, message: 'User disconnected' });
 		} catch (error: any) {
 			return reply.status(500).send({ error: error.message });
@@ -28,3 +31,4 @@ async function disconnectUser(userId: string): Promise<boolean>
 	console.log(`LOGOUT : ${info.changes}`);
 	return true;
 }
+

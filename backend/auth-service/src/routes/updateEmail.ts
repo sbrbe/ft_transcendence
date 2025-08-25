@@ -3,9 +3,15 @@ import { updateEmail } from "../lib/updateEmail.js";
 
 
 export default async function updateEmailRoute(app: FastifyInstance){
-	app.put('/email/:userId', {
+	app.put<{
+		Params: { userId: string };
+		Body: { email: string };
+		Reply:
+			| { userId: string; email: string }
+			| { error: string };}>
+		('/email/:userId', {
+		preHandler: app.authenticate,
 		schema: {
-			description: 'Update email',
 			params: {
 				type: 'object',
 				required: ['userId'],

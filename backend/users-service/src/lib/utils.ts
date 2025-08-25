@@ -1,4 +1,4 @@
-import db from '../init_db.js';
+import { db } from '../init_db.js';
 import { UserUpdate } from '../types/fastify.js';
 
 export function getUserByUsername(username: string) {

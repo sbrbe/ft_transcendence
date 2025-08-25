@@ -37,11 +37,13 @@ export async function setAuthCookies(reply: FastifyReply, userId: string) {
 	]);
 	reply.setCookie('accessToken', access, {
 		...cookieOptions('/'),
-		maxAge: Number(15) * 60,
+		maxAge: Number(2) * 60,
+		//maxAge: Number(15) * 60,
 	});
 	reply.setCookie('refreshToken', refresh.token, {
 		...cookieOptions('/auth'),
-		maxAge: Number(7) * 24 * 60 * 60,
+		maxAge: Number(5) * 60,
+		//maxAge: Number(7) * 24 * 60 * 60,
 	});
 	return { accessToken: access, refreshToken: refresh };
 }
@@ -51,23 +53,22 @@ export function clearAuthCookies(reply: FastifyReply) {
 	reply.clearCookie('refreshToken', cookieOptions('/auth'));
 }
 
-export async function rotateRefresh(app: FastifyInstance, req: FastifyRequest, reply:FastifyReply) {
+export async function rotateRefresh(req: FastifyRequest, reply:FastifyReply) {
 	const { refreshToken } = req.cookies as Record<string, string | undefined>;
 	if (!refreshToken) {
-		reply.status(401);
-		throw new Error('Missing refreshToken cookie');
+		return reply.status(401).send('Missing refreshToken cookie')
 	}
 
 	const payload = await req.refreshJwtVerify<{ sub: string; jti: string }> ({ onlyCookie: true });
 	const record = getRefreshToken(payload.jti);
+	console.log('RECORD = ', record);
 	if (!record || record.revoked || record.expiresAt.getTime() < Date.now()) {
-		reply.status(401);
-		throw new Error('Invalid or expired refresh token');
+		return reply.status(401).send('Invalid or expired refresh token')
 	}
 
 	revokeRefreshToken(payload.jti);
-	const token = await setAuthCookies(reply, payload.sub);
-	return { accessToken: token.accessToken }
+	const newToken = await setAuthCookies(reply, payload.sub);
+	return reply.status(200).send({ accessToken: newToken.accessToken, message: 'New token generated' });
 }
 
 
@@ -110,4 +111,8 @@ export function revokeAllForUser(userId: string) {
 
 export function setReplaceBy(jti: string, newId: string) {
 	db.prepare(`UPDATE refresh_tokens SET replacedBy = ? WHERE jti = ?`).run(jti, newId);
+}
+
+export function deleteRefreshToken(userId: string) {
+	db.prepare(`DELETE FROM refresh_tokens WHERE userId = ?`).run(userId);
 }

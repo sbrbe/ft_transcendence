@@ -201,6 +201,8 @@ function toggleRegister() {
 
 let currentUserId = null;
 
+/*----------------------------------------------REGISTER-------------------------------------------------------*/
+
 async function registerUser() {
   const data = {
     firstName: document.getElementById('firstName').value,
@@ -276,7 +278,7 @@ function updateUI(userId, data) {
     lastName: data.lastName
   };
 
-  setLoggedInUser(user);
+  //setLoggedInUser(user);
 
   document.getElementById('logUser').textContent = JSON.stringify(user, null, 2);
   document.getElementById('view-register').style.display = 'none';
@@ -288,12 +290,7 @@ function updateUI(userId, data) {
   document.getElementById('email').value = '';
 }
 
-function setLoggedInUser(user) {
-  localStorage.setItem('user', JSON.stringify(user));
-  document.getElementById('nav-public').style.display = 'none';
-  document.getElementById('nav-user').style.display = 'block';
-  document.getElementById('nav-username').textContent = `👤 ${user.username}`;
-}
+/*----------------------------------------------LOGIN-------------------------------------------------------*/
 
 async function loginUser() {
   const data = {
@@ -367,6 +364,8 @@ async function verify2FA() {
     }
   }
 
+/*----------------------------------------------LOGOUT-------------------------------------------------------*/
+
 async function logout() {
   const user = JSON.parse(localStorage.getItem('user'));
   if (!user) {
@@ -375,7 +374,7 @@ async function logout() {
   }
 
   try {
-    const logoutRes = await fetch('/users/logout', {
+    const logoutRes = await fetch('/auth/logout', {
     method: 'POST',
     credentials: "include",
     headers: { 'Content-Type': 'application/json' },
@@ -403,17 +402,7 @@ async function logout() {
   }
 }
 
-function openSettings() {
-  const user = JSON.parse(localStorage.getItem('user'));
-  if (!user) return;
-
-  document.getElementById('param_firstName').value = user.firstName || '';
-  document.getElementById('param_lastName').value = user.lastName || '';
-  document.getElementById('param_email').value = user.email || '';
-  document.getElementById('param_avatarUrl').value = user.avatarUrl || '';
-
-  showOnly('view-settings');
-}
+/*----------------------------------------------UPDATE PROFILE-------------------------------------------------------*/
 
 async function updateProfile() {
   const user = JSON.parse(localStorage.getItem('user'));
@@ -441,6 +430,13 @@ async function updateProfile() {
       updateEmail(user, data.email)
     ]);
     
+    if (updatedUser === 401 || updatedEmail === 401) {
+      const refresh = await refreshToken();
+      if (refresh)
+        return updateProfile();
+      else
+        return logout();
+    }
     const updatedProfile = {
       userId: user.userId,
       lastName: updatedUser.lastName,
@@ -492,6 +488,8 @@ async function updateUser(user, data) {
     avatarUrl: filteredData.avatarUrl
   })
   });
+  if (updateRes.status === 401)
+    return 401;
   const updateData = await updateRes.json();
   if (!updateRes.ok) {
     throw new Error(`Update error: ${ updateData.error || updateRes.statusText }`);
@@ -508,7 +506,8 @@ async function updateEmail(user, email) {
       email: email
   })
   });
-
+  if (updateRes.status === 401)
+    return 401;
   const updateData = await updateRes.json();
   if (!updateRes.ok) {
     throw new Error(`Email update error: ${ updateData.error || updateRes.statusText }`);
@@ -516,14 +515,23 @@ async function updateEmail(user, email) {
   return updateData;
 }
 
+/*----------------------------------------------GET USER-------------------------------------------------------*/
+
 async function getUser(userId) {
   console.log('userId = ', userId);
   try {
     const [userRes, authRes] = await Promise.all ([
-      fetch(`/users/getUser/${userId}`, { method: 'GET', credentials:"include" }),
-      fetch(`/auth/getEmail/${userId}`, { method: 'GET', credentials:"include" })
+      fetch(`/users/getUser/${userId}`, { method: 'GET', credentials: "include" }),
+      fetch(`/auth/getEmail/${userId}`, { method: 'GET', credentials: "include" })
     ]);
-
+    if (userRes.status === 401 || authRes.status === 401)
+  {
+    const refresh = await refreshToken();
+    if (refresh)
+      return getUser(userId);
+    else
+      return logout();
+  }
     if (!userRes.ok || !authRes.ok) {
       throw new Error('Error while getting user profile');
     }
@@ -539,6 +547,8 @@ async function getUser(userId) {
     return null;
   }
 }
+
+/*----------------------------------------------UPDATE PASSWORD-------------------------------------------------------*/
 
 async function updatePassword() {
   const user = JSON.parse(localStorage.getItem('user'));
@@ -571,7 +581,14 @@ async function updatePassword() {
       document.getElementById('param_confirm_new_password').value = '';
       return;
     }
-
+    if (updateRes.status === 401)
+  {
+    const refresh = await refreshToken();
+    if (refresh)
+      return updatePassword(user, email);
+    else
+      return logout();
+  }
     const updateData = await updateRes.json();
     if (!updateRes.ok) {
       throw new Error(`Password update error: ${ updateData.error || updateRes.statusText }`);
@@ -580,6 +597,43 @@ async function updatePassword() {
     document.getElementById('logUpdatePassword').textContent = '❌ ' + error.message;
   }
 }
+/*----------------------------------------------REFRESH-------------------------------------------------------*/
+
+async function refreshToken() {
+  try {
+    const updateRes = await fetch(`/auth/refresh`, {
+      method: 'POST',
+      credentials: "include",
+    })
+
+    return updateRes.ok;
+  } catch (error) {
+    console.error('RefreshToken error: ', error);
+    return;
+  }
+}
+
+/*----------------------------------------------UTILS-------------------------------------------------------*/
+
+function setLoggedInUser(user) {
+  localStorage.setItem('user', JSON.stringify(user));
+  document.getElementById('nav-public').style.display = 'none';
+  document.getElementById('nav-user').style.display = 'block';
+  document.getElementById('nav-username').textContent = `👤 ${user.username}`;
+}
+
+function openSettings() {
+  const user = JSON.parse(localStorage.getItem('user'));
+  if (!user) return;
+
+  document.getElementById('param_firstName').value = user.firstName || '';
+  document.getElementById('param_lastName').value = user.lastName || '';
+  document.getElementById('param_email').value = user.email || '';
+  document.getElementById('param_avatarUrl').value = user.avatarUrl || '';
+
+  showOnly('view-settings');
+}
+
 
 // 🔁 Au chargement de la page : afficher nav-user si déjà connecté
 window.addEventListener('DOMContentLoaded', () => {

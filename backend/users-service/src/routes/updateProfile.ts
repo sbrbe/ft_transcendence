@@ -2,9 +2,15 @@ import { FastifyInstance } from "fastify";
 import { updateProfile } from "../lib/updateProfile.js";
 
 export default async function updateProfileRoute(app: FastifyInstance) {
-	app.put('/:userId', {
+	app.put<{
+		Params: { userId: string };
+		Body: { userId: string; lastName: string; firstName: string; username: string; avatarUrl: string };
+		Reply:
+			| { lastName: string; firstName: string; username: string; avatarUrl: string }
+			| { error: string };}>
+		('/:userId', {
+			preHandler: app.authenticate,
 			schema: {
-				description: 'Updating user profile',
 				params: {
 					type: 'object',
 					required: ['userId'],

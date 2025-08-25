@@ -3,9 +3,15 @@ import { updatePassword } from "../lib/updatePassword.js";
 
 export default async function updatePasswordRoute(app: FastifyInstance)
 {
-	app.post('/password/:userId', {
+	app.post<{
+		Params: { userId: string };
+		Body: { oldPassword: string; newPassword: string };
+		Reply:
+			| { userId: string }
+			| { error: string };}>
+		('/password/:userId', {
+		preHandler: app.authenticate,
 		schema: {
-			description: 'Update password',
 			params: {
 				type: 'object',
 				required: ['userId'],

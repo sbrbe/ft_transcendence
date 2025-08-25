@@ -8,7 +8,6 @@ export default async function logoutRoute(app:FastifyInstance) {
 			| { message: string }
 			| { error: string };}>
 	('/logout', {
-		preHandler: app.authenticate,
 		schema: {
 			body: {
 				type: 'object',

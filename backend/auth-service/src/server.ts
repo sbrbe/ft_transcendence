@@ -21,26 +21,6 @@ app.register(jwtSetup);
 initDB();
 app.decorate('db', db);
 
-const PUBLIC_PATH = new Set<string>([
-	'/auth/login', 
-	'/auth/refresh', 
-	'/auth/register', 
-	'/auth/ma-route',
-	'/auth/2fa/verify']);
-
-app.addHook('preHandler', async (req: FastifyRequest, reply: FastifyReply) => {
-  const url = req.routeOptions.url;
-  const method = req.method;
-  if (method === 'OPTIONS' || PUBLIC_PATH.has(url!))
-    return;
-  try {
-    await req.accessJwtVerify({ onlyCookie: true });
-  } catch (error) {
-    return reply.status(401).send({ message: 'Unauthorized' });
-  }
-});
-
-
 app.register(registerAllRoutes, { prefix: '/auth'});
 
 // 🔎 GET /ma-route

@@ -1,7 +1,6 @@
 import { FastifyRequest, FastifyReply } from "fastify";
 import { getUserById } from './utils.js';
 
-
 export async function getUserProfile(
 	req: FastifyRequest<{ Params: { userId: string } }>,
 	reply: FastifyReply) {

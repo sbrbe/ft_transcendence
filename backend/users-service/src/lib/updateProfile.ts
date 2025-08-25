@@ -1,5 +1,5 @@
 import { FastifyRequest, FastifyReply } from "fastify";
-import db from '../init_db.js';
+import { db } from '../init_db.js';
 import { getUserById } from "./utils.js";
 import { UserUpdate } from "../types/fastify.js";
 
