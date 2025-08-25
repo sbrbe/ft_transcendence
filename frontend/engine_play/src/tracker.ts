@@ -1,8 +1,11 @@
+import { Player } from './player.js'
+import { CPU } from './CPU';
+
 export class Tracker {
   private exchanges: number = 0;
   private totalExchanges : number = 0
   private maxRally: number = 0;
-  private winner: string | null = null;
+  private winner: Player | CPU | null = null;
 
   recordHit() : void 
   {
@@ -12,7 +15,7 @@ export class Tracker {
       this.maxRally = this.exchanges;
   }
 
-  setWinner(winner: string) : void
+  setWinner(winner: Player | CPU | null) : void
   {
     this.winner = winner; 
   }
@@ -21,7 +24,7 @@ export class Tracker {
     this.exchanges = 0;
   }
 
-  getStats() :{ winner: string | null;
+  getStats() :{ winner: Player | CPU | null;
   totalExchanges: number;
   maxRally: number;}
   { 

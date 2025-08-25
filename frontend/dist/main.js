@@ -1,5 +1,6 @@
 import { OnlineClient } from './onlineClient.js';
 import { GameLogic } from '../engine_play/dist/game_logic.js';
+import { Tournament } from './tournament.js';
 class GameRenderer {
     constructor(canvas) {
         this.canvas = canvas;
@@ -26,7 +27,7 @@ class GameRenderer {
         ctx.textAlign = 'center';
         const centerX = this.canvas.width / 2;
         let y = this.canvas.height / 2 - 60;
-        ctx.fillText(`Gagnant : ${state.tracker?.winner ?? '—'}`, centerX, y);
+        ctx.fillText(`Gagnant : ${state.tracker?.winner?.name ?? '—'}`, centerX, y);
         y += 40;
         ctx.fillText(`Total échanges : ${state.tracker?.totalExchanges ?? 0}`, centerX, y);
         y += 30;
@@ -121,6 +122,9 @@ class GameApp {
         this.mobileTouchAttached = false;
     }
     constructor() {
+        // UI
+        this.tournament = null;
+        this.configTournament = null;
         // en haut de la classe
         this.online = null;
         this.mobileTouchAttached = false;
@@ -138,6 +142,8 @@ class GameApp {
                 else if (e.key === 'ArrowDown')
                     this.online.sendDir('down');
             }
+            if (this.tournament)
+                this.tournament?.redirectTournament(e.key, true);
             else {
                 this.game?.setPlayerInput(e.key, true);
             }
@@ -145,10 +151,11 @@ class GameApp {
         this.keyUpHandler = (e) => {
             if (e.key === 'ArrowUp' || e.key === 'ArrowDown')
                 e.preventDefault();
-            if (this.online) {
+            if (this.online)
                 if (e.key === 'ArrowUp' || e.key === 'ArrowDown')
                     this.online.sendDir('stop');
-            }
+            if (this.tournament)
+                this.tournament?.redirectTournament(e.key, false);
             else {
                 this.game?.setPlayerInput(e.key, false);
             }
@@ -215,6 +222,11 @@ class GameApp {
             this.stopAndReturnToMenu();
             this.startOnline();
         });
+        document.getElementById('nav-game-tournois')?.addEventListener('click', () => {
+            this.stopAndReturnToMenu();
+            this.showView('view-home');
+            this.startTournament();
+        });
         // switch 1v1 / 2v2
         this.modeSelect.addEventListener('change', () => {
             const is2v2 = this.modeSelect.value === '2v2';
@@ -231,6 +243,44 @@ class GameApp {
             };
             this.launchLocalGame(config);
         });
+    }
+    // ...
+    startTournament() {
+        // UI on bascule en mode jeu
+        this.menu.style.display = 'none';
+        this.showView('view-game');
+        this.canvas.style.display = 'block';
+        // config tournoi "brut" (offline)
+        this.configTournament = {
+            Online: false,
+            players: [
+                { id: 1, name: "Alice" },
+                { id: 2, name: "Bob" },
+                { id: 3, name: "Charlie" },
+                { id: 4, name: "Diana" }
+            ]
+        };
+        // crée le tournoi et le renderer
+        this.tournament = new Tournament(this.canvas.width, this.canvas.height, this.configTournament);
+        this.renderer = new GameRenderer(this.canvas);
+        // Input (local)
+        this.attachInputListeners();
+        // Boucle d’animation
+        const loop = () => {
+            if (!this.tournament || !this.renderer)
+                return;
+            // ⚠️ on demande au tournoi de jouer/avancer d’un tick
+            const snap = this.tournament.playLocal();
+            // rendu
+            this.renderer.draw(snap);
+            // si le tournoi est fini, on affiche l’écran de fin + stop
+            if (this.tournament.isFinished()) {
+                this.renderer.endScreen(snap);
+                return; // on arrête la boucle
+            }
+            this.rafId = requestAnimationFrame(loop);
+        };
+        this.rafId = requestAnimationFrame(loop);
     }
     startOnline() {
         // nettoie un éventuel local game
@@ -273,7 +323,8 @@ class GameApp {
         const selects = mode === '2v2' ? this.playerSelects2v2 : this.playerSelects1v1;
         return selects.map((sel, index) => ({
             type: sel.value,
-            playerId: index + 1
+            playerId: index + 1,
+            name: null
         }));
     }
     attachInputListeners() {

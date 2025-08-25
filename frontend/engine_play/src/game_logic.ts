@@ -96,9 +96,9 @@ export class GameLogic {
     )
     {
       if (this.scoreA > this.scoreB)
-        this.tracker.setWinner("Team 1");
+        this.tracker.setWinner(this.players[0]);
       else
-        this.tracker.setWinner("Team 2");
+        this.tracker.setWinner(this.players[1]);
       this.running = false ;
       return true;
     }

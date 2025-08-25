@@ -2,6 +2,7 @@ import { OnlineClient } from './onlineClient.js';
 import { GameLogic } from '../engine_play/dist/game_logic.js';
 import type { GameState, PlayerInfo } from '../engine_play/dist/types.js';
 import type { gameConfig } from '../engine_play/dist/types.js';
+import { Tournament, type buildTournament, type contender } from './tournament.js';
 type gameMode = "1v1" | "2v2" | "CPU" | "tournament";
 
 class GameRenderer {
@@ -33,7 +34,7 @@ class GameRenderer {
     ctx.textAlign = 'center';
     const centerX = this.canvas.width / 2;
     let y = this.canvas.height / 2 - 60;
-    ctx.fillText(`Gagnant : ${state.tracker?.winner ?? '—'}`, centerX, y);
+    ctx.fillText(`Gagnant : ${state.tracker?.winner?.name ?? '—'}`, centerX, y);
     y += 40;
     ctx.fillText(`Total échanges : ${state.tracker?.totalExchanges ?? 0}`, centerX, y);
     y += 30;
@@ -97,6 +98,8 @@ class GameRenderer {
 
 class GameApp {
   // UI
+  private tournament: Tournament | null = null;
+  private configTournament: buildTournament | null = null;
   private canvas: HTMLCanvasElement;
   private menu: HTMLElement;
   private startBtn: HTMLButtonElement;
@@ -105,6 +108,7 @@ class GameApp {
   private config1v1: HTMLElement;
   // en haut de la classe
 private online: OnlineClient | null = null;
+
 
 private mobileTouchAttached = false;
 
@@ -166,18 +170,26 @@ private detachMobileTouch() {
   private keyDownHandler = (e: KeyboardEvent) => {
     if (e.key === 'ArrowUp' || e.key === 'ArrowDown') e.preventDefault();
     if (this.online) {
-      if (e.key === 'ArrowUp') this.online.sendDir('up');
-      else if (e.key === 'ArrowDown') this.online.sendDir('down');
-    } else {
+      if (e.key === 'ArrowUp')
+        this.online.sendDir('up');
+      else if (e.key === 'ArrowDown')
+        this.online.sendDir('down');
+    }
+    if (this.tournament)
+      this.tournament?.redirectTournament(e.key, true);
+    else {
       this.game?.setPlayerInput(e.key, true);
     }
   };
   
   private keyUpHandler = (e: KeyboardEvent) => {
     if (e.key === 'ArrowUp' || e.key === 'ArrowDown') e.preventDefault();
-    if (this.online) {
-      if (e.key === 'ArrowUp' || e.key === 'ArrowDown') this.online.sendDir('stop');
-    } else {
+    if (this.online)
+      if (e.key === 'ArrowUp' || e.key === 'ArrowDown')
+        this.online.sendDir('stop');
+    if (this.tournament)
+        this.tournament?.redirectTournament(e.key, false);
+      else {
       this.game?.setPlayerInput(e.key, false);
     }
   };
@@ -253,6 +265,12 @@ private detachMobileTouch() {
       this.stopAndReturnToMenu();
       this.startOnline()});
 
+      document.getElementById('nav-game-tournois')?.addEventListener('click', () => {
+        this.stopAndReturnToMenu();
+        this.showView('view-home');
+        this.startTournament();
+      });
+
     // switch 1v1 / 2v2
     this.modeSelect.addEventListener('change', () => {
       const is2v2 = this.modeSelect.value === '2v2';
@@ -271,6 +289,55 @@ private detachMobileTouch() {
         this.launchLocalGame(config);
       });
   }
+
+// ...
+
+private startTournament() {
+  // UI on bascule en mode jeu
+  this.menu.style.display = 'none';
+  this.showView('view-game');
+  this.canvas.style.display = 'block';
+
+  // config tournoi "brut" (offline)
+  this.configTournament = {
+    Online: false,
+    players: [
+      { id: 1, name: "Alice" },
+      { id: 2, name: "Bob" },
+      { id: 3, name: "Charlie" },
+      { id: 4, name: "Diana" }
+    ]
+  };
+
+  // crée le tournoi et le renderer
+  this.tournament = new Tournament(this.canvas.width, this.canvas.height, this.configTournament);
+  this.renderer = new GameRenderer(this.canvas);
+
+  // Input (local)
+  this.attachInputListeners();
+
+  // Boucle d’animation
+  const loop = () => {
+    if (!this.tournament || !this.renderer) return;
+
+    // ⚠️ on demande au tournoi de jouer/avancer d’un tick
+    const snap = this.tournament.playLocal();
+
+    // rendu
+    this.renderer.draw(snap);
+
+    // si le tournoi est fini, on affiche l’écran de fin + stop
+    if (this.tournament.isFinished()) {
+      this.renderer.endScreen(snap as any);
+      return; // on arrête la boucle
+    }
+
+    this.rafId = requestAnimationFrame(loop);
+  };
+
+  this.rafId = requestAnimationFrame(loop);
+}
+
 
   private startOnline() {
     // nettoie un éventuel local game
@@ -317,7 +384,8 @@ private detachMobileTouch() {
     const selects = mode === '2v2' ? this.playerSelects2v2 : this.playerSelects1v1;
     return selects.map((sel, index) => ({
       type: sel.value as "human" | "cpu" | null,
-      playerId: index + 1
+      playerId: index + 1,
+      name: null
     }));
   }
   

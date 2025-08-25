@@ -1,7 +1,10 @@
+import { Player } from "./player";
+import { CPU } from "./CPU";
 type gameMode = "1v1" | "2v2" | "CPU" | "tournament";
 export interface PlayerInfo {
     type: "human" | "cpu" | null;
     playerId: number | null;
+    name: string | null;
 }
 export interface gameConfig {
     mode: gameMode;
@@ -29,7 +32,7 @@ export interface GameState {
     };
     running: boolean;
     tracker: {
-        winner: string | null;
+        winner: Player | CPU | null;
         totalExchanges: number;
         maxRally: number;
     };

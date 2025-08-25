@@ -59,9 +59,9 @@ export class GameLogic {
         if ((this.scoreA >= 11 || this.scoreB >= 11) &&
             Math.abs(this.scoreA - this.scoreB) > 2) {
             if (this.scoreA > this.scoreB)
-                this.tracker.setWinner("Team 1");
+                this.tracker.setWinner(this.players[0]);
             else
-                this.tracker.setWinner("Team 2");
+                this.tracker.setWinner(this.players[1]);
             this.running = false;
             return true;
         }
