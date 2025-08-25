@@ -11,7 +11,6 @@ type ClientInfo = { ws: WebSocket; role: Role; lastDir: Dir };
 const app = Fastify();
 const httpServer = app.server;
 
-// Taille logique du terrain (le rendu se fait côté client)
 const CANVAS_W = 800;
 const CANVAS_H = 600;
 
@@ -33,13 +32,11 @@ function broadcast(room: Room, obj: any) {
   }
 }
 
-// Nettoie TOUTE la room: notifie, stoppe moteur, retire la room, ferme sockets
 function endAndCleanupRoom(room: Room, reason: 'game_over'|'opponent_disconnected'|'server_stop') {
   try {
-    // informe clients (le client doit capter 'end' et retourner au menu)
     broadcast(room, { type: 'end', reason });
 
-    // stop moteur (si ton GameLogic expose une méthode)
+    // stop moteur
     try { (room.engine as any)?.dispose?.(); } catch {}
     try { room.engine.changeStatus(false); } catch {}
 
@@ -47,7 +44,7 @@ function endAndCleanupRoom(room: Room, reason: 'game_over'|'opponent_disconnecte
     const idx = rooms.indexOf(room);
     if (idx !== -1) rooms.splice(idx, 1);
 
-    // ferme les sockets de la room (propre retour côté client)
+    // ferme les sockets de la room
     for (const ci of room.clients) {
       try { ci.ws.close(); } catch {}
     }
@@ -64,7 +61,6 @@ function createRoom(a: ClientInfo, b: ClientInfo): Room {
     playerSetup: [
       { type: 'human', playerId: 1 },
       { type: 'human', playerId: 2 },
-      // P3/P4 absents → le moteur les mettra à null
     ]
   };
 
@@ -82,7 +78,6 @@ function createRoom(a: ClientInfo, b: ClientInfo): Room {
   return room;
 }
 
-// Helpers
 function safeSend(ws: WebSocket, obj: any) {
   try { ws.send(JSON.stringify(obj)); } catch {}
 }
@@ -120,17 +115,16 @@ wss.on('connection', (ws: WebSocket) => {
     try {
       const msg = JSON.parse(raw.toString());
       if (msg.type === 'input') {
-        // retrouve la room du client et note sa direction
+      
         for (const room of rooms) {
           const ci = room.clients.find(c => c.ws === ws);
           if (ci) { ci.lastDir = msg.dir as Dir; break; }
         }
       }
-    } catch { /* ignore */ }
+    } catch {  }
   });
 
   ws.on('close', () => {
-    // 1) si c’était le pending, on libère juste
     if (pending && pending.ws === ws) { pending = null; return; }
   
     // 2) sinon, trouve la room et requeue le survivant
@@ -140,16 +134,12 @@ wss.on('connection', (ws: WebSocket) => {
       if (idx !== -1) {
         const survivor = r.clients[1 - idx];
   
-        // informe le survivant
         safeSend(survivor.ws, { type: 'info', code: 'opponent_disconnected' });
   
-        // stoppe le jeu côté serveur sans fermer le survivant
         try { r.engine.changeStatus(false); } catch {}
-  
-        // retire la room
+
         rooms.splice(i, 1);
   
-        // requeue immédiat du survivant (comme une nouvelle connexion)
         requeue(survivor);
         break;
       }
@@ -157,11 +147,9 @@ wss.on('connection', (ws: WebSocket) => {
   });
   
   
-  // Bonus: route les erreurs vers close (déclenche le même cleanup)
   ws.on('error', () => ws.emit('close')); 
 });
 
-// Boucle: 60 Hz tick, 20 Hz snapshots
 const TICK_MS = Math.floor(1000 / 60);
 const SNAP_MS = Math.floor(1000 / 60);
 let lastSnap = Date.now();
