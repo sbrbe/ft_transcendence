@@ -56,6 +56,8 @@ class GameRenderer {
             this.ctx.fillStyle = p.color;
             this.ctx.fillRect(p.x, p.y, p.width, p.height);
         });
+        this.isStarting(state.ball.height, state.ball.width, state.ball.x, state.ball.y, state.tracker.totalExchanges, state.scores);
+        console.log('salutt');
         // noms au lancement (3 s)
         const elapsed = (performance.now() - this.startTime) / 1000;
         this.ctx.font = "20px Arial";
@@ -80,6 +82,13 @@ class GameRenderer {
         this.ctx.font = "30px Arial";
         this.ctx.textAlign = "center";
         this.ctx.fillText(`${state.scores.A}    ${state.scores.B}`, this.canvas.width / 2, 40);
+    }
+    isStarting(BallH, BallW, BallX, BallY, echanges, score) {
+        let scores_echanges = score.A + score.B + echanges;
+        let ball = ((this.canvas.height / 2) - BallH / 2) + ((this.canvas.width / 2) - BallW / 2);
+        if (ball && scores_echanges == 0) {
+            this.startTime = performance.now();
+        }
     }
 }
 class GameApp {
@@ -188,9 +197,14 @@ class GameApp {
         this.canvas = document.getElementById('gameCanvas');
         this.menu = document.getElementById('menu-game-config');
         this.startBtn = document.getElementById('startBtn');
+        this.startBtnTournois = document.getElementById('startTournamentBtn');
         this.modeSelect = document.getElementById('modeSelect');
+        this.tournois_select = document.getElementById('tournamentSize');
         this.config2v2 = document.getElementById('custom-config_2vs2');
         this.config1v1 = document.getElementById('custom-config_1vs1');
+        this.tournois = document.getElementById('Tournois');
+        this.playersWrap = document.getElementById('tournamentPlayers');
+        this.playerRows = Array.from(this.playersWrap.querySelectorAll('.player-row'));
         // Selects joueurs
         this.playerSelects2v2 = ['player1', 'player2', 'player3', 'player4']
             .map(id => document.getElementById(id));
@@ -202,10 +216,32 @@ class GameApp {
         this.bindUI();
     }
     showView(viewId) {
-        ['view-home', 'view-game', 'view-register', 'menu-game-config'].forEach(id => {
+        ['view-home', 'view-game', 'view-register', 'menu-game-config', 'Tournois'].forEach(id => {
             const el = document.getElementById(id);
             if (el)
                 el.style.display = (id === viewId ? 'block' : 'none');
+        });
+    }
+    // Affiche les N premières lignes (4/8/16)
+    showFirst(n) {
+        this.playerRows.forEach((row, i) => {
+            row.style.display = i < n ? '' : 'none';
+        });
+    }
+    // lit la taille choisie (4/8/16)
+    getSelectedTournamentSize() {
+        const fs = document.getElementById('tournamentSize');
+        const checked = fs.querySelector('input[name="tournamentSize"]:checked');
+        return checked ? parseInt(checked.value, 10) : 4;
+    }
+    // récupère les n premiers noms depuis #tournamentPlayers
+    getTournamentPlayersFromInputs(n) {
+        const inputs = Array.from(document.querySelectorAll('#tournamentPlayers input[type="text"]'));
+        return inputs.slice(0, n).map((inp, i) => {
+            const val = (inp.value ?? '').trim();
+            // fallback si vide/null => "Joueur X"
+            const name = val.length > 0 ? val : `Joueur ${i + 1}`;
+            return { id: i + 1, name };
         });
     }
     bindUI() {
@@ -224,8 +260,7 @@ class GameApp {
         });
         document.getElementById('nav-game-tournois')?.addEventListener('click', () => {
             this.stopAndReturnToMenu();
-            this.showView('view-home');
-            this.startTournament();
+            this.showView('Tournois');
         });
         // switch 1v1 / 2v2
         this.modeSelect.addEventListener('change', () => {
@@ -233,7 +268,18 @@ class GameApp {
             this.config2v2.style.display = is2v2 ? 'block' : 'none';
             this.config1v1.style.display = is2v2 ? 'none' : 'block';
         });
-        // start
+        this.tournois_select.addEventListener('change', (e) => {
+            const target = e.target;
+            if (target && target.name === 'tournamentSize') {
+                this.showFirst(parseInt(target.value, 10));
+            }
+        });
+        //start tournois
+        this.startBtnTournois.addEventListener('click', () => {
+            //chercher localstorage pour id joueur
+            this.startTournament();
+        });
+        // start local normal
         this.startBtn.addEventListener('click', () => {
             //chercher localstorage pour id joueur
             const mode = this.modeSelect.value;
@@ -245,20 +291,20 @@ class GameApp {
         });
     }
     // ...
+    sleep(ms) {
+        return new Promise(resolve => setTimeout(resolve, ms));
+    }
     startTournament() {
         // UI on bascule en mode jeu
-        this.menu.style.display = 'none';
         this.showView('view-game');
         this.canvas.style.display = 'block';
-        // config tournoi "brut" (offline)
+        const size = this.getSelectedTournamentSize();
+        // lire les noms (avec fallback)
+        const players = this.getTournamentPlayersFromInputs(size);
+        // construire la config tournoi
         this.configTournament = {
             Online: false,
-            players: [
-                { id: 1, name: "Alice" },
-                { id: 2, name: "Bob" },
-                { id: 3, name: "Charlie" },
-                { id: 4, name: "Diana" }
-            ]
+            players
         };
         // crée le tournoi et le renderer
         this.tournament = new Tournament(this.canvas.width, this.canvas.height, this.configTournament);
@@ -266,15 +312,20 @@ class GameApp {
         // Input (local)
         this.attachInputListeners();
         // Boucle d’animation
-        const loop = () => {
+        const loop = async () => {
             if (!this.tournament || !this.renderer)
                 return;
             // ⚠️ on demande au tournoi de jouer/avancer d’un tick
             const snap = this.tournament.playLocal();
             // rendu
             this.renderer.draw(snap);
+            if (!snap.running) {
+                this.renderer.endScreen(snap);
+                await this.sleep(3000);
+            }
             // si le tournoi est fini, on affiche l’écran de fin + stop
             if (this.tournament.isFinished()) {
+                //console.log('yo mon gatéééééeeeerrr');
                 this.renderer.endScreen(snap);
                 return; // on arrête la boucle
             }
@@ -389,6 +440,8 @@ class GameApp {
         this.game = null;
         this.online?.dispose?.();
         this.online = null;
+        this.tournament?.dispose?.();
+        this.tournament = null;
         if (this.renderer)
             this.renderer.clearRender();
         this.renderer = null;

@@ -8,7 +8,7 @@ export class Player {
   public keys: { up: string, down: string };
   public input: Record<string, boolean>;
 
-  constructor(paddle: Paddle, keys: { up: string, down: string }, id :number = 0, name: string = "Player") {
+  constructor(paddle: Paddle, keys: { up: string, down: string }, name: string, id :number = 0) {
     this.paddle = paddle;
     this.keys = keys;
     this.input = { [keys.up]: false, [keys.down]: false };

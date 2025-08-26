@@ -12,6 +12,6 @@ export declare class Player {
     constructor(paddle: Paddle, keys: {
         up: string;
         down: string;
-    }, id?: number, name?: string);
+    }, name: string, id?: number);
     update(ball: Ball, canvasHeight: number): void;
 }

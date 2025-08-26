@@ -51,12 +51,12 @@ export class GameLogic {
             const paddle = new Paddle(positions[i].x, positions[i].y, paddleWidth, paddleHeight, 'white', 15);
             this.paddles.push(paddle);
             this.players.push(this.config.playerSetup[i].type == "human"
-                ? new Player(paddle, controls[i])
+                ? new Player(paddle, controls[i], this.config.playerSetup[i].name ?? "Player")
                 : new CPU(paddle, this.config.mode, i, this.canvasH, controls[i]));
         }
     }
     isEnd() {
-        if ((this.scoreA >= 11 || this.scoreB >= 11) &&
+        if ((this.scoreA >= 3 || this.scoreB >= 3) &&
             Math.abs(this.scoreA - this.scoreB) > 2) {
             if (this.scoreA > this.scoreB)
                 this.tracker.setWinner(this.players[0]);

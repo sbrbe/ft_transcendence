@@ -83,7 +83,7 @@ export class GameLogic {
       this.paddles.push(paddle);
       this.players.push(
         this.config.playerSetup[i].type == "human"
-        ? new Player(paddle, controls[i])
+        ? new Player(paddle, controls[i], this.config.playerSetup[i].name ?? "Player")
         : new CPU(paddle, this.config.mode, i, this.canvasH, controls[i])
       );
   }
@@ -91,7 +91,7 @@ export class GameLogic {
 
   isEnd() : boolean
   {
-    if ((this.scoreA >= 11 ||this.scoreB >= 11) && 
+    if ((this.scoreA >= 3 ||this.scoreB >= 3) && 
       Math.abs(this.scoreA - this.scoreB) > 2
     )
     {

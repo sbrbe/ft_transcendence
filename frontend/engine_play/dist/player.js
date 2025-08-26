@@ -1,5 +1,5 @@
 export class Player {
-    constructor(paddle, keys, id = 0, name = "Player") {
+    constructor(paddle, keys, name, id = 0) {
         this.paddle = paddle;
         this.keys = keys;
         this.input = { [keys.up]: false, [keys.down]: false };

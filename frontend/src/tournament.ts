@@ -34,7 +34,6 @@ export class Tournament {
         this.startTour();
     }
      
-    
     private startTour() 
     {
         this.matchs = this.confs.map(conf =>
@@ -59,10 +58,9 @@ export class Tournament {
             }
         }
     }
-
+    
     public playLocal(): GameState
     {
-       // console.log(contender.name)
         this.matchs[this.currentMatchId].update();
         let info = this.matchs[this.currentMatchId].getGameState();
 
@@ -70,19 +68,26 @@ export class Tournament {
         {
             let win = info.tracker.winner
             if (win)
+            {
                 this.appendWinner(win);
+            }
+
             this.currentMatchId++;
         
         if (this.currentMatchId >= this.matchs.length) {
                 if (this.winner.length > 1) {
                     // préparer le tour suivant
+					console.log(this.winner.length);
                     this.buildConfs(this.winner);
                     this.startTour();
                 }
+				else
+					console.log('finit gg');
             }
         }
         return info;
     }
+
 	public redirectTournament(key: string, isPressed: boolean)
 	{
 		this.matchs[this.currentMatchId].setPlayerInput(key, isPressed);
@@ -115,6 +120,9 @@ export class Tournament {
 		  this.winner.push({ id: p.playerId, name: p.name ?? `Player ${p.playerId}` });
 		}
 	  }
-	  
-    public isFinished(): boolean {return (this.winner.length == 1);}
+    public isFinished(): boolean 
+	{
+
+		return (this.winner.length == 1 && this.currentMatchId == this.matchs.length);
+	}
 }

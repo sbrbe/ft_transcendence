@@ -30,20 +30,23 @@ export class Tournament {
         }
     }
     playLocal() {
-        // console.log(contender.name)
         this.matchs[this.currentMatchId].update();
         let info = this.matchs[this.currentMatchId].getGameState();
         if (info.running == false) {
             let win = info.tracker.winner;
-            if (win)
+            if (win) {
                 this.appendWinner(win);
+            }
             this.currentMatchId++;
             if (this.currentMatchId >= this.matchs.length) {
                 if (this.winner.length > 1) {
                     // préparer le tour suivant
+                    console.log(this.winner.length);
                     this.buildConfs(this.winner);
                     this.startTour();
                 }
+                else
+                    console.log('finit gg');
             }
         }
         return info;
@@ -80,5 +83,7 @@ export class Tournament {
             this.winner.push({ id: p.playerId, name: p.name ?? `Player ${p.playerId}` });
         }
     }
-    isFinished() { return (this.winner.length == 1); }
+    isFinished() {
+        return (this.winner.length == 1 && this.currentMatchId == this.matchs.length);
+    }
 }
