@@ -8,14 +8,20 @@ export class Tournament {
         this.canvasH = canvasH;
         this.canvasW = canvasW;
         this.buildConfs(info.players);
-        this.startTour();
+        if (info.Online)
+            this.startTour();
+        else
+            this.startMatchs(this.currentMatchId);
+    }
+    startMatchs(id) {
+        this.matchs[id] = new GameLogic(this.canvasW, this.canvasH, this.confs[id]);
     }
     startTour() {
         this.matchs = this.confs.map(conf => new GameLogic(this.canvasW, this.canvasH, conf));
-        this.currentMatchId = 0;
         this.winner = [];
     }
     buildConfs(list) {
+        this.currentMatchId = 0;
         this.confs = [];
         for (let i = 0; i < list.length; i += 2) {
             if (i + 1 < list.length) {
@@ -38,16 +44,12 @@ export class Tournament {
                 this.appendWinner(win);
             }
             this.currentMatchId++;
-            if (this.currentMatchId >= this.matchs.length) {
-                if (this.winner.length > 1) {
-                    // préparer le tour suivant
-                    console.log(this.winner.length);
-                    this.buildConfs(this.winner);
-                    this.startTour();
-                }
-                else
-                    console.log('finit gg');
+            if (this.currentMatchId >= this.confs.length && this.winner.length > 1) {
+                this.buildConfs(this.winner);
+                this.startTour();
             }
+            else if (this.currentMatchId < this.confs.length)
+                this.startMatchs(this.currentMatchId);
         }
         return info;
     }

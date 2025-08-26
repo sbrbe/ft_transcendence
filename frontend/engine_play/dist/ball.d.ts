@@ -10,6 +10,7 @@ export declare class Ball {
     vx: number;
     vy: number;
     speed: number;
+    limitspeed: number;
     live: boolean;
     constructor(x: number, y: number, width: number, height: number, color: string, serviceTo: string);
     spawn(): void;

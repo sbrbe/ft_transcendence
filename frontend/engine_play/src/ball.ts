@@ -1,3 +1,4 @@
+import { escapeLeadingUnderscores } from "typescript";
 import { Paddle } from "./paddle";
 import { Tracker } from "./tracker";
 
@@ -5,6 +6,7 @@ export class Ball {
     public vx: number = 0;
     public vy: number = 0;
     public speed: number = 10;
+    public limitspeed: number = 18;
     
     public live: boolean = true;
 
@@ -63,7 +65,8 @@ export class Ball {
     }
     colision(paddle: Paddle, canvasHeight: number, tracker: Tracker): void
     {
-       
+       this.limitspeed = 20;
+       console.log('maxx');
         if (paddle.x < this.x)
         {
             if (this.x <= paddle.x +paddle.width && 
@@ -72,7 +75,11 @@ export class Ball {
             {
                 paddle.interaction(this);
                 tracker.recordHit();
-                this.speed+=1;
+                console.log(this.speed);
+                if (this.speed < this.limitspeed)
+                    this.speed+=1;
+                else
+                console.log('maxx');
             }
         }
         else
@@ -83,7 +90,11 @@ export class Ball {
             {
                 paddle.interaction(this);
                 tracker.recordHit();
-                this.speed+=1;
+                console.log(this.speed);
+                if (this.speed < this.limitspeed)
+                    this.speed+=1;
+                else
+                    console.log('max');
             }
         }
     }
