@@ -3,6 +3,7 @@ import type { GameState, gameConfig } from '../engine_play/dist/types.js'
 import { Tracker } from '../engine_play/dist/tracker.js';
 import { Player } from '../engine_play/dist/player.js';
 import { CPU } from '../engine_play/dist/CPU.js';
+import { UUID } from "crypto";
 
 export interface contender{
     id: number | null;
@@ -19,6 +20,7 @@ export interface infoMatch {
 }
 
 export class Tournament {
+   // private id: UUID
     private canvasH: number;
     private canvasW: number;
     private matchs: GameLogic[] = [];
@@ -28,6 +30,7 @@ export class Tournament {
 
     constructor(canvasW: number, canvasH:number, info: buildTournament)
     {
+        //this.id =
         this.canvasH = canvasH;
         this.canvasW = canvasW;
         this.buildConfs(info.players);
@@ -89,6 +92,32 @@ export class Tournament {
         }
         return info;
     }
+
+public playOnline(): GameState[] 
+{
+    let results: GameState[] = [];
+
+    for (let i = 0; i < this.matchs.length; i++) 
+    {
+        this.matchs[i].update();
+        let info = this.matchs[i].getGameState();
+        results.push(info);
+        if (!info.running) 
+        {
+            let win = info.tracker.winner;
+            if (win)
+                this.appendWinner(win);
+        }
+    }
+    let allDone = results.every(r => r.running === false);
+    if (allDone && this.winner.length > 1) 
+    {
+            this.buildConfs(this.winner);
+            this.startTour();
+    }
+    return results;
+}
+
 
 	public redirectTournament(key: string, isPressed: boolean)
 	{
