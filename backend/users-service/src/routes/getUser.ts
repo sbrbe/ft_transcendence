@@ -14,7 +14,7 @@ export default async function getUserRoute(app: FastifyInstance) {
 				type: 'object',
 				required: ['userId'],
 				properties: {
-					userId: { type: 'string', format: 'uuid'}
+					userId: { type: 'string', format: 'uuid' }
 				}
 			},
 			response: {

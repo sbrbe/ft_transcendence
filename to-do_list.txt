@@ -1,20 +1,13 @@
 Function :
 
-	- registerUser :
-		- createAuthAccount : marche
-		- createUserProfile: marche
-		- updateUI: marche
-	- setLoggedInUser: marche
 	- login: marche / ajouter la maj de online_status avec le service users
-	- logout: marche
-	- updateProfile:
-		- updateUser: marche
-		- updateEmail: marche
-	- getUser: marche
-	- loadProfile : ne marche pas
-	- openSettings: 
-	- updatePassword: marche
-
+	- Ajouter les tokens dans le frontend
+	- Friends:
+		- Faire la DB
+		- Pouvoir faire une recherche de joueurs
+		- Pouvoir envoyer une demande d'ami
+		- Pouvoir recevoir une demande d'ami
+		- Voir le status des amis: online/offline
 
 Faire la comm entre les conteneurs
 

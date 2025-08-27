@@ -13,6 +13,10 @@ export interface User {
   firstName: string;
   username: string;
   avatarUrl: string;
+  isOnline: 0 | 1 | boolean;
+  lastLogin: string | number | null;
+  createdAt: string | number;
+  updatedAt: string | number;
 }
 
 export interface UserUpdate {
@@ -20,6 +24,15 @@ export interface UserUpdate {
   firstName?: string;
   username?: string;
   avatarUrl?: string;
+}
+
+export interface Friend {
+  id: number;
+  userId: string;
+  friendId: string;
+  status: 'pending' | 'accepted' | 'blocked';
+  createdAt: string | number;
+  updatedAt: string | number;
 }
 
 declare module 'fastify' {

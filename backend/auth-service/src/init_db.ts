@@ -39,8 +39,6 @@ const create2FATable =
 		expiresAt DATETIME NOT NULL,
 		used INTEGER NOT NULL DEFAULT 0,
 		attempts INTEGER NOT NULL DEFAULT 0,
-		ipAddress TEXT,
-		userAgent TEXT,
 		createdAt DATETIME DEFAULT CURRENT_TIMESTAMP,
 		FOREIGN KEY (userId) REFERENCES auth (userId) ON DELETE CASCADE
 		)`;

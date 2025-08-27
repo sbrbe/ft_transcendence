@@ -1,9 +1,8 @@
 import { Resend } from "resend";
 import { deleteCode } from "./twoFactorCode.js";
 
-if (!process.env.RESEND_KEY) {
-	throw new Error("RESEND_KEY is not set");
-}
+if (!process.env.TRANSCENDENCE_KEY)
+	throw new Error("TRANSCENDE_KEY is not set");
 
 const resend = new Resend(process.env.TRANSCENDENCE_KEY);
 

@@ -20,17 +20,23 @@ export function initDB() {
 const createUsersTable =
 	`CREATE TABLE IF NOT EXISTS users (
 		userId TEXT PRIMARY KEY,
-		firstName TEXT,
-		lastName TEXT,
-		username TEXT,
-		avatarUrl TEXT,
-		isOnline BOOLEAN DEFAULT FALSE
+		firstName TEXT NOT NULL,
+		lastName TEXT NOT NULL,
+		username TEXT NOT NULL,
+		avatarUrl TEXT NOT NULL,
+		isOnline BOOLEAN DEFAULT FALSE,
+		lastLogin DATETIME,
+		createdAt DATETIME DEFAULT CURRENT_TIMESTAMP,
+		updatedAt DATETIME DEFAULT CURRENT_TIMESTAMP
 		)`;
 
 const createFriendshipsTable = 
 	`CREATE TABLE IF NOT EXISTS friendships (
-		userId TEXT PRIMARY KEY,
-		requesterId TEXT NOT NULL,
-		addresseeId TEXT NOT NULL,
-		status TEXT NOT NULL DEFAULT 'pending'
+		id INTEGER PRIMARY KEY AUTOINCREMENT,
+		userId TEXT NOT NULL,
+		friendId TEXT NOT NULL,
+		status TEXT NOT NULL (status IN ('pending, 'accepted', 'rejected')),
+		createdAt DATETIME DEFAULT CURRENT_TIMESTAMP,
+		updatedAt DATETIME DEFAULT CURRENT_TIMESTAMP,
+		UNIQUE(requesterId, addresseeId)
 		)`;

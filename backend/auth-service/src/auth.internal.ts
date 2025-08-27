@@ -4,7 +4,7 @@ import jwt from '@fastify/jwt';
 
 
 export function makeUsersClient(app: FastifyInstance) {
-	const USERS_BASE = process.env.USERS_BASE_URL || `http://users-service:${process.env.USERS_PORT || 3001}`;
+	const USERS_BASE = process.env.USERS_BASE_URL || `https://users-service:${process.env.USERS_PORT || 3001}`;
 	return {
 		async setOnlineStatus(userId: string, online: boolean) {
 			const token = app.jwt.sign(

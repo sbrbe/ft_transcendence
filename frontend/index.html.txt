@@ -1,0 +1,682 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <script src="https://cdn.tailwindcss.com"></script>
+
+	<style>
+    @import "tailwindcss";
+		#view-game {
+		  background-image: url('/src/image.png');
+		  background-size: cover;
+		  background-position: center;
+		  background-repeat: no-repeat;
+		  height: 100vh; /* prend tout l'écran */
+		  display: none; /* par défaut masqué */
+		}
+      .perspective {
+        perspective: 1000px;
+      }
+      
+      .card-3d {
+        transform-style: preserve-3d;
+        transition: transform 0.8s ease;
+      }
+      
+      .card-face {
+        position: absolute;
+        width: 100%;
+        height: 100%;
+        border-radius: 1rem;
+      }
+      
+      .backface-hidden {
+        backface-visibility: hidden;
+      }
+      
+      .rotate-y-180 {
+        transform: rotateY(180deg);
+      }
+      .metal-effect {
+    background: linear-gradient(135deg, #cfcfcf, #8f8f8f);
+    background-blend-mode: overlay;
+    box-shadow: inset 0 0 10px rgba(255, 255, 255, 0.4),
+                inset 0 0 30px rgba(0, 0, 0, 0.2),
+                0 4px 20px rgba(0, 0, 0, 0.4);
+    border: 1px solid rgba(255, 255, 255, 0.2);
+  }
+  .flipped {
+  transform: rotateY(180deg);
+}
+.status-badge {
+  font-size: 0.75rem; /* text-sm */
+  font-weight: 600;
+  padding: 0.25rem 0.5rem;
+  border-radius: 9999px; /* fully rounded */
+  display: inline-block;
+  min-width: 80px;
+  text-align: center;
+}
+
+.online {
+  background-color: #22c55e; /* Tailwind green-500 */
+  color: white;
+}
+
+.offline {
+  background-color: #ef4444; /* Tailwind red-500 */
+  color: white;
+}
+
+
+
+      </style>
+       
+  <meta charset="UTF-8">
+  <title>Pong</title>
+</head>
+<body class="bg-gray-100 text-gray-800 min-h-screen">
+  <nav>
+    <div id="nav-public">
+      <button onclick="showOnly('view-register')" class="bg-blue-500 hover:bg-blue-600 text-white px-4 py-2 rounded">Créer un compte</button>
+      <button onclick="showOnly('view-login')" class="bg-blue-500 hover:bg-blue-600 text-white px-4 py-2 rounded">Se connecter</button>
+    </div>
+  
+    <div id="nav-user" class="hidden space-x-4 items-center">
+      <button id="nav-home" class="px-4 py-2 bg-gray-300 rounded hover:bg-gray-400" onclick="showOnly('view-home')">Accueil</button>
+      <button id="nav-game-online" class="bg-blue-500 hover:bg-blue-600 text-white px-4 py-2 rounded" onclick="showOnly('view-home')">Jouer en ligne</button>
+      <button id="nav-game-vs-ia" class="bg-blue-500 hover:bg-blue-600 text-white px-4 py-2 rounded">VS IA</button>
+      <button id="nav-game" class="bg-blue-500 hover:bg-blue-600 text-white px-4 py-2 rounded">Jouer en local</button>
+      <span id="nav-username" class="font-semibold"></span>
+      <button onclick="openSettings()" class="text-sm underline text-blue-600">Paramètres</button>
+      <button onclick="logout()" class="px-3 py-2 bg-red-500 text-white rounded hover:bg-red-600">Se déconnecter</button>
+    </div>
+  </nav>
+  
+
+  <div id="messageBox"></div>
+
+  <div id="view-home" class="p-8 text-center">
+    <h1 class="text-4xl font-bold text-blue-700 mb-2">Bienvenue sur Pong</h1>
+    <p class="text-lg">Cliquer sur "Jouer" pour commencer.</p>
+  </div>
+
+  <div id="view-game" class="flex justify-center items-center">
+    <canvas id="gameCanvas" width="800" height="600" class="rounded-lg shadow-lg"></canvas>
+  </div>
+
+  <div id="view-register" class="hidden p-8 max-w-md mx-auto bg-white rounded shadow mt-8 space-y-4">
+    <h2 class="text-2xl font-semibold text-center text-gray-700">Créer un utilisateur</h2>
+    <input id="firstName" type="text" placeholder="Prénom" class="w-full border px-3 py-2 rounded">
+    <input id="lastName" type="text" placeholder="Nom" class="w-full border px-3 py-2 rounded">
+    <input id="username" type="text" placeholder="Nom d'utilisateur" class="w-full border px-3 py-2 rounded">
+    <input id="password" type="password" placeholder="Mot de passe" class="w-full border px-3 py-2 rounded">
+    <input id="email" type="email" placeholder="Email" class="w-full border px-3 py-2 rounded">
+    <button onclick="registerUser()" class="bg-blue-500 hover:bg-blue-600 text-white px-4 py-2 rounded w-full">Envoyer</button>
+    <pre id="logUser" class="text-sm text-red-600"></pre>
+  </div>
+
+  <div id="view-login" class="hidden p-8 max-w-md mx-auto bg-white rounded shadow mt-8 space-y-4">
+    <h2 class="text-2xl font-semibold text-center text-gray-700">Connexion</h2>
+    <input id="login_email" type="email" placeholder="Email" class="w-full border px-3 py-2 rounded">
+    <input id="login_password" type="password" placeholder="Mot de passe" class="w-full border px-3 py-2 rounded">
+    <button onclick="loginUser()" class="bg-green-500 hover:bg-green-600 text-white px-4 py-2 rounded w-full">Se connecter</button>
+    <pre id="logLogin" class="text-sm text-red-600"></pre>
+  </div>
+
+<!-- Vue 2FA -->
+<div id="view-2fa" class="hidden p-8 max-w-md mx-auto bg-white rounded shadow mt-8 space-y-4">
+  <h2 class="text-2xl font-semibold text-center text-gray-700">Vérification 2FA</h2>
+  <input id="code_2fa" type="text" maxlength="6" placeholder="Code à 6 chiffres"
+    class="w-full border px-3 py-2 rounded text-center tracking-widest text-xl" />
+
+  <button onclick="verify2FA()" class="bg-indigo-600 hover:bg-indigo-700 text-white px-4 py-2 rounded w-full">
+    Vérifier
+  </button>
+
+  <pre id="log2FA" class="text-sm text-red-600"></pre>
+</div>
+
+  <div id="view-settings" class="hidden p-8 max-w-md mx-auto bg-white rounded shadow mt-8 space-y-4">
+    <h2 class="text-2xl font-semibold text-center text-gray-700">Paramètres</h2>
+<div class="flex justify-center gap-4">
+  <button onclick="showSettingsSubView('view-profile'); loadProfile()" class="bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600">Voir mon profil</button>
+<button onclick="showSettingsSubView('view-edit-settings')" class="bg-yellow-500 text-white px-4 py-2 rounded hover:bg-yellow-600">Changer mes infos</button>
+
+</div>
+
+  <div id="view-edit-settings" class="space-y-4 mt-6">
+  <!-- tes champs param_firstName, param_lastName... -->
+    <input id="param_firstName" type="text" placeholder="Prénom" class="w-full border px-3 py-2 rounded">
+    <input id="param_lastName" type="text" placeholder="Nom" class="w-full border px-3 py-2 rounded">
+    <input id="param_email" type="email" placeholder="Email" class="w-full border px-3 py-2 rounded">
+    <input id="param_username" type="text" placeholder="Nom de jeu" class="w-full border px-3 py-2 rounded">
+    <input id="param_avatarUrl" type="text" placeholder="Lien avatar (URL)" class="w-full border px-3 py-2 rounded">
+    <hr class="my-4">
+
+<h3 class="text-xl font-semibold text-gray-700">🔒 Changer le mot de passe</h3>
+<input id="param_old_password" type="password" placeholder="Mot de passe actuel" class="w-full border px-3 py-2 rounded">
+<input id="param_new_password" type="password" placeholder="Nouveau mot de passe" class="w-full border px-3 py-2 rounded">
+<input id="param_confirm_new_password" type="password" placeholder="Confirmer le nouveau mot de passe" class="w-full border px-3 py-2 rounded">
+<button onclick="updatePassword()" class="bg-red-500 hover:bg-red-600 text-white px-4 py-2 rounded w-full">Changer le mot de passe</button>
+<pre id="logUpdatePassword" class="text-sm text-green-600"></pre>
+
+    <button onclick="updateProfile()" class="bg-yellow-500 hover:bg-yellow-600 text-white px-4 py-2 rounded w-full">Enregistrer</button>
+    <pre id="logUpdateUser" class="text-sm text-green-600"></pre>
+  </div>
+  
+  <div id="view-profile" class="hidden flex justify-center mt-12 perspective">
+    <div class="card-3d w-[350px] h-[220px] relative cursor-pointer">
+      
+      <!-- Face avant -->
+      <div class="card-face card-front metal-effect bg-gradient-to-br from-gray-300 to-gray-500 text-white p-6 rounded-xl shadow-xl absolute inset-0 backface-hidden">
+        <span id="profile_status" class="status-badge absolute top-3 right-3"></span>
+        <img id="profile_avatar" src="/default.png" alt="Avatar" class="w-20 h-20 rounded-full border-2 border-white mb-3">
+        <h2 id="profile_username" class="text-xl font-bold"></h2>
+        <p id="profile_email" class="text-sm text-white/80 mb-2"></p>
+        <div class="text-sm space-y-1">
+          <p><span class="text-yellow-300">🏆 Victoires :</span> <span id="profile_wins">0</span></p>
+          <p><span class="text-red-300">❌ Défaites :</span> <span id="profile_losses">0</span></p>
+        </div>
+      </div>
+  
+      <!-- Face arrière -->
+      <div class="card-face card-back metal-effect bg-gray-800 text-white p-6 rounded-xl shadow-xl absolute inset-0 backface-hidden rotate-y-180">
+        <div class="space-y-2 text-sm">
+          <p><strong>👤 Prénom :</strong> <span id="profile_firstName">-</span></p>
+          <p><strong>🧑 Nom :</strong> <span id="profile_lastName">-</span></p>
+          <p><strong>📅 Créé le :</strong> <span id="profile_created_at">-</span></p>
+          <p><strong>🕒 Dernière connexion :</strong> <span id="profile_last_seen">-</span></p>
+          <p><strong>🔐 Username :</strong> <span id="profile_username">-</span></p>
+        </div>
+      </div>
+  
+    </div>
+  </div>
+
+  <script >
+
+function toggleRegister() {
+  showOnly('view-register');
+}
+
+let currentUserId = null;
+
+async function registerUser() {
+  const data = {
+    firstName: document.getElementById('firstName').value,
+    lastName: document.getElementById('lastName').value,
+    username: document.getElementById('username').value,
+    password: document.getElementById('password').value,
+    email: document.getElementById('email').value,
+  }
+
+  let userId = "";
+
+  try {
+    userId = await createAuthAccount(data.email, data.password);
+    await createUserProfile(userId, data);
+    updateUI(userId, data);
+    return { success: true, userId: userId};
+  } catch (error) {
+    if (userId) {
+      await fetch(`auth/delete/${userId}`, {method: 'DELETE'});
+    }
+    document.getElementById('logUser').textContent = 'Erreur : ' + error.message;
+    return { success: false, userId: userId };
+  }
+}
+
+async function createAuthAccount(email, password) {
+  const authRes = await fetch('/auth/register', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json'},
+    body: JSON.stringify({
+    email: email,
+    password: password
+    })
+    });
+
+    const authData = await authRes.json();
+
+    if (!authRes.ok) {
+      throw new Error(`Auth error: ${authData.error || authRes.statusText}`);
+    }
+
+    console.log(`CreateAuth successfull: ${authData.userId}`);
+    return authData.userId;
+}
+
+async function createUserProfile(userId, data) {
+  const profileRes = await fetch ('users/register', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({
+    userId : userId,
+    firstName: data.firstName,
+    lastName: data.lastName,
+    username: data.username,
+    })
+  });
+
+  const profileData = await profileRes.json();
+  if (!profileRes.ok) {
+    throw new Error(`User error: ${profileData.error || profileRes.statusText}`);
+  }
+  console.log(profileData.message)
+}
+
+function updateUI(userId, data) {
+  const user = {
+    userId,
+    email: data.email,
+    username: data.username,
+    firstName: data.firstName,
+    lastName: data.lastName
+  };
+
+  setLoggedInUser(user);
+
+  document.getElementById('logUser').textContent = JSON.stringify(user, null, 2);
+  document.getElementById('view-register').style.display = 'none';
+
+  document.getElementById('firstName').value = '';
+	document.getElementById('lastName').value = '';
+  document.getElementById('username').value = '';
+  document.getElementById('password').value = '';
+  document.getElementById('email').value = '';
+}
+
+function setLoggedInUser(user) {
+  localStorage.setItem('user', JSON.stringify(user));
+  document.getElementById('nav-public').style.display = 'none';
+  document.getElementById('nav-user').style.display = 'block';
+  document.getElementById('nav-username').textContent = `👤 ${user.username}`;
+}
+
+
+
+
+async function loginUser() {
+  const data = {
+    email: document.getElementById('login_email').value,
+    password: document.getElementById('login_password').value
+  };
+
+  if (!data) {
+    console.log('Cant get data');
+    return ;
+  }
+  try {
+    const loginRes = await fetch('/auth/login', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({
+      email: data.email,
+      password: data.password
+    })
+    });
+
+    const loginData = await loginRes.json();
+    if (!loginRes.ok) {
+    throw new Error(`Login error: ${ loginData.error || loginRes.statusText }`);
+    }
+    show2FA(loginData.userId);
+    return { success: true, userId: loginData.userId};
+
+  } catch (error) {
+    document.getElementById('logLogin').textContent = 'Erreur : ' + error.message;
+    return { success: false };
+  }
+}
+
+function show2FA(userId) {
+  currentUserId = userId
+  document.getElementById('view-login').classList.add('hidden');
+  document.getElementById('view-2fa').classList.remove('hidden');
+  document.getElementById('log2FA').textContent = '';
+  document.getElementById('code_2fa').value = '';
+  document.getElementById('code_2fa').focus();
+}
+
+async function verify2FA() {
+    const code = document.getElementById('code_2fa').value.trim();
+
+    if (!code || code.length !== 6) {
+      document.getElementById('log2FA').textContent = 'Veuillez entrer un code à 6 chiffres';
+      return;
+    }
+
+    try {
+      const res = await fetch('/auth/2fa/verify', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          userId: currentUserId,
+          code })
+      });
+
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || 'Vérification échouée');
+
+      const user = await getUser(currentUserId);
+      setLoggedInUser(user);
+      document.getElementById('view-2fa').classList.add('hidden');
+    } catch (err) {
+      document.getElementById('log2FA').textContent = 'Erreur : ' + err.message;
+    }
+  }
+
+async function logout() {
+  const user = JSON.parse(localStorage.getItem('user'));
+  if (!user) {
+    console.log('Cant get user from localStorage');
+    return;
+  }
+
+  try {
+    const logoutRes = await fetch('/users/logout', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ 
+      userId: user.userId })
+    });
+
+    const logoutData = await logoutRes.json();
+    if (!logoutRes.ok) {
+      throw new Error(`Logout error: ${ logoutData.error || logoutRes.statusText }`);
+    }
+    localStorage.removeItem('user');
+    document.getElementById('nav-public').style.display = 'block';
+    document.getElementById('nav-user').style.display = 'none';
+    document.getElementById('nav-username').textContent = '';
+    showOnly('view-home');
+
+    return { success: true, userId: logoutData.userId};
+  } catch (error) {
+    console.error("Disconnection error: ", error);
+    localStorage.removeItem('user');
+    showOnly('view-home');
+
+    return { success: false };
+  }
+}
+
+function openSettings() {
+  const user = JSON.parse(localStorage.getItem('user'));
+  if (!user) return;
+
+  document.getElementById('param_firstName').value = user.firstName || '';
+  document.getElementById('param_lastName').value = user.lastName || '';
+  document.getElementById('param_email').value = user.email || '';
+  document.getElementById('param_avatarUrl').value = user.avatarUrl || '';
+
+  showOnly('view-settings');
+}
+
+async function updateProfile() {
+  const user = JSON.parse(localStorage.getItem('user'));
+  console.log('👤 Utilisateur chargé pour update:', user);
+
+  if (!user || !user.userId) {
+    console.warn('❌ Aucun utilisateur valide en localStorage');
+    return;
+  }
+
+  const data = {
+    firstName: document.getElementById('param_firstName')?.value || '',
+    lastName: document.getElementById('param_lastName')?.value || '',
+    email: document.getElementById('param_email')?.value || '',
+    username: document.getElementById('param_username')?.value || '',
+    avatarUrl: document.getElementById('param_avatarUrl')?.value || user.avatarUrl || '/default.png'
+  };
+
+
+  console.log('🧪 updateUser - user:', user);
+
+  try {
+    const [updatedUser, updatedEmail] = await Promise.all([
+      updateUser(user, data),
+      updateEmail(user, data.email)
+    ]);
+    
+    const updatedProfile = {
+      userId: user.userId,
+      lastName: updatedUser.lastName,
+      firstName: updatedUser.firstName,
+      email: updatedEmail.email,
+      username: updatedUser.username,
+      avatarUrl: updatedUser.avatarUrl
+    };
+
+    console.log('Updated user: ', updatedProfile);
+    localStorage.setItem('user', JSON.stringify(updatedProfile));
+    document.getElementById('logUpdateUser').textContent = '✅ Modifications saved';
+    setLoggedInUser(updatedProfile); // met à jour l'affichage du nom
+
+    return { success: true, userId: user.userId };
+
+  } catch (error) {
+    document.getElementById('logUpdateUser').textContent = 'Erreur : ' + error.message;
+    return { success: false, userId: user?.userId };
+  }
+}
+
+async function updateUser(user, data) {
+
+   const rawData = {
+    userId: user.userId, // nécessaire pour le backend
+    lastName: data.lastName,
+    firstName: data.firstName,
+    username: data.username,
+    avatarUrl: data.avatarUrl
+  };
+
+  // Filtrage : on enlève tous les champs vides (ex: "")
+  const filteredData = Object.fromEntries(
+    Object.entries(rawData).filter(([_, value]) => value !== '')
+  );
+  console.log('🔄 Données envoyées au backend :', filteredData);
+
+
+  const updateRes = await fetch(`/users/${user.userId}`, {
+  method: 'PUT',
+  headers: { 'Content-Type': 'application/json' },
+  body: JSON.stringify({
+    userId: filteredData.userId,
+    lastName: filteredData.lastName,
+    firstName: filteredData.firstName,
+    username: filteredData.username,
+    avatarUrl: filteredData.avatarUrl
+  })
+  });
+  const updateData = await updateRes.json();
+  if (!updateRes.ok) {
+    throw new Error(`Update error: ${ updateData.error || updateRes.statusText }`);
+  }
+  return updateData;
+}
+
+async function updateEmail(user, email) {
+  const updateRes = await fetch(`/auth/email/${user.userId}`, {
+    method: 'PUT',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({
+      email: email
+  })
+  });
+
+  const updateData = await updateRes.json();
+  if (!updateRes.ok) {
+    throw new Error(`Email update error: ${ updateData.error || updateRes.statusText }`);
+  }
+  return updateData;
+}
+
+async function getUser(userId) {
+  console.log('userId = ', userId);
+  try {
+    const [userRes, authRes] = await Promise.all ([
+      fetch(`/users/getUser/${userId}`),
+      fetch(`/auth/getEmail/${userId}`)
+    ]);
+
+    if (!userRes.ok || !authRes.ok) {
+      throw new Error('Error while getting user profile');
+    }
+    
+    const [user, auth] = await Promise.all([
+      userRes.json(),
+      authRes.json()
+    ]);
+
+    return { ...user, email: auth.email, userId: auth.userId };
+  } catch (error) {
+    console.error('getUser error: ', error);
+    return null;
+  }
+}
+
+async function updatePassword() {
+  const user = JSON.parse(localStorage.getItem('user'));
+  if (!user) return;
+
+  const oldPassword = document.getElementById('param_old_password').value;
+  const newPassword = document.getElementById('param_new_password').value;
+  const confirmNewPassword = document.getElementById('param_confirm_new_password').value;
+
+  if (newPassword !== confirmNewPassword) {
+    document.getElementById('logUpdatePassword').textContent = '❌ Les mots de passe ne correspondent pas.';
+    return;
+  }
+
+  try {
+    const updateRes = await fetch(`auth/password/${user.userId}`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        oldPassword,
+        newPassword
+      })    
+    });
+    
+    if (updateRes.status === 204) {
+      document.getElementById('logUpdatePassword').textContent = '✅ Mot de passe modifié avec succès !';
+      document.getElementById('param_old_password').value = '';
+      document.getElementById('param_new_password').value = '';
+      document.getElementById('param_confirm_new_password').value = '';
+      return;
+    }
+
+    const updateData = await updateRes.json();
+    if (!updateRes.ok) {
+      throw new Error(`Password update error: ${ updateData.error || updateRes.statusText }`);
+    }
+  } catch (error) {
+    document.getElementById('logUpdatePassword').textContent = '❌ ' + error.message;
+  }
+}
+
+// 🔁 Au chargement de la page : afficher nav-user si déjà connecté
+window.addEventListener('DOMContentLoaded', () => {
+  const savedUser = localStorage.getItem('user');
+  if (savedUser) {
+  const user = JSON.parse(savedUser);
+  setLoggedInUser(user);
+  }
+});
+
+function toggleLogin() {
+  showOnly('view-login');
+}
+
+
+function showLocalGame() {
+  showOnly('view-game');
+}
+
+function showOnly(viewId) {
+  const views = [
+    'view-home',
+    'view-game',
+    'view-register',
+    'view-login',
+    'view-settings',
+    'view-edit-settings',
+    'view-profile'
+  ];
+  views.forEach(id => {
+    document.getElementById(id).style.display = (id === viewId) ? 'block' : 'none';
+  });
+}
+
+function showSettingsSubView(subViewId) {
+  const subViews = ['view-edit-settings', 'view-profile'];
+  subViews.forEach(id => {
+    document.getElementById(id).style.display = (id === subViewId) ? 'block' : 'none';
+  });
+}
+
+
+function formatDate(isoString) {
+  if (!isoString) return 'non défini';
+  const date = new Date(isoString);
+  return date.toLocaleDateString('fr-FR', {
+    year: 'numeric',
+    month: 'long',
+    day: 'numeric'
+  });
+}
+
+function loadProfile() {
+  const stored = JSON.parse(localStorage.getItem('user'));
+  if (!stored) return;
+
+  fetch(`/users/${stored.id}`)
+    .then(res => {
+      if (!res.ok) throw new Error('Impossible de charger le profil');
+      return res.json();
+    })
+    
+    .then(user => {
+      const statusIndicator = document.getElementById('profile_status');
+statusIndicator.textContent = user.is_online ? 'En ligne' : 'Hors ligne';
+statusIndicator.className = 'status-badge absolute top-3 right-3 ' + (user.is_online ? 'online' : 'offline');
+  if (user.is_online) {
+  statusIndicator.classList.remove('offline', 'bg-gray-400');
+  statusIndicator.classList.add('online');
+} else {
+  statusIndicator.classList.remove('online', 'bg-gray-400');
+  statusIndicator.classList.add('offline');
+}
+
+
+  document.getElementById('profile_avatar').src = user.avatarUrl || '/default.png';
+  document.getElementById('profile_email').innerText = user.email || '';
+  document.getElementById('profile_username').innerText = user.username || '';
+  document.getElementById('profile_firstName').innerText = user.firstName || '';
+  document.getElementById('profile_lastName').innerText = user.lastName || '';
+  document.getElementById('profile_created_at').innerText = formatDate(user.created_at);
+  document.getElementById('profile_last_seen').innerText = formatDate(user.last_seen);
+  document.getElementById('profile_wins').innerText = user.wins ?? 0;
+  document.getElementById('profile_losses').innerText = user.losses ?? 0;
+  })
+    .catch(err => {
+      console.error('Erreur profil :', err);
+    });
+}
+
+
+document.addEventListener('DOMContentLoaded', () => {
+  const card = document.querySelector('.card-3d');
+  if (!card) return;
+
+  card.addEventListener('click', () => {
+    card.classList.toggle('flipped');
+  });
+});
+
+  </script>
+  <script type="module" src="/dist/main.js"></script>
+</body>
+</html>
+

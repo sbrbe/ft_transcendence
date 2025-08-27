@@ -1,5 +1,24 @@
 {
   "compilerOptions": {
+    "target": "ES2020",
+    "useDefineForClassFields": true,
+    "module": "ESNext",
+    "moduleResolution": "Bundler",
+    "lib": ["ES2020", "DOM", "DOM.Iterable"],
+    "strict": true,
+    "skipLibCheck": true,
+    "noEmit": true,
+    "baseUrl": ".",
+    "paths": {}
+  },
+  "include": ["src"]
+}
+
+
+
+/*
+{
+  "compilerOptions": {
     "target": "es2016",
     "module": "commonjs",
     "rootDir": "./src",
@@ -10,3 +29,4 @@
     "skipLibCheck": true
   }
 }
+  */

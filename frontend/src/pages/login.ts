@@ -1,0 +1,97 @@
+// src/pages/login.ts
+import { navigateTo } from '../router/router';
+import { loginUser } from '../api/auth';              // API
+import { setPendingUserId } from '../api/A2F';        // State - clé session
+import { bindPasswordToggle, setStatusMessage, clearStatusMessage, lockButton } from '../utils/ui';
+
+/**
+ * [UI][ROUTER] Login:
+ * Rend la page de connexion dans `container`, branche les handlers d’UI,
+ * gère la navigation interne et le submit du formulaire.
+ */
+const Login: (container: HTMLElement) => void = (container) => {
+  container.innerHTML = `
+    <div class="container-page my-10">
+      <div class="mx-auto max-w-md rounded-2xl border shadow-sm bg-white px-6 py-8">
+        <h2 class="text-2xl font-semibold text-center text-gray-800">Connexion</h2>
+
+        <form id="login-form" class="mt-6 space-y-4" novalidate>
+          <label class="block">
+            <span class="text-sm text-gray-700">Email</span>
+            <input id="login_email" name="email" type="email" required autocomplete="email"
+              class="mt-1 w-full border px-3 py-2 rounded outline-none focus:ring-2 focus:ring-blue-500" placeholder="email@domaine.com">
+          </label>
+
+          <label class="block">
+            <span class="text-sm text-gray-700">Mot de passe</span>
+            <div class="relative">
+              <input id="login_password" name="password" type="password" required minlength="6" autocomplete="current-password"
+                class="mt-1 w-full border px-3 py-2 rounded outline-none focus:ring-2 focus:ring-blue-500 pr-10" placeholder="******">
+              <button type="button" id="togglePwd"
+                class="absolute inset-y-0 right-0 my-auto mr-2 text-xs text-gray-500 hover:text-gray-700">Afficher</button>
+            </div>
+          </label>
+
+          <button id="submitBtn" type="submit"
+            class="w-full bg-green-600 hover:bg-green-700 text-white font-medium px-4 py-2.5 rounded-lg transition">
+            Se connecter
+          </button>
+
+          <p id="formMsg" class="text-sm min-h-5" aria-live="polite"></p>
+
+          <p class="text-center text-sm text-gray-500">
+            Pas de compte ?
+            <a href="#/inscription" data-route="/inscription" class="text-blue-600 hover:underline">S'enregistrer</a>
+          </p>
+        </form>
+      </div>
+    </div>
+  `;
+
+  const form = container.querySelector<HTMLFormElement>('#login-form')!;
+  const emailEl = container.querySelector<HTMLInputElement>('#login_email')!;
+  const pwdEl = container.querySelector<HTMLInputElement>('#login_password')!;
+  const msgEl = container.querySelector<HTMLParagraphElement>('#formMsg')!;
+  const submitBtn = container.querySelector<HTMLButtonElement>('#submitBtn')!;
+  const togglePwdBtn = container.querySelector<HTMLButtonElement>('#togglePwd')!;
+
+  bindPasswordToggle(pwdEl, togglePwdBtn);
+
+  form.addEventListener('click', (e) => 
+  {
+    const a = (e.target as HTMLElement).closest('a[data-route]') as HTMLAnchorElement | null;
+    if (!a) return;
+    e.preventDefault();
+    navigateTo(a.dataset.route || '/');
+  });
+
+  form.addEventListener('submit', async (e) => 
+  {
+    e.preventDefault();
+    clearStatusMessage(msgEl);
+
+    const email = emailEl.value.trim();
+    const password = pwdEl.value.trim();
+    if (!email || !password) return setStatusMessage(msgEl, 'Veuillez saisir email et mot de passe.', 'error');
+    //if (!email || !password) return setMsg('Veuillez saisir email et mot de passe.', 'error');
+
+    lockButton(submitBtn, true, 'Connexion…');
+
+    try 
+    {
+      const { userId } = await loginUser(email, password); 
+      setPendingUserId(String(userId));                    
+      navigateTo('/a2f');
+    } 
+    catch (err: any) 
+    {
+      setStatusMessage(msgEl, err?.message || 'Connexion échouée', 'error');
+    } 
+    finally 
+    {
+      lockButton(submitBtn, false);
+    }
+  });
+};
+
+export default Login;

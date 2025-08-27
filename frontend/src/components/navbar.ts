@@ -1,0 +1,153 @@
+// src/components/navbar.ts
+
+// A mettre au propre
+// use -> dossier -> utils
+import { getSavedUser } from '../api/auth';
+
+export function createNavbar(onNavigate: (path: string) => void) {
+  const nav = document.createElement('nav');
+  nav.className = 'container-page my-4';
+  nav.setAttribute('role', 'navigation');
+
+  nav.innerHTML = `
+    <div class="flex items-center justify-between rounded-2xl border shadow-sm
+                bg-white/70 backdrop-blur supports-[backdrop-filter]:bg-white/50 px-4 py-3">
+      <!-- Gauche: logo + marque + liens -->
+      <div class="flex items-center gap-4">
+        <!-- Marque -->
+        <a href="#/accueil" data-route="/accueil"
+           class="flex items-center gap-3 select-none"
+           aria-label="Aller à l'accueil (Ft_transcendence)">
+          <img src="/site/logo.png" alt="Logo" class="h-9 w-9 rounded-xl ring-1 ring-black/5 object-cover">
+          <span class="text-base md:text-lg font-semibold tracking-tight">Ft_transcendence</span>
+        </a>
+
+        <!-- Liens principaux -->
+        <div class="hidden sm:flex items-center gap-1" aria-label="Navigation principale">
+          <a href="#/pong" data-route="/pong" data-nav
+             class="text-sm font-medium text-gray-700 hover:text-gray-900
+                    px-3 py-1.5 rounded-xl hover:bg-gray-100 active:bg-gray-200
+                    focus:outline-none focus-visible:ring-2 focus-visible:ring-blue-500/60 transition">
+            Pong
+          </a>
+
+          <a href="#/teams" data-route="/teams" data-nav
+             class="text-sm font-medium text-gray-700 hover:text-gray-900
+                    px-3 py-1.5 rounded-xl hover:bg-gray-100 active:bg-gray-200
+                    focus:outline-none focus-visible:ring-2 focus-visible:ring-blue-500/60 transition">
+            Teams
+          </a>
+
+          <a href="#/" data-route="/" data-nav
+             class="text-sm font-medium text-gray-700 hover:text-gray-900
+                    px-3 py-1.5 rounded-xl hover:bg-gray-100 active:bg-gray-200
+                    focus:outline-none focus-visible:ring-2 focus-visible:ring-blue-500/60 transition">
+            Autre1
+          </a>
+
+          <a href="#/" data-route="/" data-nav
+             class="text-sm font-medium text-gray-700 hover:text-gray-900
+                    px-3 py-1.5 rounded-xl hover:bg-gray-100 active:bg-gray-200
+                    focus:outline-none focus-visible:ring-2 focus-visible:ring-blue-500/60 transition">
+            Autre2
+          </a>
+
+        </div>
+      </div>
+
+      <!-- Droite -->
+      <div id="nav-right" class="flex items-center gap-2 sm:gap-3"></div>
+    </div>
+  `;
+
+  // Router via data-route
+  nav.addEventListener('click', (e) => {
+    const a = (e.target as HTMLElement).closest('a[data-route]') as HTMLAnchorElement | null;
+    if (!a) return;
+    e.preventDefault();
+    onNavigate(a.dataset.route || '/');
+  });
+
+  // Surbrillance du lien actif
+  const setActive = () => {
+    const current = location.hash.replace(/^#/, '') || '/';
+    nav.querySelectorAll<HTMLAnchorElement>('a[data-route]').forEach(a => {
+      const isActive = a.dataset.route === current || (current === '/' && a.dataset.route === '/accueil');
+      a.classList.toggle('bg-gray-100', isActive);
+    });
+  };
+  window.addEventListener('hashchange', setActive);
+
+  // Rendu dynamique (public ↔ connecté)
+  const renderRight = async () => {
+    const right = nav.querySelector<HTMLDivElement>('#nav-right')!;
+    const user = getSavedUser<{ username: string; avatarUrl?: string }>();
+
+    if (!user) {
+      right.innerHTML = `
+        <a href="#/connexion" data-route="/connexion"
+           class="text-sm font-medium text-gray-700 hover:text-gray-900
+                  px-3 py-1.5 rounded-xl hover:bg-gray-100 active:bg-gray-200
+                  focus:outline-none focus-visible:ring-2 focus-visible:ring-blue-500/60 transition">
+          Connexion
+        </a>
+        <a href="#/inscription" data-route="/inscription"
+           class="text-sm font-medium text-gray-700 hover:text-gray-900
+                  px-3 py-1.5 rounded-xl hover:bg-gray-100 active:bg-gray-200
+                  focus:outline-none focus-visible:ring-2 focus-visible:ring-blue-500/60 transition">
+          S'enregistrer
+        </a>
+      `;
+      return;
+    }
+
+    const avatarSrc = resolveAvatarSrc(user.avatarUrl);
+    right.innerHTML = `
+      <button type="button" id="btn-profile"
+        class="flex items-center gap-2 rounded-xl px-3 py-1.5 hover:bg-gray-100 focus:outline-none
+               focus-visible:ring-2 focus-visible:ring-blue-500/60 transition">
+        <img id="btn-profile-img" src="${avatarSrc}" alt="" class="h-8 w-8 rounded-lg ring-1 ring-black/5 object-cover">
+        <span class="text-sm font-medium">${escapeHtml(user.username)}</span>
+        <svg viewBox="0 0 20 20" class="h-4 w-4" aria-hidden="true"><path d="M5 7l5 5 5-5" fill="currentColor"/></svg>
+      </button>
+    `;
+
+    // Fallback si l'image échoue
+    const img = right.querySelector<HTMLImageElement>('#btn-profile-img')!;
+    img.addEventListener('error', () => { img.src = '/avatar/default.png'; }, { once: true });
+
+    // Menu profil (lazy import)
+    const btn = right.querySelector<HTMLButtonElement>('#btn-profile')!;
+    const { attachProfileMenu } = await import('./profileMenu');
+    const { open } = attachProfileMenu(btn, getSavedUser()!, {
+      onLogoutSuccess: () => { renderRight(); setActive(); }
+    });
+    btn.addEventListener('click', (e) => { e.preventDefault(); open(); });
+  };
+
+  window.addEventListener('auth:changed', renderRight);
+
+  renderRight();
+  setActive();
+
+  return nav;
+}
+
+/* ---------------- Helpers ---------------- */
+
+function resolveAvatarSrc(input?: string | null): string {
+  if (!input) return '/avatar/default.png';
+  const s = input.trim();
+  // URL absolue / data / blob
+  if (/^(https?:|data:|blob:)/i.test(s)) return s;
+  // normalise (supprime / initiaux)
+  const p = s.replace(/^\/+/, '');
+  if (p === 'default.png') return '/avatar/default.png';
+  if (p.startsWith('avatar/')) return '/' + p;
+  if (!p.includes('/')) return '/avatar/' + p;
+  return '/' + p;
+}
+
+function escapeHtml(s: string) {
+  return s.replace(/[&<>"']/g, (m) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[m]!));
+}
