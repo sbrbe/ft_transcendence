@@ -1,4 +1,4 @@
-import{n as u,a as g}from"./index-CRZkJy2F.js";import{s as f}from"./A2F-CUNc8p4k.js";import{b,c as x,s as d,l as c}from"./ui-BDQzTN5a.js";const h=e=>{e.innerHTML=`
+import{n as u,a as g}from"./index-VYEbWczg.js";import{s as f}from"./A2F-CUNc8p4k.js";import{b,c as x,s as d,l as c}from"./ui-BDQzTN5a.js";const h=e=>{e.innerHTML=`
     <div class="container-page my-10">
       <div class="mx-auto max-w-md rounded-2xl border shadow-sm bg-white px-6 py-8">
         <h2 class="text-2xl font-semibold text-center text-gray-800">Connexion</h2>

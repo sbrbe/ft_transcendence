@@ -1,4 +1,4 @@
-import{c as p,n as g,d as b}from"./index-CRZkJy2F.js";import{c as f}from"./users-BHhFmrZ9.js";import{b as x,c as y,s as l,l as n}from"./ui-BDQzTN5a.js";function a(e,o){var t;return(((t=e.querySelector(o))==null?void 0:t.value)||"").trim()}const N=e=>{e.innerHTML=`
+import{c as p,n as g,d as b}from"./index-VYEbWczg.js";import{c as f}from"./users-BHhFmrZ9.js";import{b as x,c as y,s as l,l as n}from"./ui-BDQzTN5a.js";function a(e,o){var t;return(((t=e.querySelector(o))==null?void 0:t.value)||"").trim()}const N=e=>{e.innerHTML=`
     <div class="container-page my-10">
       <div class="mx-auto max-w-md rounded-2xl border shadow-sm bg-white px-6 py-8">
         <h2 class="text-2xl font-semibold text-center text-gray-800">Créer un utilisateur</h2>

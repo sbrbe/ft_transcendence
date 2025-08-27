@@ -1,12 +1,8 @@
 // src/pages/profile.ts
 import { navigateTo } from '../router/router';
-import { getSavedUser, AppUser } from '../api/auth';
+import { getSavedUser, setLoggedInUser, AppUser } from '../api/auth';
+import { updateUser, updateEmail, updatePassword } from '../api/profile';
 import { initChangeAvatar } from '../features/changeAvatar';
-import { initUpdateBasics } from '../features/updateBasics';
-import { initChangePassword } from '../features/changePassword';
-
-import { normalizeAvatar } from '../utils/avatar';
-import { escapeHtml, escapeAttr } from '../utils/sanitize';
 
 const AVATARS = [
   '/avatar/default.png',
@@ -15,16 +11,14 @@ const AVATARS = [
   '/avatar/avatar3.png',
   '/avatar/avatar4.png',
   '/avatar/avatar5.png',
-  '/avatar/avatar6.png',
-  '/avatar/avatar7.png',
-  '/avatar/avatar8.png',
-  '/avatar/avatar9.png',
-  '/avatar/avatar10.png',
-  '/avatar/avatar11.png',
-  '/avatar/avatar12.png',
-  '/avatar/avatar13.png',
-  '/avatar/avatar14.png',
 ];
+
+type ProfileForm = {
+  firstName: string;
+  lastName: string;
+  email: string;
+  username: string;
+};
 
 const ProfilePage: (container: HTMLElement) => void = (container) => {
   const saved = getSavedUser<AppUser>();
@@ -33,11 +27,11 @@ const ProfilePage: (container: HTMLElement) => void = (container) => {
     return;
   }
 
-  const currentAvatar = normalizeAvatar(saved.avatarUrl) || AVATARS[0];
+  const currentAvatar = normaliseAvatar(saved.avatarUrl) || AVATARS[0];
 
   container.innerHTML = `
     <div class="container-page my-10 grid gap-6 lg:grid-cols-3">
-      <!-- Carte identité -->
+      <!-- Identité (aperçu) -->
       <section class="rounded-2xl border bg-white shadow-sm p-6 h-max">
         <h2 class="text-sm uppercase tracking-wider text-gray-500 mb-4">Identité</h2>
         <div class="flex items-center gap-4">
@@ -60,8 +54,9 @@ const ProfilePage: (container: HTMLElement) => void = (container) => {
         </div>
       </section>
 
+      <!-- Colonne droite : formulaires -->
       <div class="lg:col-span-2 space-y-6">
-        <!-- Infos de base -->
+        <!-- Informations de base -->
         <section class="rounded-2xl border bg-white shadow-sm p-6">
           <h2 class="text-sm uppercase tracking-wider text-gray-500 mb-4">Informations de base</h2>
           <form id="profile-form" class="space-y-5" novalidate>
@@ -123,6 +118,9 @@ const ProfilePage: (container: HTMLElement) => void = (container) => {
           </div>
 
           <div class="mt-3 flex items-center gap-3">
+            <input id="pf-avatarUrl" type="url" placeholder="Ou URL personnalisée (https://...)"
+              class="flex-1 border px-3 py-2 rounded-lg focus:ring-2 focus:ring-blue-500"
+              value="${escapeAttr(currentAvatar)}">
             <button id="btn-apply-url" type="button"
               class="px-3 py-2 rounded-lg border hover:bg-gray-50">Appliquer</button>
           </div>
@@ -161,69 +159,174 @@ const ProfilePage: (container: HTMLElement) => void = (container) => {
     </div>
   `;
 
-  // ==== refs ====
-  const $ = <T extends HTMLElement>(s: string) => 
-  {
-    const el = container.querySelector<T>(s);
-    if (!el) throw new Error(`Élément introuvable: ${s}`);
+  /* ---------- helpers (scopés au container) ---------- */
+  const $ = <T extends HTMLElement>(sel: string): T => {
+    const el = container.querySelector<T>(sel);
+    if (!el) throw new Error(`Élément introuvable: ${sel}`);
     return el;
   };
-
-
-  // identité
-  const card = 
-  {
-    avatar:   $<HTMLImageElement>('#pp-avatar'),
-    username: $<HTMLElement>('#pp-username'),
-    email:    $<HTMLElement>('#pp-email'),
-    first:    $<HTMLElement>('#pp-firstName'),
-    last:     $<HTMLElement>('#pp-lastName'),
+  const setMsg = (el: HTMLElement, text = '', kind?: 'success'|'error') => {
+    el.textContent = text;
+    el.className = `text-sm ${kind === 'success' ? 'text-green-600' : kind === 'error' ? 'text-red-600' : ''}`;
   };
-  card.avatar.addEventListener('error', () => { card.avatar.src = '/avatar/default.png'; }, { once: true });
+  const lockBtn = (btn: HTMLButtonElement, disabled: boolean, label?: string) => {
+    btn.disabled = disabled;
+    btn.classList.toggle('opacity-70', disabled);
+    btn.classList.toggle('cursor-not-allowed', disabled);
+    if (label && disabled) btn.textContent = label;
+  };
 
-  // avatar (feature dédiée)
-  initChangeAvatar({
-    grid:        $<HTMLDivElement>('#avatar-grid'),
-    previewImg:  card.avatar,
-    urlInput:    $<HTMLInputElement>('#pf-avatarUrl'),
+  /* ---------- refs ---------- */
+  const pf = {
+    firstName: $<HTMLInputElement>('#pf-firstName'),
+    lastName: $<HTMLInputElement>('#pf-lastName'),
+    email: $<HTMLInputElement>('#pf-email'),
+    username: $<HTMLInputElement>('#pf-username'),
+    saveBtn: $<HTMLButtonElement>('#pf-save'),
+    cancelBtn: $<HTMLButtonElement>('#pf-cancel'),
+    msg: $<HTMLParagraphElement>('#pf-msg'),
+    card: {
+      avatar: $<HTMLImageElement>('#pp-avatar'),
+      username: $<HTMLDivElement>('#pp-username'),
+      email: $<HTMLDivElement>('#pp-email'),
+      firstName: $<HTMLDivElement>('#pp-firstName'),
+      lastName: $<HTMLDivElement>('#pp-lastName'),
+    },
+  };
+  const av = {
+    grid: $<HTMLDivElement>('#avatar-grid'),
+    urlInput: $<HTMLInputElement>('#pf-avatarUrl'),
     applyUrlBtn: $<HTMLButtonElement>('#btn-apply-url'),
-    messageEl:   $<HTMLParagraphElement>('#av-msg'),
+    msg: $<HTMLParagraphElement>('#av-msg'),
+  };
+  const pwd = {
+    old: $<HTMLInputElement>('#pf-oldpwd'),
+    n1: $<HTMLInputElement>('#pf-newpwd'),
+    n2: $<HTMLInputElement>('#pf-newpwd2'),
+    saveBtn: $<HTMLButtonElement>('#pwd-save'),
+    msg: $<HTMLParagraphElement>('#pwd-msg'),
+  };
+
+  // fallback preview identité si l’image casse
+  pf.card.avatar.addEventListener('error', () => { pf.card.avatar.src = '/avatar/default.png'; }, { once: true });
+
+  /* ---------- avatar: branche la feature dédiée ---------- */
+  initChangeAvatar({
+    grid: av.grid,
+    previewImg: pf.card.avatar,
+    urlInput: av.urlInput,
+    applyUrlBtn: av.applyUrlBtn,
+    messageEl: av.msg,
     initialValue: currentAvatar,
     avatars: AVATARS,
     debounceMs: 250,
     fallback: '/avatar/default.png',
   });
 
-  // infos de base (feature dédiée)
-  initUpdateBasics({
-    user: saved,
-    formEl:   $<HTMLFormElement>('#profile-form'),
-    saveBtn:  $<HTMLButtonElement>('#pf-save'),
-    cancelBtn:$<HTMLButtonElement>('#pf-cancel'),
-    msgEl:    $<HTMLElement>('#pf-msg'),
-    firstName:$<HTMLInputElement>('#pf-firstName'),
-    lastName: $<HTMLInputElement>('#pf-lastName'),
-    username: $<HTMLInputElement>('#pf-username'),
-    email:    $<HTMLInputElement>('#pf-email'),
-    card: {
-      usernameEl: card.username,
-      emailEl:    card.email,
-      firstNameEl:card.first,
-      lastNameEl: card.last,
+  /* ---------- Annuler (réinitialise seulement les champs texte) ---------- */
+  pf.cancelBtn.addEventListener('click', () => {
+    pf.firstName.value = saved.firstName || '';
+    pf.lastName.value = saved.lastName || '';
+    pf.username.value = saved.username || '';
+    pf.email.value = saved.email || '';
+    setMsg(pf.msg);
+  });
+
+  /* ---------- Enregistrer (infos de base + email) ---------- */
+  ($<HTMLFormElement>('#profile-form')).addEventListener('submit', async (e) => {
+    e.preventDefault();
+
+    const data: ProfileForm = {
+      firstName: pf.firstName.value.trim(),
+      lastName: pf.lastName.value.trim(),
+      email: pf.email.value.trim(),
+      username: pf.username.value.trim(),
+    };
+
+    lockBtn(pf.saveBtn, true, 'Enregistrement…');
+    setMsg(pf.msg);
+
+    try {
+      // avatar est géré automatiquement par la feature
+      const updatedUser = await updateUser(saved.userId, {
+        firstName: data.firstName,
+        lastName: data.lastName,
+        username: data.username,
+      });
+      const updatedEmail = await updateEmail(saved.userId, data.email);
+
+      // conserver l’avatar courant depuis le storage (mis à jour par la feature)
+      const latest = getSavedUser<AppUser>() || saved;
+
+      const merged: AppUser = {
+        userId: saved.userId,
+        firstName: updatedUser.firstName,
+        lastName: updatedUser.lastName,
+        username: updatedUser.username,
+        email: updatedEmail.email,
+        avatarUrl: latest.avatarUrl, // <= ne pas écraser l’avatar auto-sauvé
+      };
+
+      setLoggedInUser(merged);
+      window.dispatchEvent(new CustomEvent('auth:changed', { detail: merged }));
+
+      // rafraîchir la carte identité
+      pf.card.username.textContent = merged.username || '';
+      pf.card.email.textContent = merged.email || '';
+      pf.card.firstName.textContent = merged.firstName || '';
+      pf.card.lastName.textContent = merged.lastName || '';
+
+      setMsg(pf.msg, '✅ Modifications enregistrées', 'success');
+    } catch (err: any) {
+      setMsg(pf.msg, `❌ ${err?.message || 'Erreur lors de la mise à jour'}`, 'error');
+    } finally {
+      lockBtn(pf.saveBtn, false);
     }
   });
 
-  // mot de passe (feature dédiée)
-  initChangePassword({
-    userId:   saved.userId,
-    formEl:   $<HTMLFormElement>('#pwd-form'),
-    oldInput: $<HTMLInputElement>('#pf-oldpwd'),
-    newInput: $<HTMLInputElement>('#pf-newpwd'),
-    newInput2:$<HTMLInputElement>('#pf-newpwd2'),
-    saveBtn:  $<HTMLButtonElement>('#pwd-save'),
-    msgEl:    $<HTMLElement>('#pwd-msg'),
+  /* ---------- Changer mot de passe ---------- */
+  ($<HTMLFormElement>('#pwd-form')).addEventListener('submit', async (e) => {
+    e.preventDefault();
+    setMsg(pwd.msg);
+
+    const oldPwd = pwd.old.value.trim();
+    const newPwd = pwd.n1.value.trim();
+    const newPwd2 = pwd.n2.value.trim();
+
+    if (!oldPwd || !newPwd) return setMsg(pwd.msg, '❌ Champs requis.', 'error');
+    if (newPwd !== newPwd2) return setMsg(pwd.msg, '❌ Les mots de passe ne correspondent pas.', 'error');
+
+    lockBtn(pwd.saveBtn, true, 'Mise à jour…');
+
+    try {
+      await updatePassword(saved.userId, oldPwd, newPwd);
+      setMsg(pwd.msg, '✅ Mot de passe modifié avec succès !', 'success');
+      pwd.old.value = ''; pwd.n1.value = ''; pwd.n2.value = '';
+    } catch (err: any) {
+      setMsg(pwd.msg, `❌ ${err?.message || 'Erreur lors du changement de mot de passe'}`, 'error');
+    } finally {
+      lockBtn(pwd.saveBtn, false);
+    }
   });
 };
 
 export default ProfilePage;
 
+/* ------------------------------ Utils ------------------------------ */
+
+function normaliseAvatar(input?: string | null): string {
+  if (!input) return '';
+  const s = input.trim();
+  if (!s) return '';
+  if (/^(https?:|data:|blob:)/i.test(s)) return s;
+  const p = s.replace(/^\/+/, '');
+  if (p.startsWith('avatar/')) return '/' + p;
+  if (!p.includes('/')) return '/avatar/' + p;
+  return '/' + p;
+}
+function escapeHtml(s: string) {
+  return s.replace(/[&<>"']/g, (m) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[m]!));
+}
+function escapeAttr(s: string) {
+  return escapeHtml(s).replace(/"/g, '&quot;');
+}

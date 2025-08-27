@@ -35,8 +35,8 @@ const createFriendshipsTable =
 		id INTEGER PRIMARY KEY AUTOINCREMENT,
 		userId TEXT NOT NULL,
 		friendId TEXT NOT NULL,
-		status TEXT NOT NULL (status IN ('pending, 'accepted', 'rejected')),
+		status TEXT NOT NULL CHECK (status IN ('pending', 'accepted', 'rejected')),
 		createdAt DATETIME DEFAULT CURRENT_TIMESTAMP,
 		updatedAt DATETIME DEFAULT CURRENT_TIMESTAMP,
-		UNIQUE(requesterId, addresseeId)
+		UNIQUE(userId, friendId)
 		)`;
