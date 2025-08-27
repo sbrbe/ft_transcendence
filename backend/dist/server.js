@@ -6,12 +6,12 @@ Object.defineProperty(exports, "__esModule", { value: true });
 const fastify_1 = __importDefault(require("fastify"));
 const ws_1 = require("ws");
 const game_logic_js_1 = require("../../frontend/engine_play/dist/game_logic.js");
+const crypto_1 = require("crypto");
 const app = (0, fastify_1.default)();
 const httpServer = app.server;
 const CANVAS_W = 800;
 const CANVAS_H = 600;
 const tournaments = new Map();
-function uid() { return Math.random().toString(36).slice(2, 10); }
 const wss = new ws_1.WebSocketServer({ server: httpServer, path: '/ws' });
 function broadcast(room, obj) {
     const s = JSON.stringify(obj);
@@ -189,11 +189,11 @@ setInterval(() => {
 }, TICK_MS);
 // route ping
 app.get('/', async () => ({ ok: true }));
-app.post('/tournaments', async (req, reply) => {
+app.post('/ws/tournaments', async (req, reply) => {
     const { name, size } = req.body;
     if (!name || ![4, 8, 16].includes(size))
         return reply.status(400).send({ error: 'bad_params' });
-    const id = uid();
+    const id = (0, crypto_1.randomUUID)();
     const t = {
         id,
         name,

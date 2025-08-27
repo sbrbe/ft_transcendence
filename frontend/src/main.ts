@@ -348,15 +348,13 @@ this.btn?.addEventListener('click', async () => {
   try {
     // Ici tu fais ce que tu veux (appel API, création en mémoire, navigation…)
     // Exemple d’appel REST:
-    const res = await fetch('/tournaments', {
+    const res = await fetch('/ws/tournaments', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ name, size, autoStart: true }),
     });
     if (!res.ok) throw new Error('HTTP ' + res.status);
     const data = await res.json();
-    // ex: rediriger vers le lobby
-    // goToLobby(data.id);
     console.log('Tournoi créé:', data);
   } catch (err) {
     console.error(err);

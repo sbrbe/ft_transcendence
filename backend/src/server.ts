@@ -2,6 +2,7 @@ import Fastify from 'fastify';
 import { WebSocketServer, WebSocket, RawData } from 'ws';
 import { gameConfig } from '../../frontend/engine_play/dist/types.js';
 import { GameLogic } from '../../frontend/engine_play/dist/game_logic.js';
+import { randomUUID } from 'crypto';
 
 type Dir = 'up'|'down'|'stop';
 type Role = 'left'|'right';
@@ -28,8 +29,6 @@ type Tournament = {
 };
 
 const tournaments = new Map<string, Tournament>();
-
-function uid() { return Math.random().toString(36).slice(2, 10); }
 
 const wss = new WebSocketServer({ server: httpServer, path: '/ws' });
 
@@ -226,11 +225,11 @@ app.get('/', async () => ({ ok: true }));
 
 app.post<{
   Body: { name: string; size: 4|8|16 }
-}>('/tournaments', async (req, reply) => {
+}>('/ws/tournaments', async (req, reply) => {
   const { name, size } = req.body;
   if (!name || ![4,8,16].includes(size)) return reply.status(400).send({ error: 'bad_params' });
 
-  const id = uid();
+  const id = randomUUID();
   const t: Tournament = {
     id,
     name,

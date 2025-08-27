@@ -286,7 +286,7 @@ class GameApp {
             try {
                 // Ici tu fais ce que tu veux (appel API, création en mémoire, navigation…)
                 // Exemple d’appel REST:
-                const res = await fetch('/tournaments', {
+                const res = await fetch('/ws/tournaments', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({ name, size, autoStart: true }),
