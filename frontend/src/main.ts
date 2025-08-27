@@ -110,11 +110,10 @@ class GameRenderer {
 
 class GameApp {
   // UI
+  private btn: HTMLButtonElement | null;
   private tournament: Tournament | null = null;
   private configTournament: buildTournament | null = null;
   private canvas: HTMLCanvasElement;
-  private menu: HTMLElement;
-  private tournois: HTMLElement;
   private tournois_select: HTMLElement;
   private startBtn: HTMLButtonElement;
   private startBtnTournois: HTMLButtonElement;
@@ -240,14 +239,13 @@ private detachMobileTouch() {
 
   constructor() {
     this.canvas = document.getElementById('gameCanvas') as HTMLCanvasElement;
-    this.menu = document.getElementById('menu-game-config')!;
+    this.btn = document.getElementById('CreateTournamentBtn') as HTMLButtonElement | null;
     this.startBtn = document.getElementById('startBtn') as HTMLButtonElement;
     this.startBtnTournois = document.getElementById('startTournamentBtn') as HTMLButtonElement;
     this.modeSelect = document.getElementById('modeSelect') as HTMLSelectElement;
     this.tournois_select = document.getElementById('tournamentSize') as HTMLFieldSetElement;
     this.config2v2 = document.getElementById('custom-config_2vs2')!;
     this.config1v1 = document.getElementById('custom-config_1vs1')!;
-    this.tournois = document.getElementById('Tournois') as HTMLButtonElement;
     this.playersWrap = document.getElementById('tournamentPlayers') as HTMLElement;
     this.playerRows = Array.from(this.playersWrap.querySelectorAll<HTMLElement>('.player-row'));
 
@@ -265,7 +263,7 @@ private detachMobileTouch() {
   }
 
   private showView(viewId: string) {
-    ['view-home','view-game','view-register', 'menu-game-config', 'Tournois'].forEach(id => {
+    ['view-home','view-game','view-register', 'view-login', 'view-settings', 'view-edit-settings','view-profile', 'menu-game-config', 'Tournois', 'pong-options', 'local-options', 'online-options', 'online-tournament'].forEach(id => {
       const el = document.getElementById(id);
       if (el) el.style.display = (id === viewId ? 'block' : 'none');
     });
@@ -301,19 +299,77 @@ private getTournamentPlayersFromInputs(n: number): { id: number; name: string }[
 
   private bindUI() {
     // nav (facultatif selon ton HTML)
+    document.getElementById('pong')?.addEventListener('click', () => {
+      this.stopAndReturnToMenu();
+      this.showView('pong-options');
+    });
+    document.getElementById('pong-local')?.addEventListener('click', () => {
+      this.stopAndReturnToMenu();
+      this.showView('local-options');
+    });
+    document.getElementById('pong-online')?.addEventListener('click', () => {
+      this.stopAndReturnToMenu();
+      this.showView('online-options');
+    });
+
     document.getElementById('nav-home')?.addEventListener('click', () => this.stopAndReturnToMenu());
     document.getElementById('nav-game-config')?.addEventListener('click', () => {
       this.stopAndReturnToMenu();
-      this.showView('view-home');           // ton accueil
-      this.menu.style.display = 'block';
-      this.canvas.style.display = 'none';
+      this.showView('menu-game-config');           // ton accueil
     });
 
-    document.getElementById('nav-game-online')
-    ?.addEventListener('click', () => {
+    document.getElementById('nav-game-online')?.addEventListener('click', () => {
       this.stopAndReturnToMenu();
-      this.startOnline()});
+      this.startOnline()
+    });
 
+this.btn?.addEventListener('click', async () => {
+  const nameEl = document.getElementById('createName') as HTMLInputElement | null;
+  const sizeEl = document.getElementById('createSize') as HTMLSelectElement | null;
+
+  const name = nameEl?.value.trim() ?? '';
+  const rawSize = sizeEl?.value ?? '4';
+  const sizeNum = Number(rawSize);
+
+  // petite validation
+  if (!name) {
+    alert('Le nom du tournoi est requis.');
+    nameEl?.focus();
+    return;
+  }
+
+  // force 4 | 8 | 16
+  const allowed = [4, 8, 16] as const;
+  const size = (allowed.includes(sizeNum as any) ? sizeNum : 8) as 4 | 8 | 16;
+
+  // (optionnel) désactiver le bouton pour éviter le double-click
+  this.btn!.disabled = true;
+  console.log(name, sizeNum);
+  try {
+    // Ici tu fais ce que tu veux (appel API, création en mémoire, navigation…)
+    // Exemple d’appel REST:
+    const res = await fetch('/tournaments', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ name, size, autoStart: true }),
+    });
+    if (!res.ok) throw new Error('HTTP ' + res.status);
+    const data = await res.json();
+    // ex: rediriger vers le lobby
+    // goToLobby(data.id);
+    console.log('Tournoi créé:', data);
+  } catch (err) {
+    console.error(err);
+    alert("Impossible de créer le tournoi pour l'instant.");
+  } finally {
+    this.btn!.disabled = false;
+  }
+    });
+
+    document.getElementById('nav-game-tournois-online')?.addEventListener('click', () => {
+      this.stopAndReturnToMenu();
+      this.showView('online-tournament');
+    });
       document.getElementById('nav-game-tournois')?.addEventListener('click', () => {
         this.stopAndReturnToMenu();
         this.showView('Tournois');
@@ -350,8 +406,6 @@ private getTournamentPlayersFromInputs(n: number): { id: number; name: string }[
       });
   }
 
-// ...
-
 public sleep(ms: number) {
   return new Promise(resolve => setTimeout(resolve, ms));
 }
@@ -359,7 +413,6 @@ public sleep(ms: number) {
 private startTournament() {
   // UI on bascule en mode jeu
   this.showView('view-game');
-  this.canvas.style.display = 'block';
 
   const size = this.getSelectedTournamentSize();
 
@@ -397,7 +450,6 @@ private startTournament() {
 
     // si le tournoi est fini, on affiche l’écran de fin + stop
     if (this.tournament.isFinished()) {
-      //console.log('yo mon gatéééééeeeerrr');
       this.renderer.endScreen(snap as any);
       return; // on arrête la boucle
     }
@@ -418,9 +470,7 @@ private startTournament() {
     this.game = null;
   
     // UI
-    this.menu.style.display = 'none';
     this.showView('view-game');
-    this.canvas.style.display = 'block'; 
   
     // renderer seul (le serveur envoie l'état)
     this.renderer = new GameRenderer(this.canvas);
@@ -487,9 +537,7 @@ private startTournament() {
 
   private launchLocalGame(config: gameConfig) {
    // UI
-    this.menu.style.display = 'none';
     this.showView('view-game');
-    this.canvas.style.display = 'block'; 
 
     // Crée moteur + renderer
     this.game = new GameLogic(this.canvas.width, this.canvas.height, config);
@@ -509,8 +557,6 @@ private startTournament() {
         this.rafId = requestAnimationFrame(loop);
       } else {
         this.renderer.endScreen(state as unknown as GameState);
-        // Option: on peut auto-nettoyer après l’écran de fin
-        // this.stopAndReturnToMenu();
       }
     };
     this.rafId = requestAnimationFrame(loop);

@@ -7,12 +7,29 @@ type Dir = 'up'|'down'|'stop';
 type Role = 'left'|'right';
 
 type ClientInfo = { ws: WebSocket; role: Role; lastDir: Dir };
+type TState = 'OPEN'|'READY'|'RUNNING'|'FINISHED'|'EXPIRED';
+
+type Slot = { slotIndex: number; playerId?: string; name?: string; ready?: boolean };
+
 
 const app = Fastify();
 const httpServer = app.server;
 
 const CANVAS_W = 800;
 const CANVAS_H = 600;
+
+type Tournament = {
+  id: string;
+  name: string;
+  size: 4|8|16;
+  state: TState;
+  createdAt: number;
+  slots: Slot[];
+};
+
+const tournaments = new Map<string, Tournament>();
+
+function uid() { return Math.random().toString(36).slice(2, 10); }
 
 const wss = new WebSocketServer({ server: httpServer, path: '/ws' });
 
@@ -59,8 +76,8 @@ function createRoom(a: ClientInfo, b: ClientInfo): Room {
   const config: gameConfig = {
     mode: '1v1',
     playerSetup: [
-      { type: 'human', playerId: 1 },
-      { type: 'human', playerId: 2 },
+      { type: 'human', playerId: 1, name: '' },
+      { type: 'human', playerId: 2, name: ''},
     ]
   };
 
@@ -206,6 +223,26 @@ for (const r of endedRooms) {
 
 // route ping
 app.get('/', async () => ({ ok: true }));
+
+app.post<{
+  Body: { name: string; size: 4|8|16 }
+}>('/tournaments', async (req, reply) => {
+  const { name, size } = req.body;
+  if (!name || ![4,8,16].includes(size)) return reply.status(400).send({ error: 'bad_params' });
+
+  const id = uid();
+  const t: Tournament = {
+    id,
+    name,
+    size,
+    state: 'OPEN',
+    createdAt: Date.now(),
+    slots: Array.from({ length: size }, (_, i) => ({ slotIndex: i }))
+  };
+  tournaments.set(id, t);
+  return { id: t.id, name: t.name, size: t.size, state: t.state, createdAt: t.createdAt };
+});
+
 
 const PORT = Number(process.env.PORT) || 3002;
 app.listen({ port: PORT, host: '0.0.0.0' }).then(() => {

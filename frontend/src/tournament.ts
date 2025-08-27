@@ -76,16 +76,15 @@ export class Tournament {
         {
             let win = info.tracker.winner
             if (win)
-            {
                 this.appendWinner(win);
-            }
             this.currentMatchId++;
             if (this.currentMatchId >= this.confs.length && this.winner.length > 1) 
             {
                     this.buildConfs(this.winner);
                     this.startTour();
 
-            }else if (this.currentMatchId < this.confs.length)
+            }
+            else if (this.currentMatchId < this.confs.length)
                 this.startMatchs(this.currentMatchId);
         }
         return info;

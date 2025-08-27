@@ -189,17 +189,107 @@
   
     <div id="nav-user" class="hidden space-x-4 items-center">
       <button id="nav-home" class="px-4 py-2 bg-gray-300 rounded hover:bg-gray-400" onclick="showOnly('view-home')">Accueil</button>
-      <!-- <button id="nav-game-vs-ia" class="bg-blue-500 hover:bg-blue-600 text-white px-4 py-2 rounded">VS IA</button>
-      <button id="nav-game" class="bg-blue-500 hover:bg-blue-600 text-white px-4 py-2 rounded">Jouer en local</button> -->
-      <button id="nav-game-config" class="bg-blue-500 hover:bg-blue-600 text-white px-4 py-2 rounded">🎮 Jouer</button>
-      <button id="nav-game-tournois" class="bg-blue-500 hover:bg-blue-600 text-white px-4 py-2 rounded">🎮 Tournois</button>
-      <button id="nav-game-online" class="bg-blue-500 hover:bg-blue-600 text-white px-4 py-2 rounded" onclick="showOnly('view-home')">Jouer en ligne</button>
-      <span id="nav-displayname" class="font-semibold"></span>
-      <button onclick="openSettings()" class="text-sm underline text-blue-600">Paramètres</button>
-      <button onclick="logout()" class="px-3 py-2 bg-red-500 text-white rounded hover:bg-red-600">Se déconnecter</button>
+      <!-- Bouton PONG -->
+      <button id="pong" class="bg-blue-500 hover:bg-blue-600 text-white px-4 py-2 rounded">PONG</button>
+  <span id="nav-displayname" class="font-semibold"></span>
+  <button onclick="openSettings()" class="text-sm underline text-blue-600">Paramètres</button>
+  <button onclick="logout()" class="px-3 py-2 bg-red-500 text-white rounded hover:bg-red-600">Se déconnecter</button>
     </div>
   </nav>
+
+  <div id="pong-options" class="hidden flex flex-col items-center justify-center mt-8 space-y-4 space-x-4">
+    <button id="pong-local" class="bg-green-500 hover:bg-green-600 text-white px-6 py-3 rounded-lg text-lg w-48">Local</button>
+    <button id="pong-online" class="bg-purple-500 hover:bg-purple-600 text-white px-6 py-3 rounded-lg text-lg w-48">En ligne</button>
+  </div>
+
+  <div id="local-options" class="hidden flex flex-col items-center justify-center mt-8 space-y-4 space-x-4">
+    <button id="nav-game-config" class="bg-blue-500 hover:bg-blue-600 text-white px-4 py-2 rounded">🎮 Match Libre ⚡</button>
+    <button id="nav-game-tournois" class="bg-blue-500 hover:bg-blue-600 text-white px-4 py-2 rounded">🎮 Tournois</button>
+  </div>
+
+  <div id="online-options" class="hidden flex flex-col items-center justify-center mt-8 space-y-4 space-x-4">
+    <button id="nav-game-online" class="bg-blue-500 hover:bg-blue-600 text-white px-4 py-2 rounded" >1 vs 1 Online 🌍</button>
+    <button id="nav-game-tournois-online" class="bg-blue-500 hover:bg-blue-600 text-white px-4 py-2 rounded" >Tournament Onligne 🌍</button>
+  </div>
     
+  <div id="online-tournament" class="hidden mx-auto mt-10 w-full max-w-md rounded-xl bg-slate-900/80 p-5 text-white shadow-xl">
+    <!-- Rejoindre -->
+    <h2 class="mb-3 text-center text-xl font-semibold">🎮 Rejoindre un tournoi</h2>
+  
+    <!-- Barre de recherche -->
+    <div class="mb-3">
+      <input id="search" type="text" placeholder="🔎 Rechercher un tournoi..."
+             class="w-full rounded-lg border border-slate-700 bg-slate-800 px-3 py-2 outline-none ring-0 focus:border-slate-500" />
+    </div>
+  
+    <!-- Liste des tournois -->
+    <div id="list" class="max-h-56 space-y-2 overflow-y-auto rounded-lg border border-slate-800 bg-slate-800/60 p-2">
+      <!-- item -->
+      <div class="flex items-center justify-between rounded-md bg-slate-800 px-3 py-2">
+        <div class="min-w-0">
+          <div class="truncate font-medium">Tournoi Alpha</div>
+          <div class="text-xs text-slate-400">2/8 joueurs</div>
+        </div>
+        <button class="rounded-md bg-sky-500 px-3 py-1 text-sm font-medium hover:bg-sky-400">Rejoindre</button>
+      </div>
+      <div class="flex items-center justify-between rounded-md bg-slate-800 px-3 py-2">
+        <div class="min-w-0">
+          <div class="truncate font-medium">Speed Cup</div>
+          <div class="text-xs text-slate-400">0/4 joueurs</div>
+        </div>
+        <button class="rounded-md bg-sky-500 px-3 py-1 text-sm font-medium hover:bg-sky-400">Rejoindre</button>
+      </div>
+      <div class="flex items-center justify-between rounded-md bg-slate-800 px-3 py-2">
+        <div class="min-w-0">
+          <div class="truncate font-medium">Night Bracket</div>
+          <div class="text-xs text-slate-400">5/16 joueurs</div>
+        </div>
+        <button class="rounded-md bg-sky-500 px-3 py-1 text-sm font-medium hover:bg-sky-400">Rejoindre</button>
+      </div>
+      <!-- Ajoute d'autres items dynamiquement -->
+      <div class="flex items-center justify-between rounded-md bg-slate-800 px-3 py-2">
+        <div class="min-w-0">
+          <div class="truncate font-medium">Tournoi Alpha</div>
+          <div class="text-xs text-slate-400">2/8 joueurs</div>
+        </div>
+        <button class="rounded-md bg-sky-500 px-3 py-1 text-sm font-medium hover:bg-sky-400">Rejoindre</button>
+      </div>
+      <div class="flex items-center justify-between rounded-md bg-slate-800 px-3 py-2">
+        <div class="min-w-0">
+          <div class="truncate font-medium">Speed Cup</div>
+          <div class="text-xs text-slate-400">0/4 joueurs</div>
+        </div>
+        <button class="rounded-md bg-sky-500 px-3 py-1 text-sm font-medium hover:bg-sky-400">Rejoindre</button>
+      </div>
+      <div class="flex items-center justify-between rounded-md bg-slate-800 px-3 py-2">
+        <div class="min-w-0">
+          <div class="truncate font-medium">Night Bracket</div>
+          <div class="text-xs text-slate-400">5/16 joueurs</div>
+        </div>
+        <button class="rounded-md bg-sky-500 px-3 py-1 text-sm font-medium hover:bg-sky-400">Rejoindre</button>
+      </div>
+    </div>
+  
+    <!-- Séparateur -->
+    <div class="my-5 border-t border-slate-700"></div>
+  
+    <!-- Créer -->
+    <h2 class="mb-3 text-center text-xl font-semibold">➕ Créer un tournoi</h2>
+    <form class="grid grid-cols-1 gap-3 sm:grid-cols-3">
+      <input id="createName" type="text" placeholder="Nom du tournoi"
+             class="sm:col-span-2 w-full rounded-lg border border-slate-700 bg-slate-800 px-3 py-2 outline-none focus:border-slate-500" />
+      <select id="createSize" class="rounded-lg border border-slate-700 bg-slate-800 px-3 py-2 outline-none focus:border-slate-500">
+        <option value="4">4 joueurs</option>
+        <option value="8">8 joueurs</option>
+        <option value="16">16 joueurs</option>
+      </select>
+      <button type="button" id="CreateTournamentBtn"
+              class="sm:col-span-3 rounded-lg bg-emerald-500 px-4 py-2 font-medium hover:bg-emerald-400">
+        Créer le tournoi
+      </button>
+    </form>
+  </div>
+  
 <!-- Bloc de configuration du TOURNOIS -->
 <div id="Tournois" class="tournois-config" style="display: none;">
   <h1>PONG TOURNOIS</h1>
@@ -654,7 +744,13 @@ function showOnly(viewId) {
     'view-login',
     'view-settings',
     'view-edit-settings',
-    'view-profile'
+    'view-profile',
+    'Tournois',
+    'menu-game-config',
+    'pong-options',
+    'local-options',
+    'online-options'
+
   ];
   views.forEach(id => {
     document.getElementById(id).style.display = (id === viewId) ? 'block' : 'none';

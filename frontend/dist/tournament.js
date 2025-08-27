@@ -40,9 +40,8 @@ export class Tournament {
         let info = this.matchs[this.currentMatchId].getGameState();
         if (info.running == false) {
             let win = info.tracker.winner;
-            if (win) {
+            if (win)
                 this.appendWinner(win);
-            }
             this.currentMatchId++;
             if (this.currentMatchId >= this.confs.length && this.winner.length > 1) {
                 this.buildConfs(this.winner);

@@ -8,9 +8,10 @@ const ws_1 = require("ws");
 const game_logic_js_1 = require("../../frontend/engine_play/dist/game_logic.js");
 const app = (0, fastify_1.default)();
 const httpServer = app.server;
-// Taille logique du terrain (le rendu se fait côté client)
 const CANVAS_W = 800;
 const CANVAS_H = 600;
+const tournaments = new Map();
+function uid() { return Math.random().toString(36).slice(2, 10); }
 const wss = new ws_1.WebSocketServer({ server: httpServer, path: '/ws' });
 function broadcast(room, obj) {
     const s = JSON.stringify(obj);
@@ -20,12 +21,10 @@ function broadcast(room, obj) {
         }
     }
 }
-// Nettoie TOUTE la room: notifie, stoppe moteur, retire la room, ferme sockets
 function endAndCleanupRoom(room, reason) {
     try {
-        // informe clients (le client doit capter 'end' et retourner au menu)
         broadcast(room, { type: 'end', reason });
-        // stop moteur (si ton GameLogic expose une méthode)
+        // stop moteur
         try {
             room.engine?.dispose?.();
         }
@@ -38,7 +37,7 @@ function endAndCleanupRoom(room, reason) {
         const idx = rooms.indexOf(room);
         if (idx !== -1)
             rooms.splice(idx, 1);
-        // ferme les sockets de la room (propre retour côté client)
+        // ferme les sockets de la room
         for (const ci of room.clients) {
             try {
                 ci.ws.close();
@@ -54,9 +53,8 @@ function createRoom(a, b) {
     const config = {
         mode: '1v1',
         playerSetup: [
-            { type: 'human', playerId: 1 },
-            { type: 'human', playerId: 2 },
-            // P3/P4 absents → le moteur les mettra à null
+            { type: 'human', playerId: 1, name: '' },
+            { type: 'human', playerId: 2, name: '' },
         ]
     };
     const engine = new game_logic_js_1.GameLogic(CANVAS_W, CANVAS_H, config);
@@ -71,7 +69,6 @@ function createRoom(a, b) {
     b.ws.send(JSON.stringify({ type: 'start', role: 'right', w: CANVAS_W, h: CANVAS_H }));
     return room;
 }
-// Helpers
 function safeSend(ws, obj) {
     try {
         ws.send(JSON.stringify(obj));
@@ -109,7 +106,6 @@ wss.on('connection', (ws) => {
         try {
             const msg = JSON.parse(raw.toString());
             if (msg.type === 'input') {
-                // retrouve la room du client et note sa direction
                 for (const room of rooms) {
                     const ci = room.clients.find(c => c.ws === ws);
                     if (ci) {
@@ -119,10 +115,9 @@ wss.on('connection', (ws) => {
                 }
             }
         }
-        catch { /* ignore */ }
+        catch { }
     });
     ws.on('close', () => {
-        // 1) si c’était le pending, on libère juste
         if (pending && pending.ws === ws) {
             pending = null;
             return;
@@ -133,25 +128,19 @@ wss.on('connection', (ws) => {
             const idx = r.clients.findIndex(c => c.ws === ws);
             if (idx !== -1) {
                 const survivor = r.clients[1 - idx];
-                // informe le survivant
                 safeSend(survivor.ws, { type: 'info', code: 'opponent_disconnected' });
-                // stoppe le jeu côté serveur sans fermer le survivant
                 try {
                     r.engine.changeStatus(false);
                 }
                 catch { }
-                // retire la room
                 rooms.splice(i, 1);
-                // requeue immédiat du survivant (comme une nouvelle connexion)
                 requeue(survivor);
                 break;
             }
         }
     });
-    // Bonus: route les erreurs vers close (déclenche le même cleanup)
     ws.on('error', () => ws.emit('close'));
 });
-// Boucle: 60 Hz tick, 20 Hz snapshots
 const TICK_MS = Math.floor(1000 / 60);
 const SNAP_MS = Math.floor(1000 / 60);
 let lastSnap = Date.now();
@@ -188,7 +177,6 @@ setInterval(() => {
             }
         }
     }
-    // 3) cleanup des rooms finies (envoie 'end' + ferme sockets + retire la room)
     // 3) cleanup des rooms finies (envoie 1 dernier state + end + close)
     for (const r of endedRooms) {
         try {
@@ -201,6 +189,22 @@ setInterval(() => {
 }, TICK_MS);
 // route ping
 app.get('/', async () => ({ ok: true }));
+app.post('/tournaments', async (req, reply) => {
+    const { name, size } = req.body;
+    if (!name || ![4, 8, 16].includes(size))
+        return reply.status(400).send({ error: 'bad_params' });
+    const id = uid();
+    const t = {
+        id,
+        name,
+        size,
+        state: 'OPEN',
+        createdAt: Date.now(),
+        slots: Array.from({ length: size }, (_, i) => ({ slotIndex: i }))
+    };
+    tournaments.set(id, t);
+    return { id: t.id, name: t.name, size: t.size, state: t.state, createdAt: t.createdAt };
+});
 const PORT = Number(process.env.PORT) || 3002;
 app.listen({ port: PORT, host: '0.0.0.0' }).then(() => {
     console.log('🚀 Server + WS on', PORT);
