@@ -6,7 +6,7 @@ export class OnlineClient {
   constructor(private onState: (snap:any)=>void, private onInfo?: (msg:any)=>void) {}
 
   connect() {
-    this.ws = new WebSocket(`wss://${location.host}/ws`); // ← sans slash final
+    this.ws = new WebSocket(`wss://${location.host}/ws?ch=game`); // ← sans slash final
     
     this.ws.addEventListener('message', (e) => {
       const msg = JSON.parse(e.data);
@@ -38,3 +38,28 @@ export class OnlineClient {
   }
   
 }
+
+
+// document.getElementById('list')?.addEventListener('click', async (e) => {
+//   const btn = (e.target as HTMLElement).closest<HTMLButtonElement>('.joinBtn');
+//   if (!btn) return;
+
+//   const id = btn.dataset.id!;
+//   console.log("Tu as cliqué sur le tournoi:", id);
+
+//   // 1) rejoindre (renvoie { tournamentId, playerId, slotIndex })
+//   const joined = await this.joinTournament(id);
+//   if (!joined) return; // join a échoué
+
+//   // 2) récupérer l’état complet du tournoi
+//   const tRes = await fetch(`/ws/tournaments/${id}`);
+//   if (!tRes.ok) {
+//     console.error('GET /tournaments/:id failed', tRes.status, await tRes.text());
+//     return;
+//   }
+//   const t = await tRes.json(); // doit contenir { id,name,size,slots,... }
+//   // 3) afficher le lobby
+//   this.showView('tournament-lobby');
+//   this.renderLobby(t);
+// });
+

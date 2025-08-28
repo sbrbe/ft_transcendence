@@ -189,6 +189,28 @@ setInterval(() => {
 }, TICK_MS);
 // route ping
 app.get('/', async () => ({ ok: true }));
+// abonnés à la liste publique
+const publicSubs = new Set();
+// abonnés par tournoi (lobby)
+const lobbySubs = new Map(); // id -> Set<ws>
+function send(ws, obj) {
+    try {
+        ws.send(JSON.stringify(obj));
+    }
+    catch { }
+}
+function broadcastOpenList() {
+    const payload = JSON.stringify({
+        type: 'open_list',
+        list: [...tournaments.values()]
+            .filter(t => t.state === 'OPEN')
+            .map(t => ({ id: t.id, name: t.name, size: t.size, taken: t.slots.filter(s => s.playerId).length }))
+    });
+    for (const ws of publicSubs) {
+        if (ws.readyState === ws_1.WebSocket.OPEN)
+            ws.send(payload);
+    }
+}
 app.post('/ws/tournaments', async (req, reply) => {
     const { name, size } = req.body;
     if (!name || ![4, 8, 16].includes(size))
@@ -198,13 +220,66 @@ app.post('/ws/tournaments', async (req, reply) => {
         id,
         name,
         size,
+        taken: 0,
         state: 'OPEN',
         createdAt: Date.now(),
         slots: Array.from({ length: size }, (_, i) => ({ slotIndex: i }))
     };
     tournaments.set(id, t);
-    return { id: t.id, name: t.name, size: t.size, state: t.state, createdAt: t.createdAt };
+    broadcastOpenList();
+    return { id: t.id, name: t.name, size: t.size, taken: 0, state: t.state, createdAt: t.createdAt };
 });
+app.get('/ws/tournaments', async () => {
+    return [...tournaments.values()];
+});
+app.post('/ws/tournaments/:id/join', async (req, reply) => {
+    const { id } = req.params;
+    const { name } = req.body || {};
+    const t = tournaments.get(id);
+    if (!t)
+        return reply.code(404).send({ error: 'not_found' });
+    if (t.state !== 'OPEN')
+        return reply.code(409).send({ error: 'not_open' });
+    if (!name)
+        return reply.code(400).send({ error: 'bad_params' });
+    const slot = t.slots.find(s => !s.playerId);
+    if (!slot)
+        return reply.code(409).send({ error: 'full' });
+    const playerId = (0, crypto_1.randomUUID)();
+    slot.playerId = playerId;
+    slot.name = name;
+    slot.ready = true; // MVP: auto-ready
+    // si on a rempli tous les slots → passe READY (tu pourras déclencher le bracket ensuite)
+    const taken = t.slots.filter(s => s.playerId).length;
+    if (taken === t.size) {
+        t.state = 'READY';
+    }
+    t.taken += 1;
+    // Renvoie ce que ton front loggue actuellement
+    broadcastLobbyUpdate(id);
+    broadcastOpenList();
+    return { tournamentId: id, playerId, slotIndex: slot.slotIndex };
+});
+app.get('/ws/tournaments/:id', async (req, reply) => {
+    const { id } = req.params;
+    const t = tournaments.get(id);
+    if (!t)
+        return reply.code(404).send({ error: 'not_found' });
+    return t; // ou une projection si tu veux cacher des champs
+});
+function broadcastLobbyUpdate(tid) {
+    const subs = lobbySubs.get(tid);
+    if (!subs || subs.size === 0)
+        return;
+    const t = tournaments.get(tid);
+    if (!t)
+        return;
+    const payload = JSON.stringify({ type: 'tournament_update', tournament: t });
+    for (const ws of subs) {
+        if (ws.readyState === ws_1.WebSocket.OPEN)
+            ws.send(payload);
+    }
+}
 const PORT = Number(process.env.PORT) || 3002;
 app.listen({ port: PORT, host: '0.0.0.0' }).then(() => {
     console.log('🚀 Server + WS on', PORT);

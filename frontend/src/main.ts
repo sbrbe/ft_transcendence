@@ -110,6 +110,7 @@ class GameRenderer {
 
 class GameApp {
   // UI
+  private publicWS: WebSocket | null = null;
   private btn: HTMLButtonElement | null;
   private tournament: Tournament | null = null;
   private configTournament: buildTournament | null = null;
@@ -263,7 +264,7 @@ private detachMobileTouch() {
   }
 
   private showView(viewId: string) {
-    ['view-home','view-game','view-register', 'view-login', 'view-settings', 'view-edit-settings','view-profile', 'menu-game-config', 'Tournois', 'pong-options', 'local-options', 'online-options', 'online-tournament'].forEach(id => {
+    ['view-home','view-game','view-register', 'view-login', 'view-settings', 'view-edit-settings','view-profile', 'menu-game-config', 'Tournois', 'pong-options', 'local-options', 'online-options', 'online-tournament', 'tournament-lobby'].forEach(id => {
       const el = document.getElementById(id);
       if (el) el.style.display = (id === viewId ? 'block' : 'none');
     });
@@ -297,8 +298,123 @@ private getTournamentPlayersFromInputs(n: number): { id: number; name: string }[
   });
 }
 
+private renderCard(t: {id:string; name:string; size:number; taken:number}) {
+  const div = document.createElement('div');
+  div.className = 'flex items-center justify-between rounded-md bg-slate-800 px-3 py-2';
+  div.innerHTML = `
+    <div class="min-w-0">
+      <div class="truncate font-medium">${t.name}</div>
+      <div class="text-xs text-slate-400">${t.taken}/${t.size}</div>
+    </div>
+    <button class="joinBtn rounded-md bg-sky-500 px-3 py-1 text-sm font-medium hover:bg-sky-400" data-id="${t.id}">
+      Rejoindre
+    </button>
+  `;
+  return div;
+}
+
+private async refreshOpenTournaments() {
+  const res = await fetch('/ws/tournaments');
+  const list: {id:string; name:string; size:number; taken:number}[] = await res.json();
+  const listEl = document.getElementById('list')!;
+
+  listEl.innerHTML = '';
+  if (list.length === 0) {
+    listEl.innerHTML = `<div class="text-center text-sm text-slate-400 py-6">Aucun tournoi pour le moment</div>`;
+    return;
+  }
+  for (const t of list) listEl.appendChild(this.renderCard(t));
+}
+
+private async joinTournament(id: string)
+{
+    const pseudo = prompt("Ton pseudo ?")?.trim() || "Player";
+    const res = await fetch(`/ws/tournaments/${id}/join`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ name: pseudo })
+    });
+    if (!res.ok) {
+      console.error("Join failed", res.status, await res.text());
+      return;
+    }
+    const data = await res.json();
+    console.log("Inscrit dans le tournoi:", data);
+    this.refreshOpenTournaments();
+    return (data);
+  
+}
+
+private renderLobby(t: any) {
+  const nameEl = document.getElementById('lobby-name')!;
+  const countEl = document.getElementById('lobby-count')!;
+  const sizeEl = document.getElementById('lobby-size')!;
+  const listEl = document.getElementById('lobby-players')!;
+  const statusEl = document.getElementById('lobby-status')!;
+
+  nameEl.textContent = t.name;
+  countEl.textContent = t.slots.filter((s:any)=>s.playerId).length.toString();
+  sizeEl.textContent = t.size.toString();
+
+  listEl.innerHTML = '';
+  for (const s of t.slots) {
+    if (!s.playerId) continue;
+    const li = document.createElement('li');
+    li.className = "flex items-center justify-between rounded-md bg-slate-800 px-3 py-2";
+    li.innerHTML = `
+      <span class="truncate">${s.name}</span>
+      <span class="text-xs ${s.ready ? 'text-green-400' : 'text-yellow-400'}">
+        ${s.ready ? '✅ prêt' : '⏳ en attente'}
+      </span>
+    `;
+    listEl.appendChild(li);
+  }
+
+  if (t.slots.filter((s:any)=>s.playerId).length < t.size) {
+    statusEl.textContent = "En attente d’autres joueurs…";
+  } else {
+    statusEl.textContent = "Tournoi complet ! Préparation en cours…";
+  }
+}
+
   private bindUI() {
     // nav (facultatif selon ton HTML)
+    // Dans bindUI
+    
+  document.getElementById('list')?.addEventListener('click', async (e) => {
+    const btn = (e.target as HTMLElement).closest<HTMLButtonElement>('.joinBtn');
+    if (!btn) return;
+
+    const id = btn.dataset.id!;
+    console.log("Tu as cliqué sur le tournoi:", id);
+
+    // 1) rejoindre (renvoie { tournamentId, playerId, slotIndex })
+    const joined = await this.joinTournament(id);
+    if (!joined) return; // join a échoué
+
+    // 2) récupérer l’état complet du tournoi
+    const tRes = await fetch(`/ws/tournaments/${id}`);
+    if (!tRes.ok) {
+      console.error('GET /tournaments/:id failed', tRes.status, await tRes.text());
+      return;
+    }
+    const t = await tRes.json(); // doit contenir { id,name,size,slots,... }
+    // 3) afficher le lobby
+    this.showView('tournament-lobby');
+    this.renderLobby(t);
+  });
+
+    document.getElementById('nav-game-tournois-online')?.addEventListener('click', () => {
+      this.stopAndReturnToMenu();
+      this.showView('online-tournament');
+    });
+
+    document.getElementById('pong-online')?.addEventListener('click', () => {
+      this.stopAndReturnToMenu();
+      this.showView('online-options');
+      this.refreshOpenTournaments();
+    });
+    
     document.getElementById('pong')?.addEventListener('click', () => {
       this.stopAndReturnToMenu();
       this.showView('pong-options');
@@ -306,10 +422,6 @@ private getTournamentPlayersFromInputs(n: number): { id: number; name: string }[
     document.getElementById('pong-local')?.addEventListener('click', () => {
       this.stopAndReturnToMenu();
       this.showView('local-options');
-    });
-    document.getElementById('pong-online')?.addEventListener('click', () => {
-      this.stopAndReturnToMenu();
-      this.showView('online-options');
     });
 
     document.getElementById('nav-home')?.addEventListener('click', () => this.stopAndReturnToMenu());
@@ -356,6 +468,7 @@ this.btn?.addEventListener('click', async () => {
     if (!res.ok) throw new Error('HTTP ' + res.status);
     const data = await res.json();
     console.log('Tournoi créé:', data);
+    await this.refreshOpenTournaments();
   } catch (err) {
     console.error(err);
     alert("Impossible de créer le tournoi pour l'instant.");
@@ -364,10 +477,6 @@ this.btn?.addEventListener('click', async () => {
   }
     });
 
-    document.getElementById('nav-game-tournois-online')?.addEventListener('click', () => {
-      this.stopAndReturnToMenu();
-      this.showView('online-tournament');
-    });
       document.getElementById('nav-game-tournois')?.addEventListener('click', () => {
         this.stopAndReturnToMenu();
         this.showView('Tournois');

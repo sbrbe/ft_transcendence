@@ -5,6 +5,7 @@ export class Tournament {
         this.confs = [];
         this.currentMatchId = 0;
         this.winner = [];
+        //this.id =
         this.canvasH = canvasH;
         this.canvasW = canvasW;
         this.buildConfs(info.players);
@@ -51,6 +52,25 @@ export class Tournament {
                 this.startMatchs(this.currentMatchId);
         }
         return info;
+    }
+    playOnline() {
+        let results = [];
+        for (let i = 0; i < this.matchs.length; i++) {
+            this.matchs[i].update();
+            let info = this.matchs[i].getGameState();
+            results.push(info);
+            if (!info.running) {
+                let win = info.tracker.winner;
+                if (win)
+                    this.appendWinner(win);
+            }
+        }
+        let allDone = results.every(r => r.running === false);
+        if (allDone && this.winner.length > 1) {
+            this.buildConfs(this.winner);
+            this.startTour();
+        }
+        return results;
     }
     redirectTournament(key, isPressed) {
         this.matchs[this.currentMatchId].setPlayerInput(key, isPressed);
