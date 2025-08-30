@@ -23,7 +23,7 @@ export default async function logoutRoute(app:FastifyInstance) {
 						message: { type: 'string' }
 					}
 				},
-				400: {
+				404: {
 					type: 'object',
 					properties: {
 						error: { type: 'string' }

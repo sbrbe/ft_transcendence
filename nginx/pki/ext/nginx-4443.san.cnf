@@ -1,0 +1,4 @@
+subjectAltName=DNS:nginx,DNS:mesh.local
+basicConstraints=CA:FALSE
+keyUsage = digitalSignature, keyEncipherment
+extendedKeyUsage = serverAuth

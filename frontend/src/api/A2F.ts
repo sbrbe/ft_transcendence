@@ -54,12 +54,15 @@ export async function verify2FA(userId: string, code: string): Promise<void> {
  *  - users-service:  /users/getUser/:userId
  *  - auth-service:   /auth/getEmail/:userId
  */
-export async function fetchUser(userId: string): Promise<A2FUser> {
+export async function fetchUser(userId: string, retried = false): Promise<A2FUser> {
   const [userRes, authRes] = await Promise.all([
     fetch(`/users/getUser/${encodeURIComponent(userId)}`, { method: 'GET', credentials: 'include' }),
     fetch(`/auth/getEmail/${encodeURIComponent(userId)}`, { method: 'GET', credentials: 'include' })
   ]);
-
+  if ((userRes.status === 401 || authRes.status === 401) && !retried ) {
+      const ok = await refreshOnce();
+      if (ok) return (fetchUser(userId, true));
+  }
   if (!userRes.ok || !authRes.ok) {
     const t1 = await userRes.text().catch(() => '');
     const t2 = await authRes.text().catch(() => '');
@@ -74,4 +77,20 @@ export async function fetchUser(userId: string): Promise<A2FUser> {
     email: auth.email,
     userId: auth.userId
   };
+}
+
+
+let refreshPromise: Promise<boolean> | null = null;
+
+async function refreshOnce(): Promise<boolean> {
+  if (!refreshPromise) {
+    refreshPromise = fetch('/auth/refresh', {
+      method: 'POST',
+      credentials: 'include',
+      headers: { 'Content-Type': 'application/json' },
+    })
+      .then(r => r.ok)
+      .finally(() => { refreshPromise = null; });
+  }
+  return refreshPromise;
 }

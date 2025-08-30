@@ -7,7 +7,7 @@ export default async function friendsRequestRoute(app: FastifyInstance) {
 		Reply: 
 			| { message: string }
 			| { error: string };}>
-			('/friends/request', {
+			('/friends/invite', {
 		preHandler: app.authenticate,
 		schema: {
 			body: {

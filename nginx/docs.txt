@@ -26,20 +26,38 @@ openssl req -x509 -new -nodes -sha256 -days 3650 \
   -out nginx/pki/ca/ca.crt \
   -subj "/CN=Transcendence-Internal-CA"
 
-# AUTH
-openssl genrsa -out nginx/pki/private/auth-service.key 2048
-openssl req -new -sha256 -key nginx/pki/private/auth-service.key \
-  -out nginx/pki/csr/auth-service.csr -subj "/CN=auth-service"
-openssl x509 -req -sha256 -days 825 \
-  -in nginx/pki/csr/auth-service.csr \
-  -CA nginx/pki/ca/ca.crt -CAkey nginx/pki/private/ca.key -CAcreateserial \
-  -out nginx/pki/issued/auth-service.crt \
-  -extfile nginx/pki/ext/auth-service.san.cnf
+#NGINX
+openssl genrsa -out nginx/pki/private/nginx-client.key 2048
 
-# USERS
+openssl req -new -sha256 \
+  -key nginx/pki/private/nginx-client.key \
+  -out nginx/pki/csr/nginx-client.csr \
+  -subj "/CN=nginx"
+
+openssl x509 -req -sha256 -days 825 \
+  -in nginx/pki/csr/nginx-client.csr \
+  -CA nginx/pki/ca/ca.crt -CAkey nginx/pki/private/ca.key -CAcreateserial \
+  -out nginx/pki/issued/nginx-client.crt \
+  -extfile nginx/pki/ext/nginx-client.cnf
+
+# CHANGER LES NOMS DE SERVICE
+# clé
 openssl genrsa -out nginx/pki/private/users-service.key 2048
+
+# CSR
 openssl req -new -sha256 -key nginx/pki/private/users-service.key \
-  -out nginx/pki/csr/users-service.csr -subj "/CN=users-service"
+  -out nginx/pki/csr/users-service.csr \
+  -subj "/CN=users-service"
+
+# SAN (tu as déjà un fichier, sinon:)
+cat > nginx/pki/ext/users-service.san.cnf <<'EOF'
+subjectAltName=DNS:users-service
+basicConstraints=CA:FALSE
+keyUsage = digitalSignature, keyEncipherment
+extendedKeyUsage = serverAuth
+EOF
+
+# Cert signé par le CA
 openssl x509 -req -sha256 -days 825 \
   -in nginx/pki/csr/users-service.csr \
   -CA nginx/pki/ca/ca.crt -CAkey nginx/pki/private/ca.key -CAcreateserial \

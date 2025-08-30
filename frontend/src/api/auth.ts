@@ -152,20 +152,20 @@ export async function updatePassword(
 export async function logout(): Promise<void> {
   const user = getSavedUser<AppUser>();
 
-  let res = await fetch('/users/logout', {
-    method: 'POST',
-    credentials: 'include',
-    headers: JSON_HEADERS,
-  });
+//  let res = await fetch('/auth/logout', {
+//    method: 'POST',
+//    credentials: 'include',
+//    headers: JSON_HEADERS,
+//  });
 
-  if (!res.ok && user?.userId) {
-    res = await fetch('/users/logout', {
+//  if (!res.ok && user?.userId) {
+  let res = await fetch('/auth/logout', {
       method: 'POST',
       credentials: 'include',
       headers: JSON_HEADERS,
-      body: JSON.stringify({ userId: user.userId }),
+      body: JSON.stringify({ userId: user?.userId }),
     });
-  }
+//  }
 
   if (!res.ok) {
     const txt = await res.text().catch(() => '');

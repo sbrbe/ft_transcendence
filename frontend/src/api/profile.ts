@@ -1,5 +1,7 @@
 // src/api/profile.ts
 
+import { logout } from "./auth";
+
 export interface UpdateUserPartial {
   firstName?: string;
   lastName?: string;
@@ -81,4 +83,46 @@ export async function updatePassword(
   if (res.status === 204) return;
   const data = await res.json().catch(() => ({}));
   if (!res.ok) throw new Error(data?.error || res.statusText || 'Password update error');
+}
+
+
+let refreshPromise: Promise<boolean> | null = null;
+
+async function refreshOnce(): Promise<boolean> {
+  if (!refreshPromise) {
+    refreshPromise = fetch('/auth/refresh', {
+      method: 'POST',
+      credentials: 'include',
+      headers: { 'Content-Type': 'application/json' },
+    })
+      .then(r => r.ok)
+      .finally(() => { refreshPromise = null; });
+  }
+  return refreshPromise;
+}
+
+async function requestWithJWT<T>(
+  url: string,
+  init?: RequestInit,
+  retried =false): Promise<T> {
+    const res = await fetch(url, {
+      ...init,
+      credentials: 'include',
+      headers: { 'Content-Type': 'application/json', ...(init?.headers || {})},
+    });
+
+    if (res.status === 401 && !retried) {
+      const ok = await refreshOnce();
+      if (ok) {
+        return requestWithJWT(url, init, true);
+      }
+      else {
+        return logout();
+      }
+    }
+    const data = await res.json().catch(() => ({})) as any;
+    if (!res.ok){
+      throw new Error(data?.error || res.statusText || 'Request error');
+    }
+    return data as T;
 }

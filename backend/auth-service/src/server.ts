@@ -2,13 +2,17 @@ import fastify, {FastifyInstance, FastifyReply, FastifyRequest} from 'fastify';
 import fs from 'node:fs';
 import { db, initDB } from './init_db.js';
 import registerAllRoutes from './routes/index.js';
-import jwtSetup from './plugins.js'
+import jwtSetup from './plugins.js';
+import { registerInternal } from './internal.js';
 
 const app : FastifyInstance = fastify( {
 	logger: true,
 	https: {
-		key: fs.readFileSync('/run/certs/server.key'),
-		cert: fs.readFileSync('/run/certs/server.crt')
+		key: fs.readFileSync('/run/certs/auth-service.key'),
+		cert: fs.readFileSync('/run/certs/auth-service.crt'),
+		ca: fs.readFileSync('/run/certs/ca.crt'),
+		requestCert: true,
+		rejectUnauthorized: false,
 	}
 });
 

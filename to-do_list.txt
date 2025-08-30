@@ -1,6 +1,7 @@
 Function :
 
 	- login: marche / ajouter la maj de online_status avec le service users
+	- logout: ne marche pas => revoir logique de déconnexion avec l'appel au service user
 	- Ajouter les tokens dans le frontend
 	- Friends:
 		- Faire la DB

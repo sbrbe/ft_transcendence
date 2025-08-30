@@ -9,9 +9,9 @@ export async function logout(
 		const { userId } = req.body;
 
 		try {
-		//	const user = await disconnectUser(userId);
-		//	if (!user)
-		//		return reply.status(404).send({ error: 'User not found' });
+	//		const user = await disconnectUser(userId);
+	//		if (!user)
+	//			return reply.status(404).send({ error: 'User not found' });
 			deleteRefreshToken(userId);
 			clearAuthCookies(reply);
 			return reply.status(200).send({ userId, message: 'User disconnected' });

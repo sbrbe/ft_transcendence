@@ -1,1 +1,4 @@
-subjectAltName=DNS:users-service,DNS:users-service.internal,DNS:localhost
+subjectAltName=DNS:users-service
+basicConstraints=CA:FALSE
+keyUsage = digitalSignature, keyEncipherment
+extendedKeyUsage = serverAuth
