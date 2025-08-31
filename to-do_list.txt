@@ -1,6 +1,5 @@
 Function :
 
-	- login: marche / ajouter la maj de online_status avec le service users
 	- logout: ne marche pas => revoir logique de déconnexion avec l'appel au service user
 	- Ajouter les tokens dans le frontend
 	- Friends:
@@ -12,6 +11,7 @@ Function :
 
 Faire la comm entre les conteneurs
 
+Supprimer de la DB le password en clair
 
 Quand projet terminé, penser à passer les ports des conteneurs en expose dans le docker compose pour éviter 
 qu'on puisse y accéder depuis l'extérieur de docker

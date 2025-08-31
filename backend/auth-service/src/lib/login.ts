@@ -22,7 +22,7 @@ export async function loginVerify(
 			}
 //			console.log('BEFORE SETAUTHCOOKIE');
 			await setAuthCookies(reply, user.userId);
-	
+			await setOnlineStatus(user.userId, true);
 			return reply.status(200).send({ message: 'Vérification réussite' });
 		} catch (error: any) {
 			return reply.status(401).send({ error: error.message });
@@ -41,7 +41,6 @@ export async function login(
 			console.log('USER = ', user);
 //			const code = await createTwoFactorCode(user.userId);
 //			await sendTwoFactorCode(user.userId, user.email, code);
-			await setOnlineStatus(user.userId, true);
 			return reply.status(200).send({ userId: user.userId, message: 'Code de vérification envoyé par mail'} );
 		} catch (error: any) {
 			return reply.status(400).send({ error: error.message } );
