@@ -2,7 +2,7 @@ import { OnlineClient } from './onlineClient.js';
 import { GameLogic } from '../engine_play/dist/game_logic.js';
 import type { GameState, PlayerInfo } from '../engine_play/dist/types.js';
 import type { gameConfig } from '../engine_play/dist/types.js';
-import { Tournament, type buildTournament, type contender } from './tournament.js';
+import { Tournament, type buildTournament, type contender } from '../engine_play/dist/tournament.js';
 type gameMode = "1v1" | "2v2" | "CPU" | "tournament";
 
 class GameRenderer {
@@ -39,6 +39,7 @@ class GameRenderer {
     ctx.fillText(`Total échanges : ${state.tracker?.totalExchanges ?? 0}`, centerX, y);
     y += 30;
     ctx.fillText(`Rallye max : ${state.tracker?.maxRally ?? 0}`, centerX, y);
+    ctx.fillText('Appuyez sur [Espace] pour continuer', centerX, (y + 150));
   }
 
   public clearRender()
@@ -47,12 +48,33 @@ class GameRenderer {
     // this.ctx.fillText('Matchmaking...', (this.canvas.width / 2), (this.canvas.height / 2));
   }
 
-  drawMessage(text: string) {
-    this.ctx.fillStyle = "white";
-    this.ctx.font = "32px Arial";
-    this.ctx.textAlign = "center";
-    this.ctx.fillText(text, this.canvas.width / 2, this.canvas.height / 2);
+// Dans GameRenderer
+drawMessage(
+  text: string,
+  opts: { x?: number; y?: number; lineHeight?: number; align?: CanvasTextAlign } = {}
+) {
+  const ctx = this.ctx;
+  const { width, height } = this.canvas;
+
+  const lines = String(text).split(/\r?\n/);           // ← gère \n
+  const lineHeight = opts.lineHeight ?? 24;
+
+  ctx.save();
+  ctx.textAlign = opts.align ?? 'center';
+  ctx.textBaseline = 'middle';
+  ctx.font = ctx.font || '20px sans-serif';
+
+  const x = opts.x ?? width / 2;
+  // centre verticalement le bloc de lignes
+  let y = opts.y ?? (height / 2 - ((lines.length - 1) * lineHeight) / 2);
+
+  for (const line of lines) {
+    ctx.fillText(line, x, y);
+    y += lineHeight;
   }
+  ctx.restore();
+}
+
   
 
   draw(state: ReturnType<GameLogic["getGameState"]>) {
@@ -71,7 +93,6 @@ class GameRenderer {
       this.ctx.fillRect(p.x, p.y, p.width, p.height);
     });
     this.isStarting(state.ball.height, state.ball.width ,state.ball.x, state.ball.y, state.tracker.totalExchanges, state.scores);
-    console.log('salutt');
     // noms au lancement (3 s)
     const elapsed = (performance.now() - this.startTime) / 1000;
     this.ctx.font = "20px Arial";
@@ -183,14 +204,38 @@ private detachMobileTouch() {
   private renderer: GameRenderer | null = null;
   private rafId: number | null = null;
 
+  private betweenStage: 'idle'|'winner'|'next' = 'idle';
+  private _prevRunning: boolean | null = null;
+
+
   // Handlers (références pour add/remove)
   private keyDownHandler = (e: KeyboardEvent) => {
+    const isSpace = e.code === 'Space' || e.key === ' ';
+    if (isSpace) {
+      if (isSpace && this.betweenStage === 'winner') {
+        e.preventDefault();
+        this.betweenStage = 'next';
+        this.showNextMatchScreen();  // async, gère l'affichage quand c'est prêt
+        return;
+      }
+      if (this.betweenStage === 'next') {
+        e.preventDefault();
+        // 2e espace : on relance côté serveur
+        this.online?.sendContinue();
+        this.betweenStage = 'idle';
+        this.renderer?.clearRender(); // le serveur renverra le prochain 'state'
+        return;
+      }
+    }
+    
     if (e.key === 'ArrowUp' || e.key === 'ArrowDown') e.preventDefault();
     if (this.online) {
-      if (e.key === 'ArrowUp')
-        this.online.sendDir('up');
-      else if (e.key === 'ArrowDown')
-        this.online.sendDir('down');
+      const code = e.code; // 'ArrowUp' | 'ArrowDown' | 'KeyW' | 'KeyS'
+      if (code === 'ArrowUp' || code === 'ArrowDown' || code === 'KeyW' || code === 'KeyS') {
+        e.preventDefault();
+        this.online.sendKey(code, true);
+        return; // ne pas tomber dans la logique locale
+      }
     }
     if (this.tournament)
       this.tournament?.redirectTournament(e.key, true);
@@ -200,15 +245,23 @@ private detachMobileTouch() {
   };
   
   private keyUpHandler = (e: KeyboardEvent) => {
+    const isNextKey = e.code === 'Space' || e.key === ' ';
+if (isNextKey && (this.betweenStage === 'winner' || this.betweenStage === 'next')) {
+  e.preventDefault(); // n'envoie pas T au moteur local
+  return;
+}
+
     if (e.key === 'ArrowUp' || e.key === 'ArrowDown') e.preventDefault();
-    if (this.online)
-      if (e.key === 'ArrowUp' || e.key === 'ArrowDown')
-        this.online.sendDir('stop');
-    if (this.tournament)
-        this.tournament?.redirectTournament(e.key, false);
-    else {
-      this.game?.setPlayerInput(e.key, false);
+    if (this.online) {
+      const code = e.code;
+      if (code === 'ArrowUp' || code === 'ArrowDown' || code === 'KeyW' || code === 'KeyS') {
+        e.preventDefault();
+        this.online.sendKey(code, false);
+        return;
+      }
     }
+    if (this.tournament) this.tournament.redirectTournament(e.code, false);
+    else this.game?.setPlayerInput(e.code, false);
   };
   
 
@@ -267,6 +320,11 @@ private detachMobileTouch() {
     ['view-home','view-game','view-register', 'view-login', 'view-settings', 'view-edit-settings','view-profile', 'menu-game-config', 'Tournois', 'pong-options', 'local-options', 'online-options', 'online-tournament', 'tournament-lobby'].forEach(id => {
       const el = document.getElementById(id);
       if (el) el.style.display = (id === viewId ? 'block' : 'none');
+      //console.log(viewId);
+      if (viewId === 'online-tournament' || viewId === 'tournament-lobby')
+        this.startLoop();
+      else
+        this.stopLoop();
     });
   }
 
@@ -341,6 +399,7 @@ private async joinTournament(id: string)
     const data = await res.json();
     console.log("Inscrit dans le tournoi:", data);
     this.refreshOpenTournaments();
+    this.lobbyId = id;
     return (data);
   
 }
@@ -374,6 +433,7 @@ private renderLobby(t: any) {
     statusEl.textContent = "En attente d’autres joueurs…";
   } else {
     statusEl.textContent = "Tournoi complet ! Préparation en cours…";
+    this.startTournamentOnline(t);
   }
 }
 
@@ -407,12 +467,12 @@ private renderLobby(t: any) {
     document.getElementById('nav-game-tournois-online')?.addEventListener('click', () => {
       this.stopAndReturnToMenu();
       this.showView('online-tournament');
+       this.refreshOpenTournaments();
     });
 
     document.getElementById('pong-online')?.addEventListener('click', () => {
       this.stopAndReturnToMenu();
       this.showView('online-options');
-      this.refreshOpenTournaments();
     });
     
     document.getElementById('pong')?.addEventListener('click', () => {
@@ -423,37 +483,37 @@ private renderLobby(t: any) {
       this.stopAndReturnToMenu();
       this.showView('local-options');
     });
-
+    
     document.getElementById('nav-home')?.addEventListener('click', () => this.stopAndReturnToMenu());
     document.getElementById('nav-game-config')?.addEventListener('click', () => {
       this.stopAndReturnToMenu();
       this.showView('menu-game-config');           // ton accueil
     });
-
+    
     document.getElementById('nav-game-online')?.addEventListener('click', () => {
       this.stopAndReturnToMenu();
       this.startOnline()
     });
-
-this.btn?.addEventListener('click', async () => {
-  const nameEl = document.getElementById('createName') as HTMLInputElement | null;
-  const sizeEl = document.getElementById('createSize') as HTMLSelectElement | null;
-
-  const name = nameEl?.value.trim() ?? '';
-  const rawSize = sizeEl?.value ?? '4';
-  const sizeNum = Number(rawSize);
-
-  // petite validation
-  if (!name) {
-    alert('Le nom du tournoi est requis.');
-    nameEl?.focus();
-    return;
+    
+    this.btn?.addEventListener('click', async () => {
+      const nameEl = document.getElementById('createName') as HTMLInputElement | null;
+      const sizeEl = document.getElementById('createSize') as HTMLSelectElement | null;
+      
+      const name = nameEl?.value.trim() ?? '';
+      const rawSize = sizeEl?.value ?? '4';
+      const sizeNum = Number(rawSize);
+      
+      // petite validation
+      if (!name) {
+        alert('Le nom du tournoi est requis.');
+        nameEl?.focus();
+        return;
   }
-
+  
   // force 4 | 8 | 16
   const allowed = [4, 8, 16] as const;
   const size = (allowed.includes(sizeNum as any) ? sizeNum : 8) as 4 | 8 | 16;
-
+  
   // (optionnel) désactiver le bouton pour éviter le double-click
   this.btn!.disabled = true;
   console.log(name, sizeNum);
@@ -475,98 +535,171 @@ this.btn?.addEventListener('click', async () => {
   } finally {
     this.btn!.disabled = false;
   }
-    });
+});
 
-      document.getElementById('nav-game-tournois')?.addEventListener('click', () => {
-        this.stopAndReturnToMenu();
-        this.showView('Tournois');
-      });
+document.getElementById('nav-game-tournois')?.addEventListener('click', () => {
+  this.stopAndReturnToMenu();
+  this.showView('Tournois');
+});
 
-    // switch 1v1 / 2v2
-    this.modeSelect.addEventListener('change', () => {
-      const is2v2 = this.modeSelect.value === '2v2';
-      this.config2v2.style.display = is2v2 ? 'block' : 'none';
-      this.config1v1.style.display = is2v2 ? 'none' : 'block';
-    });
+// switch 1v1 / 2v2
+this.modeSelect.addEventListener('change', () => {
+  const is2v2 = this.modeSelect.value === '2v2';
+  this.config2v2.style.display = is2v2 ? 'block' : 'none';
+  this.config1v1.style.display = is2v2 ? 'none' : 'block';
+});
 
-    this.tournois_select.addEventListener('change', (e) => {
-      const target = e.target as HTMLInputElement | null;
-      if (target && target.name === 'tournamentSize') {
-        this.showFirst(parseInt(target.value, 10));
-      }
-    });
-    //start tournois
-    this.startBtnTournois.addEventListener('click', () => {
-      //chercher localstorage pour id joueur
-       this.startTournament();
-      });
+this.tournois_select.addEventListener('change', (e) => {
+  const target = e.target as HTMLInputElement | null;
+  if (target && target.name === 'tournamentSize') {
+    this.showFirst(parseInt(target.value, 10));
+  }
+});
+//start tournois
+this.startBtnTournois.addEventListener('click', () => {
+  //chercher localstorage pour id joueur
+  this.startTournament();
+});
 
-    // start local normal
-    this.startBtn.addEventListener('click', () => {
-      //chercher localstorage pour id joueur
-        const mode = this.modeSelect.value as gameMode;
-        const config: gameConfig = {
+// start local normal
+this.startBtn.addEventListener('click', () => {
+  //chercher localstorage pour id joueur
+  const mode = this.modeSelect.value as gameMode;
+  const config: gameConfig = {
           mode,
           playerSetup: this.getCustomPlayers(mode)
         };
         this.launchLocalGame(config);
       });
+    }
+    
+  private startTournamentOnline(t: any) {
+
+    // UI
+    this.showView('view-game');
+    t.id;
+    // renderer seul (le serveur envoie l'état)
+    this.renderer = new GameRenderer(this.canvas);
+  
+    // client WS
+    this.online?.dispose();
+    this.online = new OnlineClient(
+      // onState
+      (snap) => {
+        if (!this.renderer) return;
+        this.renderer.draw(snap);
+        if (!snap.running) {
+          this.renderer.endScreen(snap);
+        }
+      },
+      // onInfo (optionnel)
+      (msg) => {
+
+        if (msg.type === "waiting") {
+          this.renderer?.clearRender();
+          this.renderer?.drawMessage("Matchmaking...");
+        }
+      },
+      t
+    );
+  
+    this.online.connect();
+    this.attachInputListeners();
   }
 
-public sleep(ms: number) {
-  return new Promise(resolve => setTimeout(resolve, ms));
-}
-
-private startTournament() {
-  // UI on bascule en mode jeu
-  this.showView('view-game');
-
-  const size = this.getSelectedTournamentSize();
-
-  // lire les noms (avec fallback)
-  const players = this.getTournamentPlayersFromInputs(size);
-
-  // construire la config tournoi
-  this.configTournament = {
-    Online: false,
-    players
-  };
-
-
-  // crée le tournoi et le renderer
-  this.tournament = new Tournament(this.canvas.width, this.canvas.height, this.configTournament);
-  this.renderer = new GameRenderer(this.canvas);
-
-  // Input (local)
-  this.attachInputListeners();
-
-  // Boucle d’animation
-  const loop = async () => {
-    if (!this.tournament || !this.renderer) return;
-
-    // ⚠️ on demande au tournoi de jouer/avancer d’un tick
-    const snap =  this.tournament.playLocal();
-
-    // rendu
-     this.renderer.draw(snap);
-     if (!snap.running)
-     {
-       this.renderer.endScreen(snap)
-       await this.sleep(3000);
-    }
-
-    // si le tournoi est fini, on affiche l’écran de fin + stop
-    if (this.tournament.isFinished()) {
-      this.renderer.endScreen(snap as any);
-      return; // on arrête la boucle
+    public sleep(ms: number) {
+      return new Promise(resolve => setTimeout(resolve, ms));
     }
 
 
-    this.rafId = requestAnimationFrame(loop);
-  };
+    private async computeNextLabel(): Promise<string | null> {
+      const players = await this.online?.sendInfoPlayers();
+      return players ?? null;
+    }
+    
+    private async showNextMatchScreen() {
+      const label = (await this.computeNextLabel());
+      this.renderer?.clearRender();
+      this.renderer?.drawMessage(`Prochain match : ${label}\n\n[ESPACE] pour commencer`);
+    }
+    
 
-  this.rafId = requestAnimationFrame(loop);
-}
+    private startTournament() {
+      // UI
+      this.showView('view-game');
+    
+      // lecture joueurs “locaux”
+      const size = this.getSelectedTournamentSize();
+      const players = this.getTournamentPlayersFromInputs(size);
+    
+      // config locale (séquentielle)
+      this.configTournament = { Online: false, players };
+    
+      // renderer (le serveur envoie les states)
+      this.renderer = new GameRenderer(this.canvas);
+    
+      // client WS /ws/local
+      this.online?.dispose();
+      this.online = new OnlineClient(
+        // onState
+        (snap) => {
+          if (!this.renderer) return;
+          this.renderer.draw(snap);
+        
+          // déclenche endScreen UNIQUEMENT à la transition true -> false
+          if (this._prevRunning === true && snap.running === false) {
+            this.renderer.endScreen(snap);
+            this.betweenStage = 'winner';
+          }
+          this._prevRunning = !!snap.running;
+        },
+        // onInfo
+        (msg) => {
+          // if (msg.type === 'tournament_end') {
+          //   this.renderer?.clearRender();
+          //   this.renderer?.drawMessage('Tournoi terminé !');
+          // }
+        },
+        '/ws/local'
+      );
+    
+      // connexion + envoi conf
+      this.online.connect().then(() => {
+        if (this.configTournament)
+          this.online!.sendConfTournament(this.configTournament);
+      });
+    
+     // détache au cas où (évite doublons si on relance)
+window.removeEventListener('keydown', this.keyDownHandler as any);
+window.removeEventListener('keyup', this.keyUpHandler as any);
+
+// attache T + le reste de ta logique
+window.addEventListener('keydown', this.keyDownHandler);
+window.addEventListener('keyup', this.keyUpHandler);
+
+// s'assurer que le clavier n’est pas capté par un <input>
+(document.activeElement as HTMLElement)?.blur?.();
+this.canvas.tabIndex = 0;
+this.canvas.focus();
+
+// puis garde tes flèches/W/S
+this.attachLocalAuthoritativeInputs();
+
+    }
+    
+    // Envoie les 4 touches: flèches (joueur 1) + WS (joueur 2)
+    private attachLocalAuthoritativeInputs() {
+      const handler = (e: KeyboardEvent) => {
+        const code = e.code; // 'ArrowUp' | 'ArrowDown' | 'KeyW' | 'KeyS' ...
+        if (code === 'ArrowUp' || code === 'ArrowDown' || code === 'KeyW' || code === 'KeyS') {
+          this.online?.sendKey(code, e.type === 'keydown');
+          e.preventDefault();
+        }
+      };
+      window.addEventListener('keydown', handler);
+      window.addEventListener('keyup', handler);
+    }
+    
 
 
   private startOnline() {
@@ -600,7 +733,8 @@ private startTournament() {
           this.renderer?.clearRender();
           this.renderer?.drawMessage("Matchmaking...");
         }
-      }
+      },
+  '/ws'
     );
   
     this.online.connect();
@@ -697,6 +831,42 @@ private startTournament() {
 
     // UI
     this.showView('view-home');
+  }
+
+  loopTimer: any = null;
+  lobbyId: string|null = null;
+
+  startLoop() {
+    if (this.loopTimer) return; // déjà en cours
+
+    this.loopTimer = setInterval(async () => {
+      const onlineView = document.getElementById('online-tournament');
+      const lobbyView  = document.getElementById('tournament-lobby');
+      if (onlineView && onlineView.style.display === 'block') {
+        this.refreshOpenTournaments();
+      console.log('ici');
+
+      } 
+      else if (lobbyView && lobbyView.style.display === 'block' && this.lobbyId) {
+        try {
+
+          const res = await fetch(`/ws/tournaments/${encodeURIComponent(this.lobbyId)}`);
+          if (res.ok) {
+            const t = await res.json();
+            this.renderLobby(t);
+          }
+        } catch (e) {
+          console.warn('Erreur polling lobby', e);
+        }
+      }
+    }, 1000);
+  }
+
+  stopLoop() {
+    if (this.loopTimer) {
+      clearInterval(this.loopTimer);
+      this.loopTimer = null;
+    }
   }
 }
 

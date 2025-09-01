@@ -3,52 +3,61 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
 Object.defineProperty(exports, "__esModule", { value: true });
+// server.ts
 const fastify_1 = __importDefault(require("fastify"));
 const ws_1 = require("ws");
+const url_1 = require("url");
 const game_logic_js_1 = require("../../frontend/engine_play/dist/game_logic.js");
-const crypto_1 = require("crypto");
-const app = (0, fastify_1.default)();
-const httpServer = app.server;
+const tournament_js_1 = require("../../frontend/engine_play/dist/tournament.js");
+/* =========
+   Constantes
+   ========= */
 const CANVAS_W = 800;
 const CANVAS_H = 600;
-const tournaments = new Map();
-const wss = new ws_1.WebSocketServer({ server: httpServer, path: '/ws' });
+const TICK_MS = Math.floor(1000 / 60);
+const SNAP_MS = Math.floor(1000 / 60);
+/* =========
+   HTTP
+   ========= */
+const app = (0, fastify_1.default)();
+const httpServer = app.server;
+/* ==========================================
+   WS unique + routing par HTTP upgrade
+   ========================================== */
+const wss = new ws_1.WebSocketServer({ noServer: true });
+httpServer.on('upgrade', (req, socket, head) => {
+    const u = (0, url_1.parse)(req.url || '', true);
+    const pathname = u.pathname || '';
+    // On n’accepte que /ws et /ws/local sur ce serveur WS
+    if (pathname === '/ws' || pathname === '/ws/local') {
+        wss.handleUpgrade(req, socket, head, (ws) => {
+            // on stocke le path pour la branche dans 'connection'
+            ws.__pathname = pathname;
+            wss.emit('connection', ws, req);
+        });
+    }
+    else {
+        socket.destroy();
+    }
+});
+/* ==========================================
+   1v1 EN LIGNE (identique à ton original)
+   ========================================== */
+const rooms = [];
+let pending = null;
 function broadcast(room, obj) {
     const s = JSON.stringify(obj);
     for (const ci of room.clients) {
-        if (ci.ws.readyState === ws_1.WebSocket.OPEN) {
+        if (ci.ws.readyState === ws_1.WebSocket.OPEN)
             ci.ws.send(s);
-        }
     }
 }
-function endAndCleanupRoom(room, reason) {
+function safeSend(ws, obj) {
     try {
-        broadcast(room, { type: 'end', reason });
-        // stop moteur
-        try {
-            room.engine?.dispose?.();
-        }
-        catch { }
-        try {
-            room.engine.changeStatus(false);
-        }
-        catch { }
-        // retire la room de la liste
-        const idx = rooms.indexOf(room);
-        if (idx !== -1)
-            rooms.splice(idx, 1);
-        // ferme les sockets de la room
-        for (const ci of room.clients) {
-            try {
-                ci.ws.close();
-            }
-            catch { }
-        }
+        ws.send(JSON.stringify(obj));
     }
     catch { }
 }
-const rooms = [];
-let pending = null;
 function createRoom(a, b) {
     const config = {
         mode: '1v1',
@@ -69,12 +78,6 @@ function createRoom(a, b) {
     b.ws.send(JSON.stringify({ type: 'start', role: 'right', w: CANVAS_W, h: CANVAS_H }));
     return room;
 }
-function safeSend(ws, obj) {
-    try {
-        ws.send(JSON.stringify(obj));
-    }
-    catch { }
-}
 function requeue(client) {
     client.lastDir = 'stop';
     if (!pending) {
@@ -89,198 +92,269 @@ function requeue(client) {
         createRoom(a, client);
     }
 }
-wss.on('connection', (ws) => {
-    const client = { ws, role: 'left', lastDir: 'stop' };
-    if (!pending) {
-        client.role = 'left';
-        pending = client;
-        ws.send(JSON.stringify({ type: 'waiting', role: 'left' }));
-    }
-    else {
-        client.role = 'right';
-        const a = pending;
-        pending = null;
-        createRoom(a, client);
-    }
-    ws.on('message', (raw) => {
+function endAndCleanupRoom(room, reason) {
+    try {
+        broadcast(room, { type: 'end', reason });
         try {
-            const msg = JSON.parse(raw.toString());
-            if (msg.type === 'input') {
-                for (const room of rooms) {
-                    const ci = room.clients.find(c => c.ws === ws);
-                    if (ci) {
-                        ci.lastDir = msg.dir;
-                        break;
+            room.engine?.dispose?.();
+        }
+        catch { }
+        try {
+            room.engine.changeStatus(false);
+        }
+        catch { }
+        const idx = rooms.indexOf(room);
+        if (idx !== -1)
+            rooms.splice(idx, 1);
+        for (const ci of room.clients) {
+            try {
+                ci.ws.close();
+            }
+            catch { }
+        }
+    }
+    catch { }
+}
+/* ==========================================
+   TOURNOI LOCAL (séquentiel) sur /ws/local
+   ========================================== */
+function normalizeEngineKey(code, key) {
+    if (code === 'ArrowUp' || key === 'ArrowUp')
+        return 'ArrowUp';
+    if (code === 'ArrowDown' || key === 'ArrowDown')
+        return 'ArrowDown';
+    if (code === 'KeyW' || key === 'z' || key === 'Z')
+        return 'z';
+    if (code === 'KeyS' || key === 's' || key === 'S')
+        return 's';
+    return null;
+}
+function startLocalTicker(sess) {
+    if (sess.ticker)
+        clearInterval(sess.ticker);
+    const FRAME_MS = 1000 / 60;
+    sess.ticker = setInterval(() => {
+        if (!sess.t)
+            return;
+        if (sess.awaitingContinue)
+            return; // ⛔ gel
+        const snap = sess.t.playLocal?.();
+        if (snap) {
+            safeSend(sess.ws, { type: 'state', state: snap });
+            if (!snap.running) {
+                // manche finie → on fige. AUCUN autre message.
+                sess.awaitingContinue = true;
+                sess.continueCount = 0;
+            }
+        }
+        if (sess.t.isFinished?.()) {
+            safeSend(sess.ws, { type: 'tournament_end' });
+            clearInterval(sess.ticker);
+            sess.ticker = undefined;
+        }
+    }, FRAME_MS);
+}
+/* ==========================================
+   Branche WS unique → routing par pathname
+   ========================================== */
+wss.on('connection', (ws, req) => {
+    const pathname = ws.__pathname;
+    // ---------- 1) 1v1 en ligne ----------
+    if (pathname === '/ws') {
+        const client = { ws, role: 'left', lastDir: 'stop' };
+        if (!pending) {
+            client.role = 'left';
+            pending = client;
+            ws.send(JSON.stringify({ type: 'waiting', role: 'left' }));
+        }
+        else {
+            client.role = 'right';
+            const a = pending;
+            pending = null;
+            createRoom(a, client);
+        }
+        ws.on('message', (raw) => {
+            try {
+                const msg = JSON.parse(raw.toString());
+                if (msg.type === 'input') {
+                    for (const room of rooms) {
+                        const ci = room.clients.find(c => c.ws === ws);
+                        if (ci) {
+                            ci.lastDir = msg.dir;
+                            break;
+                        }
                     }
                 }
             }
-        }
-        catch { }
-    });
-    ws.on('close', () => {
-        if (pending && pending.ws === ws) {
-            pending = null;
-            return;
-        }
-        // 2) sinon, trouve la room et requeue le survivant
-        for (let i = rooms.length - 1; i >= 0; i--) {
-            const r = rooms[i];
-            const idx = r.clients.findIndex(c => c.ws === ws);
-            if (idx !== -1) {
-                const survivor = r.clients[1 - idx];
-                safeSend(survivor.ws, { type: 'info', code: 'opponent_disconnected' });
-                try {
-                    r.engine.changeStatus(false);
-                }
-                catch { }
-                rooms.splice(i, 1);
-                requeue(survivor);
-                break;
+            catch { }
+        });
+        ws.on('close', () => {
+            if (pending && pending.ws === ws) {
+                pending = null;
+                return;
             }
-        }
-    });
-    ws.on('error', () => ws.emit('close'));
+            for (let i = rooms.length - 1; i >= 0; i--) {
+                const r = rooms[i];
+                const idx = r.clients.findIndex(c => c.ws === ws);
+                if (idx !== -1) {
+                    const survivor = r.clients[1 - idx];
+                    safeSend(survivor.ws, { type: 'info', code: 'opponent_disconnected' });
+                    try {
+                        r.engine.changeStatus(false);
+                    }
+                    catch { }
+                    rooms.splice(i, 1);
+                    requeue(survivor);
+                    break;
+                }
+            }
+        });
+        ws.on('error', () => ws.emit('close'));
+        return;
+    }
+    // ---------- 2) Tournoi local ----------
+    if (pathname === '/ws/local') {
+        const sess = { ws, t: null };
+        safeSend(ws, { type: 'info', code: 'waiting_conf' });
+        ws.on('message', (raw) => {
+            let msg;
+            try {
+                msg = JSON.parse(raw.toString());
+            }
+            catch {
+                return;
+            }
+            switch (msg.type) {
+                case 'conf': {
+                    const conf = msg.config;
+                    if (!conf || !Array.isArray(conf.players)) {
+                        safeSend(ws, { type: 'info', code: 'conf_invalid' });
+                        return;
+                    }
+                    conf.Online = false; // mode offline/sequentiel
+                    try {
+                        sess.t = new tournament_js_1.Tournament(CANVAS_W, CANVAS_H, conf);
+                        safeSend(ws, { type: 'start', w: CANVAS_W, h: CANVAS_H });
+                        startLocalTicker(sess);
+                    }
+                    catch (e) {
+                        console.error('LocalTournament init error:', e);
+                        safeSend(ws, { type: 'info', code: 'conf_error' });
+                    }
+                    break;
+                }
+                case 'key': {
+                    if (!sess.t)
+                        return;
+                    const code = msg.code;
+                    const key = msg.key;
+                    const isPressed = !!msg.isPressed;
+                    const norm = normalizeEngineKey(code, key);
+                    if (!norm)
+                        return;
+                    try {
+                        sess.t.redirectTournament?.(norm, isPressed);
+                    }
+                    catch { }
+                    break;
+                }
+                case 'continue': {
+                    if (!sess.t || !sess.awaitingContinue)
+                        break;
+                    // Dé-gèle
+                    sess.awaitingContinue = false;
+                    // 👇 Kick immédiat : recalcule un frame et renvoie un state tout de suite
+                    try {
+                        const snap = sess.t.playLocal?.();
+                        if (snap)
+                            safeSend(sess.ws, { type: 'state', state: snap });
+                    }
+                    catch { }
+                    break;
+                }
+                case 'info_players': {
+                    try {
+                        if (sess.t) {
+                            const res = sess.t.playLocal?.();
+                            if (res) {
+                                const names = res.paddles
+                                    .filter((p) => p !== null)
+                                    .map((p) => p.name ?? 'Inconnu');
+                                const player1 = names[0] ?? 'Player1';
+                                const player2 = names[1] ?? 'Player2';
+                                const player = `${player1} VS ${player2}`;
+                                safeSend(sess.ws, { type: 'info_players', player });
+                            }
+                        }
+                    }
+                    catch (err) {
+                        console.error('info_players error', err);
+                    }
+                    break;
+                }
+                default: break;
+            }
+        });
+        ws.on('close', () => {
+            if (sess.ticker)
+                clearInterval(sess.ticker);
+            sess.ticker = undefined;
+            sess.t = null;
+        });
+        ws.on('error', () => ws.emit('close'));
+        return;
+    }
 });
-const TICK_MS = Math.floor(1000 / 60);
-const SNAP_MS = Math.floor(1000 / 60);
+/* ==========================================
+   Boucle serveur (1v1 uniquement)
+   ========================================== */
 let lastSnap = Date.now();
 setInterval(() => {
     const now = Date.now();
     const endedRooms = [];
-    // 1) update de chaque room
+    // Update rooms 1v1
     for (const room of rooms) {
         room.lastTick = now;
-        // applique les inputs aux deux joueurs
+        // inputs
         for (const ci of room.clients) {
             const idx = (ci.role === 'left') ? 0 : 1;
             room.engine.applyInput(idx, ci.lastDir);
         }
-        // avance la simulation
+        // avance la simu
         room.engine.update();
-        // si la partie est finie (GameLogic.running = false), marque-la pour cleanup
         if (!room.engine.getStatus()) {
             endedRooms.push(room);
         }
     }
-    // 2) snapshots (seulement pour les rooms encore actives)
+    // Snapshots 1v1
     if (now - lastSnap >= SNAP_MS) {
         lastSnap = now;
         for (const room of rooms) {
             if (!room.engine.getStatus())
-                continue; // ignore rooms finies
+                continue;
             const snapshot = room.engine.getSnapshot();
             const payload = JSON.stringify({ type: 'state', snapshot });
             for (const ci of room.clients) {
-                if (ci.ws.readyState === ws_1.WebSocket.OPEN) {
+                if (ci.ws.readyState === ws_1.WebSocket.OPEN)
                     ci.ws.send(payload);
-                }
             }
         }
     }
-    // 3) cleanup des rooms finies (envoie 1 dernier state + end + close)
+    // Cleanup rooms finies
     for (const r of endedRooms) {
         try {
-            const finalSnap = r.engine.getSnapshot(); // doit contenir running:false
-            broadcast(r, { type: 'state', snapshot: finalSnap }); // ← dernier frame
+            const finalSnap = r.engine.getSnapshot();
+            broadcast(r, { type: 'state', snapshot: finalSnap });
         }
         catch { }
         endAndCleanupRoom(r, 'game_over');
     }
 }, TICK_MS);
-// route ping
+/* =========
+   Routes
+   ========= */
 app.get('/', async () => ({ ok: true }));
-// abonnés à la liste publique
-const publicSubs = new Set();
-// abonnés par tournoi (lobby)
-const lobbySubs = new Map(); // id -> Set<ws>
-function send(ws, obj) {
-    try {
-        ws.send(JSON.stringify(obj));
-    }
-    catch { }
-}
-function broadcastOpenList() {
-    const payload = JSON.stringify({
-        type: 'open_list',
-        list: [...tournaments.values()]
-            .filter(t => t.state === 'OPEN')
-            .map(t => ({ id: t.id, name: t.name, size: t.size, taken: t.slots.filter(s => s.playerId).length }))
-    });
-    for (const ws of publicSubs) {
-        if (ws.readyState === ws_1.WebSocket.OPEN)
-            ws.send(payload);
-    }
-}
-app.post('/ws/tournaments', async (req, reply) => {
-    const { name, size } = req.body;
-    if (!name || ![4, 8, 16].includes(size))
-        return reply.status(400).send({ error: 'bad_params' });
-    const id = (0, crypto_1.randomUUID)();
-    const t = {
-        id,
-        name,
-        size,
-        taken: 0,
-        state: 'OPEN',
-        createdAt: Date.now(),
-        slots: Array.from({ length: size }, (_, i) => ({ slotIndex: i }))
-    };
-    tournaments.set(id, t);
-    broadcastOpenList();
-    return { id: t.id, name: t.name, size: t.size, taken: 0, state: t.state, createdAt: t.createdAt };
-});
-app.get('/ws/tournaments', async () => {
-    return [...tournaments.values()];
-});
-app.post('/ws/tournaments/:id/join', async (req, reply) => {
-    const { id } = req.params;
-    const { name } = req.body || {};
-    const t = tournaments.get(id);
-    if (!t)
-        return reply.code(404).send({ error: 'not_found' });
-    if (t.state !== 'OPEN')
-        return reply.code(409).send({ error: 'not_open' });
-    if (!name)
-        return reply.code(400).send({ error: 'bad_params' });
-    const slot = t.slots.find(s => !s.playerId);
-    if (!slot)
-        return reply.code(409).send({ error: 'full' });
-    const playerId = (0, crypto_1.randomUUID)();
-    slot.playerId = playerId;
-    slot.name = name;
-    slot.ready = true; // MVP: auto-ready
-    // si on a rempli tous les slots → passe READY (tu pourras déclencher le bracket ensuite)
-    const taken = t.slots.filter(s => s.playerId).length;
-    if (taken === t.size) {
-        t.state = 'READY';
-    }
-    t.taken += 1;
-    // Renvoie ce que ton front loggue actuellement
-    broadcastLobbyUpdate(id);
-    broadcastOpenList();
-    return { tournamentId: id, playerId, slotIndex: slot.slotIndex };
-});
-app.get('/ws/tournaments/:id', async (req, reply) => {
-    const { id } = req.params;
-    const t = tournaments.get(id);
-    if (!t)
-        return reply.code(404).send({ error: 'not_found' });
-    return t; // ou une projection si tu veux cacher des champs
-});
-function broadcastLobbyUpdate(tid) {
-    const subs = lobbySubs.get(tid);
-    if (!subs || subs.size === 0)
-        return;
-    const t = tournaments.get(tid);
-    if (!t)
-        return;
-    const payload = JSON.stringify({ type: 'tournament_update', tournament: t });
-    for (const ws of subs) {
-        if (ws.readyState === ws_1.WebSocket.OPEN)
-            ws.send(payload);
-    }
-}
 const PORT = Number(process.env.PORT) || 3002;
 app.listen({ port: PORT, host: '0.0.0.0' }).then(() => {
-    console.log('🚀 Server + WS on', PORT);
+    console.log('🚀 HTTP on', PORT, '| WS via httpUpgrade for /ws and /ws/local');
 });

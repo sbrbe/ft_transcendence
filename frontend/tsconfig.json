@@ -43,6 +43,6 @@
     "skipLibCheck": true
   },
   "references": [{ "path": "engine_play" }],
-  "include": ["src/**/*", "engine_play/src/game_logic.ts", "engine_play/src/CPU.ts", "engine_play/src/player.ts"],
+  "include": ["src/**/*", "engine_play/src/game_logic.ts", "engine_play/src/CPU.ts", "engine_play/src/player.ts", "engine_play/src/tournament.ts"],
   "exclude": ["dist"]
 }

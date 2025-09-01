@@ -1,4 +1,4 @@
-import { GameLogic } from "../engine_play/dist/game_logic.js";
+import { GameLogic } from "./game_logic.js";
 export class Tournament {
     constructor(canvasW, canvasH, info) {
         this.matchs = [];
@@ -70,7 +70,7 @@ export class Tournament {
             this.buildConfs(this.winner);
             this.startTour();
         }
-        return results;
+        return this.matchs;
     }
     redirectTournament(key, isPressed) {
         this.matchs[this.currentMatchId].setPlayerInput(key, isPressed);

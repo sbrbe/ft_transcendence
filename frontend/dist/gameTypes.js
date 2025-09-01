@@ -1,2 +1,0 @@
-// src/gameTypes.ts
-export {};

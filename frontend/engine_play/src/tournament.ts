@@ -1,9 +1,8 @@
-import { GameLogic } from "../engine_play/dist/game_logic.js";
-import type { GameState, gameConfig } from '../engine_play/dist/types.js'
-import { Tracker } from '../engine_play/dist/tracker.js';
-import { Player } from '../engine_play/dist/player.js';
-import { CPU } from '../engine_play/dist/CPU.js';
-import { UUID } from "crypto";
+import { GameLogic } from "./game_logic.js";
+import type { GameState, gameConfig } from './types.js'
+import { Tracker } from './tracker.js';
+import { Player } from './player.js';
+import { CPU } from './CPU.js';
 
 export interface contender{
     id: number | null;
@@ -93,7 +92,7 @@ export class Tournament {
         return info;
     }
 
-public playOnline(): GameState[] 
+public playOnline(): GameLogic[] 
 {
     let results: GameState[] = [];
 
@@ -115,7 +114,7 @@ public playOnline(): GameState[]
             this.buildConfs(this.winner);
             this.startTour();
     }
-    return results;
+    return this.matchs;
 }
 
 

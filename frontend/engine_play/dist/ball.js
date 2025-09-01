@@ -54,18 +54,14 @@ export class Ball {
     }
     colision(paddle, canvasHeight, tracker) {
         this.limitspeed = 20;
-        console.log('maxx');
         if (paddle.x < this.x) {
             if (this.x <= paddle.x + paddle.width &&
                 this.y <= paddle.y + paddle.height &&
                 this.y + this.height >= paddle.y) {
                 paddle.interaction(this);
                 tracker.recordHit();
-                console.log(this.speed);
                 if (this.speed < this.limitspeed)
                     this.speed += 1;
-                else
-                    console.log('maxx');
             }
         }
         else {
@@ -74,11 +70,8 @@ export class Ball {
                 this.y + this.height >= paddle.y) {
                 paddle.interaction(this);
                 tracker.recordHit();
-                console.log(this.speed);
                 if (this.speed < this.limitspeed)
                     this.speed += 1;
-                else
-                    console.log('max');
             }
         }
     }
