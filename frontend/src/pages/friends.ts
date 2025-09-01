@@ -1,4 +1,5 @@
-// src/pages/amis.ts
+import { searchUser } from "../api/friends";
+import { clearStatusMessage, lockButton, setStatusMessage } from "../utils/ui";
 
 const friends: (container: HTMLElement) => void = (container) => {
   container.innerHTML = `
@@ -102,12 +103,17 @@ const friends: (container: HTMLElement) => void = (container) => {
           <!-- Ajouter un ami -->
           <section class="rounded-2xl border bg-white shadow-sm p-6">
             <h2 class="text-sm uppercase tracking-wider text-gray-500 mb-3">Add a friend</h2>
-            <div class="flex items-center gap-2">
-              <input
+            <form id="add-friend-form" class="flex items-center gap-2">
+              <input id="Username"
                 type="text"
                 placeholder="Username"
                 class="flex-1 border rounded-xl px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500">
-              <button class="px-3 py-2 rounded-xl bg-blue-600 text-white hover:bg-blue-700 text-sm">Search</button>
+
+                <p id="add-msg" class="text-sm min-h-5" aria-live="polite"></p>
+
+                <button id="searchBtn" type="submit"
+                 class="px-3 py-2 rounded-xl bg-blue-600 text-white hover:bg-blue-700 text-sm">Search
+                </button>
             </div>
             <p class="text-xs text-gray-500 mt-2">Enter the username to send a request</p>
           </section>
@@ -144,6 +150,31 @@ const friends: (container: HTMLElement) => void = (container) => {
       </div>
     </div>
   `;
+
+  const form = container.querySelector<HTMLFormElement>('#add-friend-form')!;
+  const usernameEl = container.querySelector<HTMLInputElement>('#Username')!;
+  const addMsg = container.querySelector<HTMLParagraphElement>('#add-msg')!;
+  const searchBtn = container.querySelector<HTMLButtonElement>('#searchBtn')!;
+
+  form.addEventListener('submit', async (e) => {
+    e.preventDefault();
+    clearStatusMessage(addMsg);
+    const username = usernameEl.value.trim();
+    if (!username){
+      return setStatusMessage(addMsg, 'Please enter a username', 'error');
+    }
+
+    lockButton(searchBtn, true);
+
+    try {
+      const { userId, avatarPath } = await searchUser(username);
+    } catch (error: any) {
+      setStatusMessage(addMsg, error.message || 'Player search failed', 'error');
+    }
+    finally {
+      lockButton(searchBtn, false);
+    }
+  });
 };
 
 export default friends;

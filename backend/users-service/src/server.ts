@@ -19,6 +19,7 @@ const app : FastifyInstance = fastify( {
 	}
 });
 
+
 if (!process.env.JWT_ACCESS_SECRET || !process.env.COOKIE_SECRET) {
 	throw new Error('JWT_ACCESS_SECRET or COOKIE_SECRET not set');
 }

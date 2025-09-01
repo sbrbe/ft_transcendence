@@ -1,16 +1,16 @@
 import { FastifyInstance } from "fastify";
-import searchUser from "../lib/searchUser";
+import searchUser from "../lib/searchUser.js";
 
 export async function searchUserRoute(app: FastifyInstance) {
 	app.get<{
-		Body: { username: string };
+		Params: { username: string };
 		Reply:
-			| { userId: string, username: string, avatarPath: string }
+			| { userId: string, avatarPath: string }
 			| { error: string };}>
-			('/searchUser', {
-		preHandler: app.authenticate,
+			('/friends/searchUser/:username', {
+		//preHandler: app.authenticate,
 		schema: {
-			body: {
+			params: {
 				type: 'object',
 				required: ['username'],
 				properties: {
@@ -20,10 +20,9 @@ export async function searchUserRoute(app: FastifyInstance) {
 			response: {
 				200: {
 					type: 'object',
-					required: ['userId', 'username', 'avatarPath'],
+					required: ['userId', 'avatarPath'],
 					properties: {
 						userId: { type: 'string', format: 'uuid' },
-						username: { type: 'string', minLength: 1, maxLength: 20 },
 						avatarPath: { type: 'string' }
 					}
 				},

@@ -1,9 +1,23 @@
 /*
 	Fonction pour faire une recherche de joueurs qui renvoie le profil du joueur contenant le username, le userId, l'avatar
 	et l'historique de match.
-	On affichera que le username, l'avatar et l'historique de match
+	On affichera que le username et l'avatar
 */
-
+export async function searchUser(username: string) {
+	const res = await fetch(`/users/friends/searchUser/${encodeURIComponent(username)}`, {
+		method: 'GET',
+		credentials: 'include',
+		headers: { 'Content-Type': 'appliaction/json' },
+	});
+	const data = await res.json();
+	if (!res.ok) {
+		throw new Error(data.error || res.statusText);
+	}
+	return {
+		userId: data.userId,
+		avatarPath: data.avatarPath
+	};
+}
 
 
 /**
@@ -11,7 +25,7 @@
  * Attend un 201 ; si erreur -> lève une exception.
  */
 export async function sendFriendRequest(userId: string, friendUsername: string) {
-	const res = await fetch('/friends/invite', {
+	const res = await fetch('/users/friends/invite', {
 		method: 'POST',
 		credentials: 'include',
 		headers: { 'Content-Type': 'application/json' },
@@ -35,7 +49,7 @@ export async function sendFriendRequest(userId: string, friendUsername: string) 
  * Attend un 200 ; si erreur -> lève une exception.
  */
 export async function acceptRequest(userId: string, requestId: number) {
-	const res = await fetch('/friends/accept', {
+	const res = await fetch('/users/friends/accept', {
 		method: 'PUT',
 		credentials: 'include',
 		headers: { 'Content-Type' : 'application/json'},
@@ -59,7 +73,7 @@ export async function acceptRequest(userId: string, requestId: number) {
  * Attend un 200 ; si erreur -> lève une exception.
  */
 export async function rejectRequest(userId: string, requestId: string) {
-		const res = await fetch('/friends/reject', {
+		const res = await fetch('/users/friends/reject', {
 		method: 'PUT',
 		credentials: 'include',
 		headers: { 'Content-Type' : 'application/json'},
@@ -83,7 +97,7 @@ export async function rejectRequest(userId: string, requestId: string) {
  * Attend un 200 ; si erreur -> lève une exception.
  */
 export async function blockUser(userId: string, targetName: string) {
-			const res = await fetch('/friends/block', {
+			const res = await fetch('/users/friends/block', {
 		method: 'POST',
 		credentials: 'include',
 		headers: { 'Content-Type' : 'application/json'},
@@ -107,7 +121,7 @@ export async function blockUser(userId: string, targetName: string) {
  * Attend un 200 ; si erreur -> lève une exception.
  */
 export async function unblockUser(userId: string, targetName: string) {
-			const res = await fetch('/friends/unblock', {
+			const res = await fetch('/users/friends/unblock', {
 		method: 'PUT',
 		credentials: 'include',
 		headers: { 'Content-Type' : 'application/json'},
@@ -131,7 +145,7 @@ export async function unblockUser(userId: string, targetName: string) {
  * Attend un 200 ; si erreur -> lève une exception.
  */
 export async function removeFriend(userId: string, targetName: string) {
-			const res = await fetch('/friends/remove', {
+			const res = await fetch('/users/friends/remove', {
 		method: 'PUT',
 		credentials: 'include',
 		headers: { 'Content-Type' : 'application/json'},

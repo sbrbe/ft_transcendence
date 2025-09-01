@@ -2,9 +2,9 @@ import { FastifyRequest, FastifyReply } from "fastify";
 import { getUserByUsername } from './utils.js';
 
 export default async function searchUser(
-	req: FastifyRequest<{ Body: { username: string } }>,
+	req: FastifyRequest<{ Params: { username: string } }>,
 	reply: FastifyReply) {
-		const { username } = req.body;
+		const { username } = req.params;
 
 		try {
 			const user = getUserByUsername(username);
@@ -13,7 +13,6 @@ export default async function searchUser(
 			}
 			return reply.status(200).send({
 				userId: user.userId,
-				username: user.username,
 				avatarPath: user.avatarPath
 			});
 		} catch (error: any) {
