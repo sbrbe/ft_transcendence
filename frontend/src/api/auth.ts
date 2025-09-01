@@ -9,7 +9,7 @@ export interface AppUser {
   email?: string;
   firstName?: string;
   lastName?: string;
-  avatarUrl?: string;
+  avatarPath?: string;
 }
 
 // [STATE] getSavedUser :

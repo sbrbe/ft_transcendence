@@ -5,7 +5,7 @@ export async function searchUserRoute(app: FastifyInstance) {
 	app.get<{
 		Body: { username: string };
 		Reply:
-			| { userId: string, username: string, avatarUrl: string }
+			| { userId: string, username: string, avatarPath: string }
 			| { error: string };}>
 			('/searchUser', {
 		preHandler: app.authenticate,
@@ -20,11 +20,11 @@ export async function searchUserRoute(app: FastifyInstance) {
 			response: {
 				200: {
 					type: 'object',
-					required: ['userId', 'username', 'avatarUrl'],
+					required: ['userId', 'username', 'avatarPath'],
 					properties: {
 						userId: { type: 'string', format: 'uuid' },
 						username: { type: 'string', minLength: 1, maxLength: 20 },
-						avatarUrl: { type: 'string' }
+						avatarPath: { type: 'string' }
 					}
 				},
 				404: {

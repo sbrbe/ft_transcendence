@@ -18,6 +18,12 @@ npm i @fastify/jwt
 npm i resend
 
 
+USERS-SERVICE
+npm i @fastify/multipart @fastify/static sharp mime-types
+npm i -D @types/mime-types
+npm install uuid
+
+
 Génération clé JWT : openssl rand -base64 48
 
     | Code    | Nom                   | Quand l’utiliser                                                        |

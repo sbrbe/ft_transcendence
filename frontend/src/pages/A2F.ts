@@ -11,11 +11,11 @@ const A2F: (container: HTMLElement) => void = (container) => {
   container.innerHTML = `
     <div class="container-page my-10">
       <div class="mx-auto max-w-md rounded-2xl border shadow-sm bg-white px-6 py-8">
-        <h2 class="text-2xl font-semibold text-center text-gray-800">Vérification 2FA</h2>
+        <h2 class="text-2xl font-semibold text-center text-gray-800">Checking 2FA</h2>
 
         <form id="a2f-form" class="mt-6 space-y-4" novalidate>
           <label class="block">
-            <span class="text-sm text-gray-700">Code à 6 chiffres</span>
+            <span class="text-sm text-gray-700">6 digits code</span>
             <input id="code_2fa" inputmode="numeric" pattern="\\d{6}" maxlength="6" required
               class="mt-1 w-full border px-3 py-2 rounded outline-none focus:ring-2 focus:ring-blue-500 text-center tracking-widest text-xl"
               placeholder="••••••">
@@ -23,7 +23,7 @@ const A2F: (container: HTMLElement) => void = (container) => {
 
           <button id="verifyBtn" type="submit"
             class="w-full bg-indigo-600 hover:bg-indigo-700 text-white font-medium px-4 py-2.5 rounded-lg transition">
-            Vérifier
+            Submit
           </button>
 
           <p id="formMsg" class="text-sm min-h-5" aria-live="polite"></p>
@@ -37,7 +37,7 @@ const A2F: (container: HTMLElement) => void = (container) => {
   const msgEl = container.querySelector<HTMLParagraphElement>('#formMsg')!;
   const verifyBtn = container.querySelector<HTMLButtonElement>('#verifyBtn')!;
 
-  if (!pendingUserId) setStatusMessage(msgEl, 'Session expirée. Veuillez vous reconnecter.', 'error');
+  if (!pendingUserId) setStatusMessage(msgEl, 'Session expired. Please login again.', 'error');
   setTimeout(() => codeEl.focus(), 0);
 
   // Force 6 chiffres
@@ -51,12 +51,12 @@ const A2F: (container: HTMLElement) => void = (container) => {
     e.preventDefault();
     clearStatusMessage(msgEl);
 
-    if (!pendingUserId) setStatusMessage(msgEl, 'Session expirée. Veuillez vous reconnecter.', 'error');
+    if (!pendingUserId) setStatusMessage(msgEl, 'Session expired. Please login again.', 'error');
 
     const code = codeEl.value.trim();
-    if (code.length !== 6) return setStatusMessage(msgEl, 'Veuillez entrer un code à 6 chiffres.', 'error');
+    if (code.length !== 6) return setStatusMessage(msgEl, 'Enter a 6 digits code.', 'error');
 
-    lockButton(verifyBtn, true, 'Vérification…');
+    lockButton(verifyBtn, true, 'Checking…');
 
     
     try 
@@ -70,11 +70,11 @@ const A2F: (container: HTMLElement) => void = (container) => {
       window.dispatchEvent(new CustomEvent('auth:changed', { detail: user }));
 
       clearPendingUserId();
-      navigateTo('/accueil');
+      navigateTo('/home');
     } 
     catch (err: any) 
     {
-      setStatusMessage(msgEl, err?.message || 'Vérification échouée', 'error');
+      setStatusMessage(msgEl, err?.message || 'Checking failed', 'error');
     } 
     finally 
     {

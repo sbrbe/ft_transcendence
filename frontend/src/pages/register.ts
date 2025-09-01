@@ -16,24 +16,24 @@ const Register: (container: HTMLElement) => void = (container) => {
   container.innerHTML = `
     <div class="container-page my-10">
       <div class="mx-auto max-w-md rounded-2xl border shadow-sm bg-white px-6 py-8">
-        <h2 class="text-2xl font-semibold text-center text-gray-800">Créer un utilisateur</h2>
+        <h2 class="text-2xl font-semibold text-center text-gray-800">Create an user</h2>
 
         <form id="register-form" class="mt-6 space-y-4" novalidate>
           <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <label class="block">
-              <span class="text-sm text-gray-700">Prénom</span>
+              <span class="text-sm text-gray-700">Firstname</span>
               <input id="firstName" name="firstName" type="text" required
-                class="mt-1 w-full border px-3 py-2 rounded outline-none focus:ring-2 focus:ring-blue-500" placeholder="Prénom">
+                class="mt-1 w-full border px-3 py-2 rounded outline-none focus:ring-2 focus:ring-blue-500" placeholder="Firstname">
             </label>
             <label class="block">
-              <span class="text-sm text-gray-700">Nom</span>
+              <span class="text-sm text-gray-700">Lastname</span>
               <input id="lastName" name="lastName" type="text" required
-                class="mt-1 w-full border px-3 py-2 rounded outline-none focus:ring-2 focus:ring-blue-500" placeholder="Nom">
+                class="mt-1 w-full border px-3 py-2 rounded outline-none focus:ring-2 focus:ring-blue-500" placeholder="Lastname">
             </label>
           </div>
 
           <label class="block">
-            <span class="text-sm text-gray-700">Nom d'utilisateur</span>
+            <span class="text-sm text-gray-700">Username</span>
             <input id="username" name="username" type="text" required
               class="mt-1 w-full border px-3 py-2 rounded outline-none focus:ring-2 focus:ring-blue-500" placeholder="john_doe">
           </label>
@@ -41,22 +41,22 @@ const Register: (container: HTMLElement) => void = (container) => {
           <label class="block">
             <span class="text-sm text-gray-700">Email</span>
             <input id="email" name="email" type="email" required
-              class="mt-1 w-full border px-3 py-2 rounded outline-none focus:ring-2 focus:ring-blue-500" placeholder="email@domaine.com" autocomplete="email">
+              class="mt-1 w-full border px-3 py-2 rounded outline-none focus:ring-2 focus:ring-blue-500" placeholder="email@domain.com" autocomplete="email">
           </label>
 
           <label class="block">
-            <span class="text-sm text-gray-700">Mot de passe</span>
+            <span class="text-sm text-gray-700">Password</span>
             <div class="relative">
               <input id="password" name="password" type="password" required minlength="6"
                 class="mt-1 w-full border px-3 py-2 rounded outline-none focus:ring-2 focus:ring-blue-500 pr-10" placeholder="******" autocomplete="new-password">
               <button type="button" id="togglePwd"
-                class="absolute inset-y-0 right-0 my-auto mr-2 text-xs text-gray-500 hover:text-gray-700">Afficher</button>
+                class="absolute inset-y-0 right-0 my-auto mr-2 text-xs text-gray-500 hover:text-gray-700">Show</button>
             </div>
           </label>
 
           <button id="submitBtn" type="submit"
             class="w-full bg-blue-600 hover:bg-blue-700 text-white font-medium px-4 py-2.5 rounded-lg transition">
-            Créer le compte
+            Create account
           </button>
 
           <p id="formMsg" class="text-sm min-h-5" aria-live="polite"></p>
@@ -96,14 +96,14 @@ const Register: (container: HTMLElement) => void = (container) => {
 
     if (!data.firstName || !data.lastName || !data.username || !data.email || !data.password) 
     {
-      return setStatusMessage(msgEl, 'Veuillez remplir tous les champs.', 'error');
+      return setStatusMessage(msgEl, 'Please complete all fields.', 'error');
     }
     if (data.password.length < 6) 
     {
-      return setStatusMessage(msgEl, 'Le mot de passe doit contenir au moins 6 caractères.', 'error');
+      return setStatusMessage(msgEl, 'Password must have at least 6 characters.', 'error');
     }
 
-    lockButton(submitBtn, true, 'Création en cours…');
+    lockButton(submitBtn, true, 'Creating…');
 
     let createdUserId = '';
     try 
@@ -111,13 +111,13 @@ const Register: (container: HTMLElement) => void = (container) => {
       createdUserId = await createAuthAccount(data.email, data.password);
       await createUserProfile(createdUserId, data);
 
-      setStatusMessage(msgEl, 'Compte créé avec succès. Vous pouvez vous connecter.', 'success');
-      setTimeout(() => navigateTo('/connexion'), 400);
+      setStatusMessage(msgEl, 'Account created. You can log in', 'success');
+      setTimeout(() => navigateTo('/connection'), 400);
     } 
     catch (err: any) 
     {
       if (createdUserId) await deleteAuthAccount(createdUserId);
-      setStatusMessage(msgEl, `Erreur : ${err?.message ?? 'échec de création'}`, 'error');
+      setStatusMessage(msgEl, `Erreur : ${err?.message ?? 'Failed to create'}`, 'error');
     } 
     finally 
     {

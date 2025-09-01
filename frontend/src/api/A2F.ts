@@ -7,7 +7,7 @@ export type A2FUser = {
   email: string;
   firstName?: string;
   lastName?: string;
-  avatarUrl?: string;
+  avatarPath?: string;
 };
 
 /* ---------------- Session helpers (pending userId) ---------------- */

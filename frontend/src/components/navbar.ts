@@ -12,44 +12,31 @@ export function createNavbar(onNavigate: (path: string) => void) {
   nav.innerHTML = `
     <div class="flex items-center justify-between rounded-2xl border shadow-sm
                 bg-white/70 backdrop-blur supports-[backdrop-filter]:bg-white/50 px-4 py-3">
-      <!-- Gauche: logo + marque + liens -->
+
+<!-- Gauche: logo + marque + liens -->
       <div class="flex items-center gap-4">
         <!-- Marque -->
-        <a href="#/accueil" data-route="/accueil"
+        <a href="#/home" data-route="/home"
            class="flex items-center gap-3 select-none"
-           aria-label="Aller à l'accueil (Ft_transcendence)">
+           aria-label="Return home (Ft_transcendence)">
           <img src="/site/logo.png" alt="Logo" class="h-9 w-9 rounded-xl ring-1 ring-black/5 object-cover">
-          <span class="text-base md:text-lg font-semibold tracking-tight">Ft_transcendence</span>
+          <span class="text-base md:text-lg font-semibold tracking-tight">Pong</span>
         </a>
 
-        <!-- Liens principaux -->
+<!-- Liens principaux -->
         <div class="hidden sm:flex items-center gap-1" aria-label="Navigation principale">
+          <a href="#/home" data-route="/home" data-nav
+             class="text-sm font-medium text-gray-700 hover:text-gray-900
+                    px-3 py-1.5 rounded-xl hover:bg-gray-100 active:bg-gray-200
+                    focus:outline-none focus-visible:ring-2 focus-visible:ring-blue-500/60 transition">
+            Home
+          </a>
+
           <a href="#/pong" data-route="/pong" data-nav
              class="text-sm font-medium text-gray-700 hover:text-gray-900
                     px-3 py-1.5 rounded-xl hover:bg-gray-100 active:bg-gray-200
                     focus:outline-none focus-visible:ring-2 focus-visible:ring-blue-500/60 transition">
-            Pong
-          </a>
-
-          <a href="#/teams" data-route="/teams" data-nav
-             class="text-sm font-medium text-gray-700 hover:text-gray-900
-                    px-3 py-1.5 rounded-xl hover:bg-gray-100 active:bg-gray-200
-                    focus:outline-none focus-visible:ring-2 focus-visible:ring-blue-500/60 transition">
-            Teams
-          </a>
-
-          <a href="#/" data-route="/" data-nav
-             class="text-sm font-medium text-gray-700 hover:text-gray-900
-                    px-3 py-1.5 rounded-xl hover:bg-gray-100 active:bg-gray-200
-                    focus:outline-none focus-visible:ring-2 focus-visible:ring-blue-500/60 transition">
-            Autre1
-          </a>
-
-          <a href="#/" data-route="/" data-nav
-             class="text-sm font-medium text-gray-700 hover:text-gray-900
-                    px-3 py-1.5 rounded-xl hover:bg-gray-100 active:bg-gray-200
-                    focus:outline-none focus-visible:ring-2 focus-visible:ring-blue-500/60 transition">
-            Autre2
+            Play
           </a>
 
         </div>
@@ -85,17 +72,17 @@ export function createNavbar(onNavigate: (path: string) => void) {
 
     if (!user) {
       right.innerHTML = `
-        <a href="#/connexion" data-route="/connexion"
+        <a href="#/connexion" data-route="/connection"
            class="text-sm font-medium text-gray-700 hover:text-gray-900
                   px-3 py-1.5 rounded-xl hover:bg-gray-100 active:bg-gray-200
                   focus:outline-none focus-visible:ring-2 focus-visible:ring-blue-500/60 transition">
-          Connexion
+          Login
         </a>
-        <a href="#/inscription" data-route="/inscription"
+        <a href="#/inscription" data-route="/register"
            class="text-sm font-medium text-gray-700 hover:text-gray-900
                   px-3 py-1.5 rounded-xl hover:bg-gray-100 active:bg-gray-200
                   focus:outline-none focus-visible:ring-2 focus-visible:ring-blue-500/60 transition">
-          S'enregistrer
+          Sign up
         </a>
       `;
       return;

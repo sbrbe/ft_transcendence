@@ -6,14 +6,14 @@ export interface UpdateUserPartial {
   firstName?: string;
   lastName?: string;
   username?: string;
-  avatarUrl?: string;
+  avatarPath?: string;
 }
 
 export interface UpdatedUserResponse {
   firstName: string;
   lastName: string;
   username: string;
-  avatarUrl: string;
+  avatarPath: string;
 }
 
 export interface EmailUpdateResponse {
@@ -45,7 +45,7 @@ export async function updateUser(
       firstName: partial.firstName ?? '',
       lastName: partial.lastName ?? '',
       username: partial.username ?? '',
-      avatarUrl: partial.avatarUrl ?? '',
+      avatarPath: partial.avatarPath ?? '',
     }).filter(([, v]) => v !== '')
   );
 

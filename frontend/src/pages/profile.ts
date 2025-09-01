@@ -3,6 +3,7 @@ import { navigateTo } from '../router/router';
 import { getSavedUser, setLoggedInUser, AppUser } from '../api/auth';
 import { updateUser, updateEmail, updatePassword } from '../api/profile';
 import { initChangeAvatar } from '../features/changeAvatar';
+import { setStatusMessage, clearStatusMessage, lockButton } from '../utils/ui';
 
 const AVATARS = [
   '/avatar/default.png',
@@ -27,13 +28,13 @@ const ProfilePage: (container: HTMLElement) => void = (container) => {
     return;
   }
 
-  const currentAvatar = normaliseAvatar(saved.avatarUrl) || AVATARS[0];
+  const currentAvatar = normaliseAvatar(saved.avatarPath) || AVATARS[0];
 
   container.innerHTML = `
     <div class="container-page my-10 grid gap-6 lg:grid-cols-3">
       <!-- Identité (aperçu) -->
       <section class="rounded-2xl border bg-white shadow-sm p-6 h-max">
-        <h2 class="text-sm uppercase tracking-wider text-gray-500 mb-4">Identité</h2>
+        <h2 class="text-sm uppercase tracking-wider text-gray-500 mb-4">Identity</h2>
         <div class="flex items-center gap-4">
           <img id="pp-avatar" src="${escapeAttr(currentAvatar)}" alt="Avatar"
                class="h-16 w-16 rounded-xl ring-1 ring-black/10 object-cover">
@@ -44,11 +45,11 @@ const ProfilePage: (container: HTMLElement) => void = (container) => {
         </div>
         <div class="mt-4 grid grid-cols-2 gap-3 text-sm">
           <div>
-            <div class="text-gray-500">Prénom</div>
+            <div class="text-gray-500">First Name</div>
             <div id="pp-firstName" class="font-medium">${escapeHtml(saved.firstName || '')}</div>
           </div>
           <div>
-            <div class="text-gray-500">Nom</div>
+            <div class="text-gray-500">Last Name</div>
             <div id="pp-lastName" class="font-medium">${escapeHtml(saved.lastName || '')}</div>
           </div>
         </div>
@@ -58,17 +59,17 @@ const ProfilePage: (container: HTMLElement) => void = (container) => {
       <div class="lg:col-span-2 space-y-6">
         <!-- Informations de base -->
         <section class="rounded-2xl border bg-white shadow-sm p-6">
-          <h2 class="text-sm uppercase tracking-wider text-gray-500 mb-4">Informations de base</h2>
+          <h2 class="text-sm uppercase tracking-wider text-gray-500 mb-4">Profil</h2>
           <form id="profile-form" class="space-y-5" novalidate>
             <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <label class="block">
-                <span class="text-sm text-gray-700">Prénom</span>
+                <span class="text-sm text-gray-700">First Name</span>
                 <input id="pf-firstName" type="text"
                   class="mt-1 w-full border px-3 py-2 rounded-lg focus:ring-2 focus:ring-blue-500"
                   value="${escapeAttr(saved.firstName || '')}">
               </label>
               <label class="block">
-                <span class="text-sm text-gray-700">Nom</span>
+                <span class="text-sm text-gray-700">LastName</span>
                 <input id="pf-lastName" type="text"
                   class="mt-1 w-full border px-3 py-2 rounded-lg focus:ring-2 focus:ring-blue-500"
                   value="${escapeAttr(saved.lastName || '')}">
@@ -76,7 +77,7 @@ const ProfilePage: (container: HTMLElement) => void = (container) => {
             </div>
 
             <label class="block">
-              <span class="text-sm text-gray-700">Nom d'utilisateur</span>
+              <span class="text-sm text-gray-700">Username</span>
               <input id="pf-username" type="text"
                 class="mt-1 w-full border px-3 py-2 rounded-lg focus:ring-2 focus:ring-blue-500"
                 value="${escapeAttr(saved.username)}">
@@ -93,9 +94,9 @@ const ProfilePage: (container: HTMLElement) => void = (container) => {
               <p id="pf-msg" class="text-sm min-h-5" aria-live="polite"></p>
               <div class="flex items-center gap-3">
                 <button id="pf-cancel" type="button"
-                  class="px-4 py-2 rounded-lg border hover:bg-gray-50">Annuler</button>
+                  class="px-4 py-2 rounded-lg border hover:bg-gray-50">Cancel</button>
                 <button id="pf-save" type="submit"
-                  class="px-4 py-2 rounded-lg bg-blue-600 text-white hover:bg-blue-700">Enregistrer</button>
+                  class="px-4 py-2 rounded-lg bg-blue-600 text-white hover:bg-blue-700">Save</button>
               </div>
             </div>
           </form>
@@ -104,7 +105,7 @@ const ProfilePage: (container: HTMLElement) => void = (container) => {
         <!-- Avatar -->
         <section class="rounded-2xl border bg-white shadow-sm p-6">
           <h2 class="text-sm uppercase tracking-wider text-gray-500 mb-2">Avatar</h2>
-          <p class="text-xs text-gray-500 mb-3">Les changements d’avatar sont enregistrés automatiquement.</p>
+          <p class="text-xs text-gray-500 mb-3">Avatars are updated automatically.</p>
 
           <div class="grid grid-cols-3 sm:grid-cols-6 gap-3" id="avatar-grid">
             ${AVATARS.map(src => `
@@ -118,32 +119,44 @@ const ProfilePage: (container: HTMLElement) => void = (container) => {
           </div>
 
           <div class="mt-3 flex items-center gap-3">
-            <input id="pf-avatarUrl" type="url" placeholder="Ou URL personnalisée (https://...)"
+            <input id="pf-avatarPath" type="url" placeholder="Ou URL personnalisée (https://...)"
               class="flex-1 border px-3 py-2 rounded-lg focus:ring-2 focus:ring-blue-500"
               value="${escapeAttr(currentAvatar)}">
             <button id="btn-apply-url" type="button"
-              class="px-3 py-2 rounded-lg border hover:bg-gray-50">Appliquer</button>
+              class="px-3 py-2 rounded-lg border hover:bg-gray-50">Submit</button>
           </div>
+
+          <!-- Upload direct -->
+          <div class="mt-4 space-y-3">
+            <div class="flex items-center gap-3">
+              <button id="btn-upload" type="button"
+                  class="px-3 py-2 rounded-lg border hover:bg-gray-50">
+                  Upload an avatar
+              </button>
+              <input id="file-input" type="file" accept="image/*" class="hidden">
+              <img id="avatar-preview" alt="Prévisualisation avatar"
+                  class="h-10 w-10 rounded-full ring-1 ring-black/10 object-cover hidden">
+           </div>
 
           <p id="av-msg" class="text-sm min-h-5 mt-2" aria-live="polite"></p>
         </section>
 
         <!-- Sécurité -->
         <section class="rounded-2xl border bg-white shadow-sm p-6">
-          <h2 class="text-sm uppercase tracking-wider text-gray-500 mb-4">Sécurité</h2>
+          <h2 class="text-sm uppercase tracking-wider text-gray-500 mb-4">Security</h2>
           <form id="pwd-form" class="space-y-4" novalidate>
             <label class="block">
-              <span class="text-sm text-gray-700">Mot de passe actuel</span>
+              <span class="text-sm text-gray-700">Old password</span>
               <input id="pf-oldpwd" type="password"
                 class="mt-1 w-full border px-3 py-2 rounded-lg focus:ring-2 focus:ring-blue-500">
             </label>
             <label class="block">
-              <span class="text-sm text-gray-700">Nouveau mot de passe</span>
+              <span class="text-sm text-gray-700">New password</span>
               <input id="pf-newpwd" type="password"
                 class="mt-1 w-full border px-3 py-2 rounded-lg focus:ring-2 focus:ring-blue-500">
             </label>
             <label class="block">
-              <span class="text-sm text-gray-700">Confirmer le nouveau mot de passe</span>
+              <span class="text-sm text-gray-700">Confirm new password</span>
               <input id="pf-newpwd2" type="password"
                 class="mt-1 w-full border px-3 py-2 rounded-lg focus:ring-2 focus:ring-blue-500">
             </label>
@@ -151,7 +164,7 @@ const ProfilePage: (container: HTMLElement) => void = (container) => {
             <div class="flex items-center justify-between gap-4">
               <p id="pwd-msg" class="text-sm min-h-5" aria-live="polite"></p>
               <button id="pwd-save" type="submit"
-                class="px-4 py-2 rounded-lg bg-red-600 text-white hover:bg-red-700">Changer</button>
+                class="px-4 py-2 rounded-lg bg-red-600 text-white hover:bg-red-700">Save</button>
             </div>
           </form>
         </section>
@@ -162,10 +175,10 @@ const ProfilePage: (container: HTMLElement) => void = (container) => {
   /* ---------- helpers (scopés au container) ---------- */
   const $ = <T extends HTMLElement>(sel: string): T => {
     const el = container.querySelector<T>(sel);
-    if (!el) throw new Error(`Élément introuvable: ${sel}`);
+    if (!el) throw new Error(`Element not found: ${sel}`);
     return el;
   };
-  const setMsg = (el: HTMLElement, text = '', kind?: 'success'|'error') => {
+/*  const setMsg = (el: HTMLElement, text = '', kind?: 'success'|'error') => {
     el.textContent = text;
     el.className = `text-sm ${kind === 'success' ? 'text-green-600' : kind === 'error' ? 'text-red-600' : ''}`;
   };
@@ -175,9 +188,9 @@ const ProfilePage: (container: HTMLElement) => void = (container) => {
     btn.classList.toggle('cursor-not-allowed', disabled);
     if (label && disabled) btn.textContent = label;
   };
-
+*/
   /* ---------- refs ---------- */
-  const pf = {
+  const profile = {
     firstName: $<HTMLInputElement>('#pf-firstName'),
     lastName: $<HTMLInputElement>('#pf-lastName'),
     email: $<HTMLInputElement>('#pf-email'),
@@ -193,9 +206,9 @@ const ProfilePage: (container: HTMLElement) => void = (container) => {
       lastName: $<HTMLDivElement>('#pp-lastName'),
     },
   };
-  const av = {
+  const avatar = {
     grid: $<HTMLDivElement>('#avatar-grid'),
-    urlInput: $<HTMLInputElement>('#pf-avatarUrl'),
+    urlInput: $<HTMLInputElement>('#pf-avatarPath'),
     applyUrlBtn: $<HTMLButtonElement>('#btn-apply-url'),
     msg: $<HTMLParagraphElement>('#av-msg'),
   };
@@ -208,15 +221,15 @@ const ProfilePage: (container: HTMLElement) => void = (container) => {
   };
 
   // fallback preview identité si l’image casse
-  pf.card.avatar.addEventListener('error', () => { pf.card.avatar.src = '/avatar/default.png'; }, { once: true });
+  profile.card.avatar.addEventListener('error', () => { profile.card.avatar.src = '/avatar/default.png'; }, { once: true });
 
   /* ---------- avatar: branche la feature dédiée ---------- */
   initChangeAvatar({
-    grid: av.grid,
-    previewImg: pf.card.avatar,
-    urlInput: av.urlInput,
-    applyUrlBtn: av.applyUrlBtn,
-    messageEl: av.msg,
+    grid: avatar.grid,
+    previewImg: profile.card.avatar,
+    urlInput: avatar.urlInput,
+    applyUrlBtn: avatar.applyUrlBtn,
+    messageEl: avatar.msg,
     initialValue: currentAvatar,
     avatars: AVATARS,
     debounceMs: 250,
@@ -224,12 +237,13 @@ const ProfilePage: (container: HTMLElement) => void = (container) => {
   });
 
   /* ---------- Annuler (réinitialise seulement les champs texte) ---------- */
-  pf.cancelBtn.addEventListener('click', () => {
-    pf.firstName.value = saved.firstName || '';
-    pf.lastName.value = saved.lastName || '';
-    pf.username.value = saved.username || '';
-    pf.email.value = saved.email || '';
-    setMsg(pf.msg);
+  profile.cancelBtn.addEventListener('click', () => {
+    const user = getSavedUser<AppUser>() ?? saved;
+    profile.firstName.value = user.firstName || '';
+    profile.lastName.value = user.lastName || '';
+    profile.username.value = user.username || '';
+    profile.email.value = user.email || '';
+    setStatusMessage(profile.msg);
   });
 
   /* ---------- Enregistrer (infos de base + email) ---------- */
@@ -237,14 +251,14 @@ const ProfilePage: (container: HTMLElement) => void = (container) => {
     e.preventDefault();
 
     const data: ProfileForm = {
-      firstName: pf.firstName.value.trim(),
-      lastName: pf.lastName.value.trim(),
-      email: pf.email.value.trim(),
-      username: pf.username.value.trim(),
+      firstName: profile.firstName.value.trim(),
+      lastName: profile.lastName.value.trim(),
+      email: profile.email.value.trim(),
+      username: profile.username.value.trim(),
     };
 
-    lockBtn(pf.saveBtn, true, 'Enregistrement…');
-    setMsg(pf.msg);
+    lockButton(profile.saveBtn, true, 'Saving…');
+    setStatusMessage(profile.msg);
 
     try {
       // avatar est géré automatiquement par la feature
@@ -264,48 +278,48 @@ const ProfilePage: (container: HTMLElement) => void = (container) => {
         lastName: updatedUser.lastName,
         username: updatedUser.username,
         email: updatedEmail.email,
-        avatarUrl: latest.avatarUrl, // <= ne pas écraser l’avatar auto-sauvé
+        avatarPath: latest.avatarPath, // <= ne pas écraser l’avatar auto-sauvé
       };
 
       setLoggedInUser(merged);
       window.dispatchEvent(new CustomEvent('auth:changed', { detail: merged }));
 
       // rafraîchir la carte identité
-      pf.card.username.textContent = merged.username || '';
-      pf.card.email.textContent = merged.email || '';
-      pf.card.firstName.textContent = merged.firstName || '';
-      pf.card.lastName.textContent = merged.lastName || '';
+      profile.card.username.textContent = merged.username || '';
+      profile.card.email.textContent = merged.email || '';
+      profile.card.firstName.textContent = merged.firstName || '';
+      profile.card.lastName.textContent = merged.lastName || '';
 
-      setMsg(pf.msg, '✅ Modifications enregistrées', 'success');
+      setStatusMessage(profile.msg, '✅ Infos updated', 'success');
     } catch (err: any) {
-      setMsg(pf.msg, `❌ ${err?.message || 'Erreur lors de la mise à jour'}`, 'error');
+      setStatusMessage(profile.msg, `❌ ${err?.message || 'Error while updating'}`, 'error');
     } finally {
-      lockBtn(pf.saveBtn, false);
+      lockButton(profile.saveBtn, false);
     }
   });
 
   /* ---------- Changer mot de passe ---------- */
   ($<HTMLFormElement>('#pwd-form')).addEventListener('submit', async (e) => {
     e.preventDefault();
-    setMsg(pwd.msg);
+    setStatusMessage(pwd.msg);
 
     const oldPwd = pwd.old.value.trim();
     const newPwd = pwd.n1.value.trim();
     const newPwd2 = pwd.n2.value.trim();
 
-    if (!oldPwd || !newPwd) return setMsg(pwd.msg, '❌ Champs requis.', 'error');
-    if (newPwd !== newPwd2) return setMsg(pwd.msg, '❌ Les mots de passe ne correspondent pas.', 'error');
+    if (!oldPwd || !newPwd) return setStatusMessage(pwd.msg, '❌ Fields required.', 'error');
+    if (newPwd !== newPwd2) return setStatusMessage(pwd.msg, '❌ Passwords dont match.', 'error');
 
-    lockBtn(pwd.saveBtn, true, 'Mise à jour…');
+    lockButton(pwd.saveBtn, true, 'Updating…');
 
     try {
       await updatePassword(saved.userId, oldPwd, newPwd);
-      setMsg(pwd.msg, '✅ Mot de passe modifié avec succès !', 'success');
+      setStatusMessage(pwd.msg, '✅ Password updated !', 'success');
       pwd.old.value = ''; pwd.n1.value = ''; pwd.n2.value = '';
     } catch (err: any) {
-      setMsg(pwd.msg, `❌ ${err?.message || 'Erreur lors du changement de mot de passe'}`, 'error');
+      setStatusMessage(pwd.msg, `❌ ${err?.message || 'Error while updating pasword'}`, 'error');
     } finally {
-      lockBtn(pwd.saveBtn, false);
+      lockButton(pwd.saveBtn, false);
     }
   });
 };

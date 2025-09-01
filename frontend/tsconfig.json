@@ -13,20 +13,3 @@
   },
   "include": ["src"]
 }
-
-
-
-/*
-{
-  "compilerOptions": {
-    "target": "es2016",
-    "module": "commonjs",
-    "rootDir": "./src",
-    "outDir": "./dist",
-    "strict": true,
-    "esModuleInterop": true,
-    "forceConsistentCasingInFileNames": true,
-    "skipLibCheck": true
-  }
-}
-  */

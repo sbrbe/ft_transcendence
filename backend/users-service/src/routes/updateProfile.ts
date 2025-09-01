@@ -4,9 +4,9 @@ import { updateProfile } from "../lib/updateProfile.js";
 export default async function updateProfileRoute(app: FastifyInstance) {
 	app.put<{
 		Params: { userId: string };
-		Body: { userId: string; lastName: string; firstName: string; username: string; avatarUrl: string };
+		Body: { userId: string; lastName: string; firstName: string; username: string; avatarPath: string };
 		Reply:
-			| { lastName: string; firstName: string; username: string; avatarUrl: string }
+			| { lastName: string; firstName: string; username: string; avatarPath: string }
 			| { error: string };}>
 		('/:userId', {
 			preHandler: app.authenticate,
@@ -25,13 +25,13 @@ export default async function updateProfileRoute(app: FastifyInstance) {
 						lastName: { type: 'string', minLength: 1, maxLength: 20 },
 						firstName: { type: 'string', minLength: 1, maxLength: 20 },
 						username: { type: 'string', minLength: 1, maxLength: 20 },
-						avatarUrl: { type: 'string', minLength: 1, maxLength: 20 },
+						avatarPath: { type: 'string', minLength: 1, maxLength: 20 },
 					},
 					anyOf: [
 						{ required: ['lastName'] },
 						{ required: ['firstName'] },
 						{ required: ['username'] },
-						{ required: ['avatarUrl'] },
+						{ required: ['avatarPath'] },
 					]
 				},
 				response: {
@@ -41,7 +41,7 @@ export default async function updateProfileRoute(app: FastifyInstance) {
 							lastName: { type: 'string', minLength: 1, maxLength: 20 },
 							firstName: { type: 'string', minLength: 1, maxLength: 20 },
 							username: { type: 'string', minLength: 1, maxLength: 20 },
-							avatarUrl: { type: 'string', minLength: 1, maxLength: 20 }
+							avatarPath: { type: 'string', minLength: 1, maxLength: 20 }
 						}
 					},
 					400: {

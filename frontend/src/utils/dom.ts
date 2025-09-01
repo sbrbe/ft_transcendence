@@ -8,7 +8,7 @@
 export function q<T extends HTMLElement>(root: ParentNode, selector: string): T 
 {
   const el = root.querySelector<T>(selector);
-  if (!el) throw new Error(`Élément introuvable: ${selector}`);
+  if (!el) throw new Error(`Element not found: ${selector}`);
   return el;
 }
 

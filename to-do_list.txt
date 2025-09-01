@@ -1,6 +1,5 @@
 Function :
 
-	- logout: ne marche pas => revoir logique de déconnexion avec l'appel au service user
 	- Ajouter les tokens dans le frontend
 	- Friends:
 		- Faire la DB
@@ -9,6 +8,10 @@ Function :
 		- Pouvoir recevoir une demande d'ami
 		- Voir le status des amis: online/offline
 
+Upload avatar par url
+Changer le nom de la variable avatarPath par avatarPath
+
+mettre modsecurity
 Faire la comm entre les conteneurs
 
 Supprimer de la DB le password en clair

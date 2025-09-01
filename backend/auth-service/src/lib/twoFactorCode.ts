@@ -23,9 +23,7 @@ const timeLimitMinutes = 5;
 const maxAttempts = 5;
 
 export async function createTwoFactorCode(
-	userId: string,
-	ipAddress?: string,
-	userAgent?: string) {
+	userId: string) {
 		deleteCode(userId);
 		const code = generateCode();
 		const nonce = randomBytes(16);

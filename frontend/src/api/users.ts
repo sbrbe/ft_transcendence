@@ -15,13 +15,13 @@ export interface UpdateUserPartial {
   firstName?: string;
   lastName?: string;
   username?: string;
-  avatarUrl?: string;
+  avatarPath?: string;
 }
 export interface UpdatedUserResponse {
   firstName: string;
   lastName: string;
   username: string;
-  avatarUrl: string;
+  avatarPath: string;
 }
 
 /* ------------------------------------------------------------------ *
@@ -62,7 +62,7 @@ export async function createUserProfile(userId: string, d: RegisterFormData): Pr
 }
 
 /** [API] updateUser :
- * PUT /users/:userId — met à jour le profil (first/last/username/avatarUrl).
+ * PUT /users/:userId — met à jour le profil (first/last/username/avatarPath).
  * N'envoie que les champs non vides pour éviter d'écraser des valeurs.
  */
 export async function updateUser(
@@ -75,7 +75,7 @@ export async function updateUser(
       firstName: partial.firstName ?? '',
       lastName : partial.lastName ?? '',
       username : partial.username ?? '',
-      avatarUrl: partial.avatarUrl ?? '',
+      avatarPath: partial.avatarPath ?? '',
     }).filter(([, v]) => v !== '')
   );
 

@@ -94,8 +94,8 @@ export function initChangeAvatar(opts: ChangeAvatarOptions) {
   async function persistAvatar(src: string) {
     const u = getSavedUser<AppUser>();
     if (!u) throw new Error('Session expirée');
-    const updated = await updateUser(u.userId, { avatarUrl: src });
-    const merged: AppUser = { ...u, avatarUrl: updated.avatarUrl };
+    const updated = await updateUser(u.userId, { avatarPath: src });
+    const merged: AppUser = { ...u, avatarPath: updated.avatarPath };
     setLoggedInUser(merged);
     window.dispatchEvent(new CustomEvent('auth:changed', { detail: merged }));
   }
@@ -151,3 +151,6 @@ export function initChangeAvatar(opts: ChangeAvatarOptions) {
     },
   };
 }
+
+
+

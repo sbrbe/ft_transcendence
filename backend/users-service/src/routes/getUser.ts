@@ -5,7 +5,7 @@ export default async function getUserRoute(app: FastifyInstance) {
 	app.get<{
 		Params: { userId: string };
 		Reply: 
-			| { lastName: string; firstName: string; username: string; avatarUrl: string }
+			| { lastName: string; firstName: string; username: string; avatarPath: string }
 			| { error: string };}>
 			('/getUser/:userId', {
 		preHandler: app.authenticate,
@@ -20,12 +20,12 @@ export default async function getUserRoute(app: FastifyInstance) {
 			response: {
 				200: {
 					type: 'object',
-					required: ['lastName', 'firstName', 'username', 'avatarUrl'],
+					required: ['lastName', 'firstName', 'username', 'avatarPath'],
 					properties: {
 						lastName: { type: 'string', minLength: 1, maxLength: 20 },
 						firstName: { type: 'string', minLength: 1, maxLength: 20 },
 						username: { type: 'string', minLength: 1, maxLength: 20 },
-						avatarUrl: { type: 'string', minLength: 1, maxLength: 20 }
+						avatarPath: { type: 'string', minLength: 1, maxLength: 20 }
 					}
 				},
 				404: {

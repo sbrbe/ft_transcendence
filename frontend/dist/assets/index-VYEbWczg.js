@@ -61,7 +61,7 @@ const __vite__mapDeps=(i,m=__vite__mapDeps,d=(m.f||(m.f=["assets/register-mkfnDk
                   focus:outline-none focus-visible:ring-2 focus-visible:ring-blue-500/60 transition">
           S'enregistrer
         </a>
-      `;return}const s=P(o.avatarUrl);n.innerHTML=`
+      `;return}const s=P(o.avatarPath);n.innerHTML=`
       <button type="button" id="btn-profile"
         class="flex items-center gap-2 rounded-xl px-3 py-1.5 hover:bg-gray-100 focus:outline-none
                focus-visible:ring-2 focus-visible:ring-blue-500/60 transition">

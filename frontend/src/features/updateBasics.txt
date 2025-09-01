@@ -1,0 +1,128 @@
+// src/features/updateBasics.ts
+import { updateUser } from '../api/users';
+import {
+  AppUser,
+  getSavedUser,
+  setLoggedInUser,
+  updateEmail,
+} from '../api/auth';
+
+type El<T extends HTMLElement> = T | null;
+
+export interface UpdateBasicsOpts {
+  user: AppUser;
+
+  // Form + UI
+  formEl: HTMLFormElement;
+  saveBtn: HTMLButtonElement;
+  cancelBtn: HTMLButtonElement;
+  msgEl: HTMLElement;
+
+  // Inputs
+  firstName: HTMLInputElement;
+  lastName: HTMLInputElement;
+  username: HTMLInputElement;
+  email: HTMLInputElement;
+
+  // Carte identité à rafraîchir
+  card: {
+    usernameEl: HTMLElement;
+    emailEl: HTMLElement;
+    firstNameEl: HTMLElement;
+    lastNameEl: HTMLElement;
+  };
+}
+
+export function initUpdateBasics(opts: UpdateBasicsOpts) {
+  // snapshot initial (pour "Annuler")
+  const initial = {
+    firstName: opts.user.firstName || '',
+    lastName: opts.user.lastName || '',
+    username: opts.user.username || '',
+    email: opts.user.email || '',
+  };
+
+  const onCancel = () => {
+    opts.firstName.value = initial.firstName;
+    opts.lastName.value  = initial.lastName;
+    opts.username.value  = initial.username;
+    opts.email.value     = initial.email;
+    setMsg(opts.msgEl);
+  };
+
+  const onSubmit = async (e: SubmitEvent) => {
+    e.preventDefault();
+    setMsg(opts.msgEl);
+    lockBtn(opts.saveBtn, true, 'Enregistrement…');
+
+    try {
+      // 1) users-service
+      const updatedUser = await updateUser(opts.user.userId, {
+        firstName: opts.firstName.value.trim(),
+        lastName : opts.lastName.value.trim(),
+        username : opts.username.value.trim(),
+      });
+
+      // 2) auth-service (email)
+      const updatedEmail = await updateEmail(opts.user.userId, opts.email.value.trim());
+
+      // 3) avatar: ne pas l’écraser -> garder la version la plus récente depuis le storage
+      const latest = getSavedUser<AppUser>() || opts.user;
+
+      const merged: AppUser = {
+        userId: opts.user.userId,
+        firstName: updatedUser.firstName,
+        lastName : updatedUser.lastName,
+        username : updatedUser.username,
+        email    : updatedEmail.email,
+        avatarPath: latest.avatarPath,
+      };
+
+      // MAJ state + notifie la navbar
+      setLoggedInUser(merged);
+      window.dispatchEvent(new CustomEvent('auth:changed', { detail: merged }));
+
+      // Rafraîchir la carte identité
+      opts.card.usernameEl.textContent  = merged.username || '';
+      opts.card.emailEl.textContent     = merged.email || '';
+      opts.card.firstNameEl.textContent = merged.firstName || '';
+      opts.card.lastNameEl.textContent  = merged.lastName || '';
+
+      // MAJ du snapshot “Annuler”
+      initial.firstName = merged.firstName || '';
+      initial.lastName  = merged.lastName || '';
+      initial.username  = merged.username || '';
+      initial.email     = merged.email || '';
+
+      setMsg(opts.msgEl, '✅ Modifications enregistrées', 'success');
+    } catch (err: any) {
+      setMsg(opts.msgEl, `❌ ${err?.message || 'Erreur lors de la mise à jour'}`, 'error');
+    } finally {
+      lockBtn(opts.saveBtn, false);
+    }
+  };
+
+  opts.cancelBtn.addEventListener('click', onCancel);
+  opts.formEl.addEventListener('submit', onSubmit);
+
+  return {
+    destroy() {
+      opts.cancelBtn.removeEventListener('click', onCancel);
+      opts.formEl.removeEventListener('submit', onSubmit);
+    }
+  };
+}
+
+/* ---------- petits helpers locaux ---------- */
+function setMsg(el: HTMLElement, text = '', kind?: 'success'|'error') {
+  el.textContent = text;
+  el.className = `text-sm ${
+    kind === 'success' ? 'text-green-600' : kind === 'error' ? 'text-red-600' : ''
+  }`;
+}
+function lockBtn(btn: HTMLButtonElement, disabled: boolean, label?: string) {
+  btn.disabled = disabled;
+  btn.classList.toggle('opacity-70', disabled);
+  btn.classList.toggle('cursor-not-allowed', disabled);
+  if (label && disabled) btn.textContent = label;
+}

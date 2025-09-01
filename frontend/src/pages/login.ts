@@ -13,7 +13,7 @@ const Login: (container: HTMLElement) => void = (container) => {
   container.innerHTML = `
     <div class="container-page my-10">
       <div class="mx-auto max-w-md rounded-2xl border shadow-sm bg-white px-6 py-8">
-        <h2 class="text-2xl font-semibold text-center text-gray-800">Connexion</h2>
+        <h2 class="text-2xl font-semibold text-center text-gray-800">Login</h2>
 
         <form id="login-form" class="mt-6 space-y-4" novalidate>
           <label class="block">
@@ -23,25 +23,25 @@ const Login: (container: HTMLElement) => void = (container) => {
           </label>
 
           <label class="block">
-            <span class="text-sm text-gray-700">Mot de passe</span>
+            <span class="text-sm text-gray-700">Password</span>
             <div class="relative">
               <input id="login_password" name="password" type="password" required minlength="6" autocomplete="current-password"
                 class="mt-1 w-full border px-3 py-2 rounded outline-none focus:ring-2 focus:ring-blue-500 pr-10" placeholder="******">
               <button type="button" id="togglePwd"
-                class="absolute inset-y-0 right-0 my-auto mr-2 text-xs text-gray-500 hover:text-gray-700">Afficher</button>
+                class="absolute inset-y-0 right-0 my-auto mr-2 text-xs text-gray-500 hover:text-gray-700">Show</button>
             </div>
           </label>
 
           <button id="submitBtn" type="submit"
             class="w-full bg-green-600 hover:bg-green-700 text-white font-medium px-4 py-2.5 rounded-lg transition">
-            Se connecter
+            Login
           </button>
 
           <p id="formMsg" class="text-sm min-h-5" aria-live="polite"></p>
 
           <p class="text-center text-sm text-gray-500">
-            Pas de compte ?
-            <a href="#/inscription" data-route="/inscription" class="text-blue-600 hover:underline">S'enregistrer</a>
+            No account ?
+            <a href="#/inscription" data-route="/inscription" class="text-blue-600 hover:underline">Register</a>
           </p>
         </form>
       </div>
@@ -72,10 +72,10 @@ const Login: (container: HTMLElement) => void = (container) => {
 
     const email = emailEl.value.trim();
     const password = pwdEl.value.trim();
-    if (!email || !password) return setStatusMessage(msgEl, 'Veuillez saisir email et mot de passe.', 'error');
+    if (!email || !password) return setStatusMessage(msgEl, 'Please enter your email and password.', 'error');
     //if (!email || !password) return setMsg('Veuillez saisir email et mot de passe.', 'error');
 
-    lockButton(submitBtn, true, 'Connexion…');
+    lockButton(submitBtn, true, 'Connection…');
 
     try 
     {
@@ -85,7 +85,7 @@ const Login: (container: HTMLElement) => void = (container) => {
     } 
     catch (err: any) 
     {
-      setStatusMessage(msgEl, err?.message || 'Connexion échouée', 'error');
+      setStatusMessage(msgEl, err?.message || 'Connection failed', 'error');
     } 
     finally 
     {

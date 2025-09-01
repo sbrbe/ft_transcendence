@@ -15,11 +15,17 @@
     "@fastify/cookie": "^11.0.2",
     "@fastify/cors": "^11.1.0",
     "@fastify/jwt": "^9.1.0",
+    "@fastify/multipart": "^9.0.3",
+    "@fastify/static": "^8.2.0",
     "@types/better-sqlite3": "^7.6.13",
     "better-sqlite3": "^12.2.0",
-    "fastify": "^5.4.0"
+    "fastify": "^5.4.0",
+    "mime-types": "^3.0.1",
+    "sharp": "^0.34.3",
+    "uuid": "^11.1.0"
   },
   "devDependencies": {
+    "@types/mime-types": "^3.0.1",
     "typescript": "^5.8.3"
   }
 }

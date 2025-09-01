@@ -150,7 +150,7 @@
     <input id="param_lastName" type="text" placeholder="Nom" class="w-full border px-3 py-2 rounded">
     <input id="param_email" type="email" placeholder="Email" class="w-full border px-3 py-2 rounded">
     <input id="param_username" type="text" placeholder="Nom de jeu" class="w-full border px-3 py-2 rounded">
-    <input id="param_avatarUrl" type="text" placeholder="Lien avatar (URL)" class="w-full border px-3 py-2 rounded">
+    <input id="param_avatarPath" type="text" placeholder="Lien avatar (URL)" class="w-full border px-3 py-2 rounded">
     <hr class="my-4">
 
 <h3 class="text-xl font-semibold text-gray-700">🔒 Changer le mot de passe</h3>
@@ -408,7 +408,7 @@ function openSettings() {
   document.getElementById('param_firstName').value = user.firstName || '';
   document.getElementById('param_lastName').value = user.lastName || '';
   document.getElementById('param_email').value = user.email || '';
-  document.getElementById('param_avatarUrl').value = user.avatarUrl || '';
+  document.getElementById('param_avatarPath').value = user.avatarPath || '';
 
   showOnly('view-settings');
 }
@@ -427,7 +427,7 @@ async function updateProfile() {
     lastName: document.getElementById('param_lastName')?.value || '',
     email: document.getElementById('param_email')?.value || '',
     username: document.getElementById('param_username')?.value || '',
-    avatarUrl: document.getElementById('param_avatarUrl')?.value || user.avatarUrl || '/default.png'
+    avatarPath: document.getElementById('param_avatarPath')?.value || user.avatarPath || '/default.png'
   };
 
 
@@ -445,7 +445,7 @@ async function updateProfile() {
       firstName: updatedUser.firstName,
       email: updatedEmail.email,
       username: updatedUser.username,
-      avatarUrl: updatedUser.avatarUrl
+      avatarPath: updatedUser.avatarPath
     };
 
     console.log('Updated user: ', updatedProfile);
@@ -468,7 +468,7 @@ async function updateUser(user, data) {
     lastName: data.lastName,
     firstName: data.firstName,
     username: data.username,
-    avatarUrl: data.avatarUrl
+    avatarPath: data.avatarPath
   };
 
   // Filtrage : on enlève tous les champs vides (ex: "")
@@ -486,7 +486,7 @@ async function updateUser(user, data) {
     lastName: filteredData.lastName,
     firstName: filteredData.firstName,
     username: filteredData.username,
-    avatarUrl: filteredData.avatarUrl
+    avatarPath: filteredData.avatarPath
   })
   });
   const updateData = await updateRes.json();
@@ -650,7 +650,7 @@ statusIndicator.className = 'status-badge absolute top-3 right-3 ' + (user.is_on
 }
 
 
-  document.getElementById('profile_avatar').src = user.avatarUrl || '/default.png';
+  document.getElementById('profile_avatar').src = user.avatarPath || '/default.png';
   document.getElementById('profile_email').innerText = user.email || '';
   document.getElementById('profile_username').innerText = user.username || '';
   document.getElementById('profile_firstName').innerText = user.firstName || '';

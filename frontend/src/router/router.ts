@@ -7,14 +7,14 @@ interface RouterOptions
 
 const routes: Record<string, () => Promise<{ default: RouteHandler }>> = 
 {
-  '/': () => import('../pages/accueil'),
-  '/accueil': () => import('../pages/accueil'),
-  '/inscription': () => import('../pages/register'),
-  '/connexion': () => import('../pages/login'),
+  '/': () => import('../pages/home'),
+  '/home': () => import('../pages/home'),
+  '/register': () => import('../pages/register'),
+  '/connection': () => import('../pages/login'),
   '/a2f': () => import('../pages/A2F'),
   '/profil': () => import('../pages/profile'),
   '/friends': () => import('../pages/friends'),
-  '/statistiques': () => import('../pages/statistiques'),
+  '/statistics': () => import('../pages/statistics'),
   '/pong': () => import('../pages/pong'),
   '/teams': () => import('../pages/teams')
   // tu peux ajouter d'autres routes ici

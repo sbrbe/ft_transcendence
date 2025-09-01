@@ -14,7 +14,7 @@ export default async function searchUser(
 			return reply.status(200).send({
 				userId: user.userId,
 				username: user.username,
-				avatarUrl: user.avatarUrl
+				avatarPath: user.avatarPath
 			});
 		} catch (error: any) {
 			return reply.status(500).send({ error: error.message });

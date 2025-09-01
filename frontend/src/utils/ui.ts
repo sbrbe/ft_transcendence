@@ -50,8 +50,8 @@ export function bindPasswordToggle
 (
   input: HTMLInputElement,
   button: HTMLButtonElement,
-  showLabel = 'Afficher',
-  hideLabel = 'Masquer'
+  showLabel = 'Show',
+  hideLabel = 'Hide'
 ) {
   const onClick = () => {
     const isPwd = input.type === 'password';
