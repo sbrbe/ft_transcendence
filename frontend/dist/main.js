@@ -144,7 +144,6 @@ class GameApp {
     }
     constructor() {
         // UI
-        this.publicWS = null;
         this.tournament = null;
         this.configTournament = null;
         // en haut de la classe
@@ -240,7 +239,6 @@ class GameApp {
         this.loopTimer = null;
         this.lobbyId = null;
         this.canvas = document.getElementById('gameCanvas');
-        this.btn = document.getElementById('CreateTournamentBtn');
         this.startBtn = document.getElementById('startBtn');
         this.startBtnTournois = document.getElementById('startTournamentBtn');
         this.modeSelect = document.getElementById('modeSelect');
@@ -265,10 +263,6 @@ class GameApp {
             if (el)
                 el.style.display = (id === viewId ? 'block' : 'none');
             //console.log(viewId);
-            if (viewId === 'online-tournament' || viewId === 'tournament-lobby')
-                this.startLoop();
-            else
-                this.stopLoop();
         });
     }
     // Affiche les N premières lignes (4/8/16)
@@ -293,109 +287,7 @@ class GameApp {
             return { id: i + 1, name };
         });
     }
-    renderCard(t) {
-        const div = document.createElement('div');
-        div.className = 'flex items-center justify-between rounded-md bg-slate-800 px-3 py-2';
-        div.innerHTML = `
-    <div class="min-w-0">
-      <div class="truncate font-medium">${t.name}</div>
-      <div class="text-xs text-slate-400">${t.taken}/${t.size}</div>
-    </div>
-    <button class="joinBtn rounded-md bg-sky-500 px-3 py-1 text-sm font-medium hover:bg-sky-400" data-id="${t.id}">
-      Rejoindre
-    </button>
-  `;
-        return div;
-    }
-    async refreshOpenTournaments() {
-        const res = await fetch('/ws/tournaments');
-        const list = await res.json();
-        const listEl = document.getElementById('list');
-        listEl.innerHTML = '';
-        if (list.length === 0) {
-            listEl.innerHTML = `<div class="text-center text-sm text-slate-400 py-6">Aucun tournoi pour le moment</div>`;
-            return;
-        }
-        for (const t of list)
-            listEl.appendChild(this.renderCard(t));
-    }
-    async joinTournament(id) {
-        const pseudo = prompt("Ton pseudo ?")?.trim() || "Player";
-        const res = await fetch(`/ws/tournaments/${id}/join`, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ name: pseudo })
-        });
-        if (!res.ok) {
-            console.error("Join failed", res.status, await res.text());
-            return;
-        }
-        const data = await res.json();
-        console.log("Inscrit dans le tournoi:", data);
-        this.refreshOpenTournaments();
-        this.lobbyId = id;
-        return (data);
-    }
-    renderLobby(t) {
-        const nameEl = document.getElementById('lobby-name');
-        const countEl = document.getElementById('lobby-count');
-        const sizeEl = document.getElementById('lobby-size');
-        const listEl = document.getElementById('lobby-players');
-        const statusEl = document.getElementById('lobby-status');
-        nameEl.textContent = t.name;
-        countEl.textContent = t.slots.filter((s) => s.playerId).length.toString();
-        sizeEl.textContent = t.size.toString();
-        listEl.innerHTML = '';
-        for (const s of t.slots) {
-            if (!s.playerId)
-                continue;
-            const li = document.createElement('li');
-            li.className = "flex items-center justify-between rounded-md bg-slate-800 px-3 py-2";
-            li.innerHTML = `
-      <span class="truncate">${s.name}</span>
-      <span class="text-xs ${s.ready ? 'text-green-400' : 'text-yellow-400'}">
-        ${s.ready ? '✅ prêt' : '⏳ en attente'}
-      </span>
-    `;
-            listEl.appendChild(li);
-        }
-        if (t.slots.filter((s) => s.playerId).length < t.size) {
-            statusEl.textContent = "En attente d’autres joueurs…";
-        }
-        else {
-            statusEl.textContent = "Tournoi complet ! Préparation en cours…";
-            this.startTournamentOnline(t);
-        }
-    }
     bindUI() {
-        // nav (facultatif selon ton HTML)
-        // Dans bindUI
-        document.getElementById('list')?.addEventListener('click', async (e) => {
-            const btn = e.target.closest('.joinBtn');
-            if (!btn)
-                return;
-            const id = btn.dataset.id;
-            console.log("Tu as cliqué sur le tournoi:", id);
-            // 1) rejoindre (renvoie { tournamentId, playerId, slotIndex })
-            const joined = await this.joinTournament(id);
-            if (!joined)
-                return; // join a échoué
-            // 2) récupérer l’état complet du tournoi
-            const tRes = await fetch(`/ws/tournaments/${id}`);
-            if (!tRes.ok) {
-                console.error('GET /tournaments/:id failed', tRes.status, await tRes.text());
-                return;
-            }
-            const t = await tRes.json(); // doit contenir { id,name,size,slots,... }
-            // 3) afficher le lobby
-            this.showView('tournament-lobby');
-            this.renderLobby(t);
-        });
-        document.getElementById('nav-game-tournois-online')?.addEventListener('click', () => {
-            this.stopAndReturnToMenu();
-            this.showView('online-tournament');
-            this.refreshOpenTournaments();
-        });
         document.getElementById('pong-online')?.addEventListener('click', () => {
             this.stopAndReturnToMenu();
             this.showView('online-options');
@@ -416,46 +308,6 @@ class GameApp {
         document.getElementById('nav-game-online')?.addEventListener('click', () => {
             this.stopAndReturnToMenu();
             this.startOnline();
-        });
-        this.btn?.addEventListener('click', async () => {
-            const nameEl = document.getElementById('createName');
-            const sizeEl = document.getElementById('createSize');
-            const name = nameEl?.value.trim() ?? '';
-            const rawSize = sizeEl?.value ?? '4';
-            const sizeNum = Number(rawSize);
-            // petite validation
-            if (!name) {
-                alert('Le nom du tournoi est requis.');
-                nameEl?.focus();
-                return;
-            }
-            // force 4 | 8 | 16
-            const allowed = [4, 8, 16];
-            const size = (allowed.includes(sizeNum) ? sizeNum : 8);
-            // (optionnel) désactiver le bouton pour éviter le double-click
-            this.btn.disabled = true;
-            console.log(name, sizeNum);
-            try {
-                // Ici tu fais ce que tu veux (appel API, création en mémoire, navigation…)
-                // Exemple d’appel REST:
-                const res = await fetch('/ws/tournaments', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ name, size, autoStart: true }),
-                });
-                if (!res.ok)
-                    throw new Error('HTTP ' + res.status);
-                const data = await res.json();
-                console.log('Tournoi créé:', data);
-                await this.refreshOpenTournaments();
-            }
-            catch (err) {
-                console.error(err);
-                alert("Impossible de créer le tournoi pour l'instant.");
-            }
-            finally {
-                this.btn.disabled = false;
-            }
         });
         document.getElementById('nav-game-tournois')?.addEventListener('click', () => {
             this.stopAndReturnToMenu();
@@ -488,34 +340,6 @@ class GameApp {
             };
             this.launchLocalGame(config);
         });
-    }
-    startTournamentOnline(t) {
-        // UI
-        this.showView('view-game');
-        t.id;
-        // renderer seul (le serveur envoie l'état)
-        this.renderer = new GameRenderer(this.canvas);
-        // client WS
-        this.online?.dispose();
-        this.online = new OnlineClient(
-        // onState
-        (snap) => {
-            if (!this.renderer)
-                return;
-            this.renderer.draw(snap);
-            if (!snap.running) {
-                this.renderer.endScreen(snap);
-            }
-        }, 
-        // onInfo (optionnel)
-        (msg) => {
-            if (msg.type === "waiting") {
-                this.renderer?.clearRender();
-                this.renderer?.drawMessage("Matchmaking...");
-            }
-        }, t);
-        this.online.connect();
-        this.attachInputListeners();
     }
     sleep(ms) {
         return new Promise(resolve => setTimeout(resolve, ms));
@@ -556,10 +380,11 @@ class GameApp {
         }, 
         // onInfo
         (msg) => {
-            // if (msg.type === 'tournament_end') {
-            //   this.renderer?.clearRender();
-            //   this.renderer?.drawMessage('Tournoi terminé !');
-            // }
+            if (msg.type === 'tournament_end') {
+                this.renderer?.clearRender();
+                this.renderer?.drawMessage('Tournoi terminé !');
+                this.showView('Tournois');
+            }
         }, '/ws/local');
         // connexion + envoi conf
         this.online.connect().then(() => {
@@ -699,36 +524,6 @@ class GameApp {
         this.renderer = null;
         // UI
         this.showView('view-home');
-    }
-    startLoop() {
-        if (this.loopTimer)
-            return; // déjà en cours
-        this.loopTimer = setInterval(async () => {
-            const onlineView = document.getElementById('online-tournament');
-            const lobbyView = document.getElementById('tournament-lobby');
-            if (onlineView && onlineView.style.display === 'block') {
-                this.refreshOpenTournaments();
-                console.log('ici');
-            }
-            else if (lobbyView && lobbyView.style.display === 'block' && this.lobbyId) {
-                try {
-                    const res = await fetch(`/ws/tournaments/${encodeURIComponent(this.lobbyId)}`);
-                    if (res.ok) {
-                        const t = await res.json();
-                        this.renderLobby(t);
-                    }
-                }
-                catch (e) {
-                    console.warn('Erreur polling lobby', e);
-                }
-            }
-        }, 1000);
-    }
-    stopLoop() {
-        if (this.loopTimer) {
-            clearInterval(this.loopTimer);
-            this.loopTimer = null;
-        }
     }
 }
 new GameApp();

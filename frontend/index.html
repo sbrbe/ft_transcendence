@@ -209,74 +209,8 @@
 
   <div id="online-options" class="hidden flex flex-col items-center justify-center mt-8 space-y-4 space-x-4">
     <button id="nav-game-online" class="bg-blue-500 hover:bg-blue-600 text-white px-4 py-2 rounded" >1 vs 1 Online 🌍</button>
-    <button id="nav-game-tournois-online" class="bg-blue-500 hover:bg-blue-600 text-white px-4 py-2 rounded" >Tournament Onligne 🌍</button>
-  </div>
+  </div>    
 
-  <div id="tournament-lobby" class="hidden mx-auto mt-10 w-full max-w-md rounded-xl bg-slate-900/80 p-6 text-white shadow-xl">
-    <!-- Titre -->
-    <h2 class="mb-4 text-center text-xl font-semibold">🏆 Salle d’attente du tournoi</h2>
-    
-    <!-- Infos générales -->
-    <div class="mb-4 text-center">
-      <div id="lobby-name" class="text-lg font-bold">Tournoi Alpha</div>
-      <div class="text-sm text-slate-400">
-        <span id="lobby-count">2</span>/<span id="lobby-size">8</span> joueurs inscrits
-      </div>
-    </div>
-  
-    <!-- Liste des joueurs -->
-    <ul id="lobby-players" class="space-y-2">
-      <li class="flex items-center justify-between rounded-md bg-slate-800 px-3 py-2">
-        <span class="truncate">Alice</span>
-        <span class="text-xs text-green-400">✅ prêt</span>
-      </li>
-      <li class="flex items-center justify-between rounded-md bg-slate-800 px-3 py-2">
-        <span class="truncate">Bob</span>
-        <span class="text-xs text-yellow-400">⏳ en attente</span>
-      </li>
-    </ul>
-  
-    <!-- Message d’attente -->
-    <div id="lobby-status" class="mt-4 text-center text-sm text-slate-400">
-      En attente d’autres joueurs…
-    </div>
-  </div>
-    
-  <div id="online-tournament" class="hidden mx-auto mt-10 w-full max-w-md rounded-xl bg-slate-900/80 p-5 text-white shadow-xl">
-    <!-- Rejoindre -->
-    <h2 class="mb-3 text-center text-xl font-semibold">🎮 Rejoindre un tournoi</h2>
-  
-    <!-- Barre de recherche -->
-    <div class="mb-3">
-      <input id="search" type="text" placeholder="🔎 Rechercher un tournoi..."
-             class="w-full rounded-lg border border-slate-700 bg-slate-800 px-3 py-2 outline-none ring-0 focus:border-slate-500" />
-    </div>
-  
-    <!-- Liste des tournois -->
-    <div id="list" class="max-h-56 space-y-2 overflow-y-auto rounded-lg border border-slate-800 bg-slate-800/60 p-2">
-    </div>
-
-    
-  
-    <!-- Séparateur -->
-    <div class="my-5 border-t border-slate-700"></div>
-  
-    <!-- Créer -->
-    <h2 class="mb-3 text-center text-xl font-semibold">➕ Créer un tournoi</h2>
-    <form class="grid grid-cols-1 gap-3 sm:grid-cols-3">
-      <input id="createName" type="text" placeholder="Nom du tournoi"
-             class="sm:col-span-2 w-full rounded-lg border border-slate-700 bg-slate-800 px-3 py-2 outline-none focus:border-slate-500" />
-      <select id="createSize" class="rounded-lg border border-slate-700 bg-slate-800 px-3 py-2 outline-none focus:border-slate-500">
-        <option value="4">4 joueurs</option>
-        <option value="8">8 joueurs</option>
-        <option value="16">16 joueurs</option>
-      </select>
-      <button type="button" id="CreateTournamentBtn"
-              class="sm:col-span-3 rounded-lg bg-emerald-500 px-4 py-2 font-medium hover:bg-emerald-400">
-        Créer le tournoi
-      </button>
-    </form>
-  </div>
   
 <!-- Bloc de configuration du TOURNOIS -->
 <div id="Tournois" class="tournois-config" style="display: none;">
