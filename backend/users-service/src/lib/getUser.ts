@@ -9,10 +9,10 @@ export async function getUserProfile(
 		try {
 			const user = getUserById(userId);
 			if (!user) {
-				return reply.status(404).send({ error: 'User not found'} );
+				return reply.status(404).send({ error: 'User not found' } );
 			}
 			return reply.status(200).send(user);
 		} catch (error: any) {
-			return reply.status(500).send({ error: error.message })
+			return reply.status(500).send({ error: error.message });
 		}
-	}
+}

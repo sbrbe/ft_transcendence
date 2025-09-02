@@ -7,13 +7,13 @@ export async function updateProfile(
 	req: FastifyRequest<{ Body: UserUpdate }>,
 	reply: FastifyReply) {
 		const { userId } = req.params as { userId: string };
-		const { lastName, firstName, username, avatarUrl } = req.body;
+		const { lastName, firstName, username, avatarPath } = req.body;
 
-		if (!lastName && !firstName && !username && !avatarUrl) {
+		if (!lastName && !firstName && !username && !avatarPath) {
 			return reply.status(400).send({ error: 'No fields to update' });
 		}
 		try {
-			const res = await updateUser(userId, { lastName, firstName, username, avatarUrl });
+			const res = await updateUser(userId, { lastName, firstName, username, avatarPath });
 			if (!res) {
 				return reply.status(404).send( { error: 'User not found' });
 			}
@@ -28,9 +28,9 @@ async function updateUser(userId: string, data: UserUpdate) {
 		lastName = COALESCE(?, lastName),
 		firstName = COALESCE(?, firstName),
 		username = COALESCE(?, username),
-		avatarUrl = COALESCE(?, avatarUrl)
+		avatarPath = COALESCE(?, avatarPath)
 		WHERE userId = ?`);
-	const res = stmt.run(data.lastName, data.firstName, data.username, data.avatarUrl, userId);
+	const res = stmt.run(data.lastName, data.firstName, data.username, data.avatarPath, userId);
 	if (res.changes < 0) {
 		return false;
 	}

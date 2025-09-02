@@ -15,17 +15,15 @@ export interface TwoFactorCode {
 	createdAt: string;
 }
 
-if (!process.env.TRANSCENDENCE_KEY)
+if (!process.env.TWO_FA_SECRET)
 	throw new Error("TWO_FA_SECRET is not set");
 
-const TWO_FA_SECRET = process.env.TRANSCENDENCE_KEY;
+const TWO_FA_SECRET = process.env.TWO_FA_SECRET;
 const timeLimitMinutes = 5;
 const maxAttempts = 5;
 
 export async function createTwoFactorCode(
-	userId: string,
-	ipAddress?: string,
-	userAgent?: string) {
+	userId: string) {
 		deleteCode(userId);
 		const code = generateCode();
 		const nonce = randomBytes(16);

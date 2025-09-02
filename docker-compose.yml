@@ -6,8 +6,9 @@ services:
       - "3001:3001"
     volumes:
       - user-db:/app/database
-      - ./nginx/pki/issued/users-service.crt:/run/certs/server.crt:ro
-      - ./nginx/pki/private/users-service.key:/run/certs/server.key:ro
+      - ./nginx/pki/issued/users-service.crt:/run/certs/users-service.crt:ro
+      - ./nginx/pki/private/users-service.key:/run/certs/users-service.key:ro
+      - ./nginx/pki/ca/ca.crt:/run/certs/ca.crt:ro
     environment:
       - JWT_ACCESS_SECRET=${JWT_ACCESS_SECRET}
       - COOKIE_SECRET=${COOKIE_SECRET}
@@ -21,12 +22,12 @@ services:
     - "3002:3002"
     volumes:
     - auth-db:/app/database
-    - ./nginx/pki/issued/auth-service.crt:/run/certs/server.crt:ro
-    - ./nginx/pki/private/auth-service.key:/run/certs/server.key:ro
+    - ./nginx/pki/issued/auth-service.crt:/run/certs/auth-service.crt:ro
+    - ./nginx/pki/private/auth-service.key:/run/certs/auth-service.key:ro
+    - ./nginx/pki/ca/ca.crt:/run/certs/ca.crt:ro
+
     environment:
       - TWO_FA_SECRET=${TWO_FA_SECRET}
-      - RESEND_KEY=${RESEND_KEY}
-      - FROM_EMAIL=${FROM_EMAIL}
       - TRANSCENDENCE_KEY=${TRANSCENDENCE_KEY}
       - JWT_ACCESS_SECRET=${JWT_ACCESS_SECRET}
       - JWT_REFRESH_SECRET=${JWT_REFRESH_SECRET}
@@ -35,7 +36,7 @@ services:
     - transcendence
 
   nginx:
-    build: ./nginx
+    build: .
     depends_on:
       - users-service
       - auth-service
@@ -43,7 +44,11 @@ services:
       - "443:443"
       - "8080:80"
     volumes:
-      - ./frontend:/usr/share/nginx/html
+    - ./nginx/pki/issued/nginx-4443.crt:/etc/nginx/mtls/server.crt:ro
+    - ./nginx/pki/private/nginx-4443.key:/etc/nginx/mtls/server.key:ro
+    - ./nginx/pki/ca/ca.crt:/etc/nginx/ca/ca.crt:ro
+    - ./nginx/pki/issued/nginx-client.crt:/etc/nginx/mtls/client.crt:ro
+    - ./nginx/pki/private/nginx-client.key:/etc/nginx/mtls/client.key:ro
     networks:
       - transcendence
 
