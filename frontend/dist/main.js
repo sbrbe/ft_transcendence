@@ -9,6 +9,11 @@ class GameRenderer {
         this.ctx = ctx;
         this.startTime = performance.now();
     }
+    // newStart()
+    // {
+    //   this.startTime = performance.now();
+    //   console.log('hey');
+    // }
     drawDashedLine(pattern) {
         this.ctx.strokeStyle = 'white';
         this.ctx.setLineDash(pattern);
@@ -171,6 +176,7 @@ class GameApp {
                     this.online?.sendContinue();
                     this.betweenStage = 'idle';
                     this.renderer?.clearRender(); // le serveur renverra le prochain 'state'
+                    // this.renderer?.newStart();
                     return;
                 }
             }
@@ -383,7 +389,7 @@ class GameApp {
             if (msg.type === 'tournament_end') {
                 this.renderer?.clearRender();
                 this.renderer?.drawMessage('Tournoi terminé !');
-                this.showView('Tournois');
+                // this.showView('Tournois')
             }
         }, '/ws/local');
         // connexion + envoi conf

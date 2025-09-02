@@ -464,7 +464,7 @@ this.startBtn.addEventListener('click', () => {
           if (msg.type === 'tournament_end') {
             this.renderer?.clearRender();
             this.renderer?.drawMessage('Tournoi terminé !');
-            this.showView('Tournois')
+            // this.showView('Tournois')
           }
         },
         '/ws/local'
