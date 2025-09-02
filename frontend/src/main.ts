@@ -142,6 +142,7 @@ class GameApp {
   private config1v1: HTMLElement;
   private playersWrap!: HTMLElement;
   private playerRows!: HTMLElement[];
+  private renderer: GameRenderer; 
   // en haut de la classe
 private online: OnlineClient | null = null;
 
@@ -199,16 +200,16 @@ private detachMobileTouch() {
 
   // Jeu / rendu / boucle
   private game: GameLogic | null = null;
-  private renderer: GameRenderer | null = null;
   private rafId: number | null = null;
-
+  
   private betweenStage: 'idle'|'winner'|'next' | 'end' = 'idle';
   private _prevRunning: boolean | null = null;
-
-
+  
+  
+  
   private keyDownHandler = (e: KeyboardEvent) => {
     const code = e.code;
-  
+    
     if (code === 'Space') {
       if (this.betweenStage === 'winner') {
         e.preventDefault();
@@ -224,10 +225,10 @@ private detachMobileTouch() {
         return;
       }
     }
-  
+    
     // Empêche le scroll avec les flèches
     if (code === 'ArrowUp' || code === 'ArrowDown') e.preventDefault();
-  
+    
     if (this.online) {
       if (code === 'ArrowUp' || code === 'ArrowDown' || code === 'KeyW' || code === 'KeyS') {
         e.preventDefault();
@@ -235,26 +236,26 @@ private detachMobileTouch() {
         return;
       }
     }
-  
+    
     if (this.tournament) {
       this.tournament.redirectTournament(code, true);
       return;
     }
-
+    
     this.game?.setPlayerInput(e.key, true);
   };
   
   private keyUpHandler = (e: KeyboardEvent) => {
     const code = e.code;
-  
+    
     // Espace “between stages” (tournoi)
     if (code === 'Space' && (this.betweenStage === 'winner' || this.betweenStage === 'next')) {
       e.preventDefault();
       return;
     }
-  
+    
     if (code === 'ArrowUp' || code === 'ArrowDown') e.preventDefault();
-  
+    
     if (this.online) {
       if (code === 'ArrowUp' || code === 'ArrowDown' || code === 'KeyW' || code === 'KeyS') {
         e.preventDefault();
@@ -262,12 +263,12 @@ private detachMobileTouch() {
         return;
       }
     }
-  
+    
     if (this.tournament) {
       this.tournament.redirectTournament(code, false);
       return;
     }
-  
+    
     this.game?.setPlayerInput(e.key, false);
   };
   
@@ -300,6 +301,7 @@ private detachMobileTouch() {
 
   constructor() {
     this.canvas = document.getElementById('gameCanvas') as HTMLCanvasElement;
+    this.renderer = new GameRenderer(this.canvas);
     this.startBtn = document.getElementById('startBtn') as HTMLButtonElement;
     this.startBtnTournois = document.getElementById('startTournamentBtn') as HTMLButtonElement;
     this.modeSelect = document.getElementById('modeSelect') as HTMLSelectElement;
@@ -308,14 +310,14 @@ private detachMobileTouch() {
     this.config1v1 = document.getElementById('custom-config_1vs1')!;
     this.playersWrap = document.getElementById('tournamentPlayers') as HTMLElement;
     this.playerRows = Array.from(this.playersWrap.querySelectorAll<HTMLElement>('.player-row'));
-
+    
     // Selects joueurs
     this.playerSelects2v2 = ['player1', 'player2', 'player3', 'player4']
-      .map(id => document.getElementById(id) as HTMLSelectElement);
-
+    .map(id => document.getElementById(id) as HTMLSelectElement);
+    
     this.playerSelects1v1 = ['player1-1v1', 'player2-1v1']
-      .map(id => document.getElementById(id) as HTMLSelectElement);
-
+    .map(id => document.getElementById(id) as HTMLSelectElement);
+    
     // Boutons mobile (assure-toi que ces IDs existent dans ton HTML)
     this.btnUp = document.getElementById('btn-up') as HTMLButtonElement | null;
     this.btnDown = document.getElementById('btn-down') as HTMLButtonElement | null;
@@ -382,7 +384,7 @@ private getTournamentPlayersFromInputs(n: number): { id: number; name: string }[
     
     document.getElementById('nav-game-online')?.addEventListener('click', () => {
       this.stopAndReturnToMenu();
-      this.startOnline()
+      this.startOnline();
     });
     
 
@@ -452,8 +454,6 @@ this.startBtn.addEventListener('click', () => {
       const size = this.getSelectedTournamentSize();
       const players = this.getTournamentPlayersFromInputs(size);
       this.configTournament = { players };
-    
-      this.renderer = new GameRenderer(this.canvas);
     
       // Ici on garde keyDownHandler / keyUpHandler pour Espace & UI, mais PAS pour mouvements.
       window.removeEventListener('keydown', this.keyDownHandler as any);
@@ -529,17 +529,8 @@ this.startBtn.addEventListener('click', () => {
 
 
   private startOnline() {
-    // nettoie un éventuel local game
-    if (this.rafId !== null) { cancelAnimationFrame(this.rafId); this.rafId = null; }
-    this.detachInputListeners();
-    (this.game as any)?.dispose?.();
-    this.game = null;
-  
-    // UI
     this.showView('view-game');
   
-    // renderer seul (le serveur envoie l'état)
-    this.renderer = new GameRenderer(this.canvas);
   
     // client WS
     this.online?.dispose();
@@ -556,8 +547,9 @@ this.startBtn.addEventListener('click', () => {
       (msg) => {
 
         if (msg.type === "waiting") {
-          this.renderer?.clearRender();
-          this.renderer?.drawMessage("Matchmaking...");
+          console.log('Y')
+          this.renderer.clearRender();
+          this.renderer.drawMessage("Matchmaking...");
         }
       },
   '/ws'
@@ -608,7 +600,6 @@ this.startBtn.addEventListener('click', () => {
 
     // Crée moteur + renderer
     this.game = new GameLogic(this.canvas.width, this.canvas.height, config);
-    this.renderer = new GameRenderer(this.canvas);
 
     // Listeners input
     this.attachInputListeners();
@@ -656,9 +647,6 @@ this.startBtn.addEventListener('click', () => {
   
   if (this.renderer)
     this.renderer.clearRender();
-
-    this.renderer = null;
-
     // UI
     this.showView('view-home');
   }

@@ -19,9 +19,9 @@ export declare class Tournament {
     private confs;
     private currentMatchId;
     private winner;
+    launch: boolean;
     constructor(canvasW: number, canvasH: number, info: buildTournament);
     private startMatchs;
-    private startTour;
     private buildConfs;
     playLocal(): GameState;
     redirectTournament(key: string, isPressed: boolean): void;

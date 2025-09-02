@@ -155,7 +155,8 @@ function startLocalTicker(sess: LocalSession) {
 
   sess.ticker = setInterval(() => {
     if (!sess.t) return;
-    if (sess.awaitingContinue) return;     // ⛔ gel
+    if (sess.awaitingContinue)
+      return;     // ⛔ gel
 
     if ((sess.t as any).isFinished?.())
     {
@@ -166,20 +167,21 @@ function startLocalTicker(sess: LocalSession) {
     }
 
     const snap = (sess.t as any).playLocal?.();
+    sess.t.launch = false;
     if (snap) {
       safeSend(sess.ws, { type: 'state', state: snap });
       if (!snap.running && !(sess.t as any).isFinished?.()) {
-          // manche finie → on fige. AUCUN autre message.
+        // manche finie → on fige. AUCUN autre message.
         sess.awaitingContinue = true;
         sess.continueCount = 0;
-        }
       }
-      else {
-        safeSend(sess.ws, { type: 'tournament_end' });
-        clearInterval(sess.ticker!);
-        sess.ticker = undefined;
-        return;
-      }
+    }
+    else {
+      safeSend(sess.ws, { type: 'tournament_end' });
+      clearInterval(sess.ticker!);
+      sess.ticker = undefined;
+      return;
+    }
 
   }, FRAME_MS);
 }
@@ -285,6 +287,7 @@ wss.on('connection', (ws: WebSocket, req) => {
         
           // Dé-gèle
           sess.awaitingContinue = false;
+          sess.t.launch = true;
         
           // 👇 Kick immédiat : recalcule un frame et renvoie un state tout de suite
           try {
@@ -299,7 +302,7 @@ wss.on('connection', (ws: WebSocket, req) => {
             if (sess.t) {
               const res = sess.t.playLocal?.();
               if (res) {
-
+                
                 const names = res.paddles
                   .filter((p: any) => p !== null)
                   .map((p: any) => p.name ?? 'Inconnu');

@@ -160,6 +160,7 @@ function startLocalTicker(sess) {
             sess.ticker = undefined;
             return;
         }
+        sess.t.launch = false;
     }, FRAME_MS);
 }
 /* ==========================================
@@ -270,6 +271,7 @@ wss.on('connection', (ws, req) => {
                         break;
                     // Dé-gèle
                     sess.awaitingContinue = false;
+                    sess.t.launch = true;
                     // 👇 Kick immédiat : recalcule un frame et renvoie un state tout de suite
                     try {
                         const snap = sess.t.playLocal?.();

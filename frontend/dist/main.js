@@ -151,7 +151,6 @@ class GameApp {
         this.mobileTouchAttached = false;
         // Jeu / rendu / boucle
         this.game = null;
-        this.renderer = null;
         this.rafId = null;
         this.betweenStage = 'idle';
         this._prevRunning = null;
@@ -239,6 +238,7 @@ class GameApp {
         this.loopTimer = null;
         this.lobbyId = null;
         this.canvas = document.getElementById('gameCanvas');
+        this.renderer = new GameRenderer(this.canvas);
         this.startBtn = document.getElementById('startBtn');
         this.startBtnTournois = document.getElementById('startTournamentBtn');
         this.modeSelect = document.getElementById('modeSelect');
@@ -361,7 +361,6 @@ class GameApp {
         const size = this.getSelectedTournamentSize();
         const players = this.getTournamentPlayersFromInputs(size);
         this.configTournament = { players };
-        this.renderer = new GameRenderer(this.canvas);
         // Ici on garde keyDownHandler / keyUpHandler pour Espace & UI, mais PAS pour mouvements.
         window.removeEventListener('keydown', this.keyDownHandler);
         window.removeEventListener('keyup', this.keyUpHandler);
@@ -421,18 +420,7 @@ class GameApp {
         this.tournamentKeysActive = false;
     }
     startOnline() {
-        // nettoie un éventuel local game
-        if (this.rafId !== null) {
-            cancelAnimationFrame(this.rafId);
-            this.rafId = null;
-        }
-        this.detachInputListeners();
-        this.game?.dispose?.();
-        this.game = null;
-        // UI
         this.showView('view-game');
-        // renderer seul (le serveur envoie l'état)
-        this.renderer = new GameRenderer(this.canvas);
         // client WS
         this.online?.dispose();
         this.online = new OnlineClient(
@@ -448,8 +436,9 @@ class GameApp {
         // onInfo (optionnel)
         (msg) => {
             if (msg.type === "waiting") {
-                this.renderer?.clearRender();
-                this.renderer?.drawMessage("Matchmaking...");
+                console.log('Y');
+                this.renderer.clearRender();
+                this.renderer.drawMessage("Matchmaking...");
             }
         }, '/ws');
         this.online.connect();
@@ -488,7 +477,6 @@ class GameApp {
         this.showView('view-game');
         // Crée moteur + renderer
         this.game = new GameLogic(this.canvas.width, this.canvas.height, config);
-        this.renderer = new GameRenderer(this.canvas);
         // Listeners input
         this.attachInputListeners();
         // Boucle
@@ -528,7 +516,6 @@ class GameApp {
         this.tournament = null;
         if (this.renderer)
             this.renderer.clearRender();
-        this.renderer = null;
         // UI
         this.showView('view-home');
     }

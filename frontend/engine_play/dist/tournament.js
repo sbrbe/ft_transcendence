@@ -5,6 +5,7 @@ export class Tournament {
         this.confs = [];
         this.currentMatchId = 0;
         this.winner = [];
+        this.launch = false;
         //this.id =
         this.canvasH = canvasH;
         this.canvasW = canvasW;
@@ -13,10 +14,6 @@ export class Tournament {
     }
     startMatchs(id) {
         this.matchs[id] = new GameLogic(this.canvasW, this.canvasH, this.confs[id]);
-    }
-    startTour() {
-        this.matchs = this.confs.map(conf => new GameLogic(this.canvasW, this.canvasH, conf));
-        this.winner = [];
     }
     buildConfs(list) {
         this.currentMatchId = 0;
@@ -38,18 +35,19 @@ export class Tournament {
     playLocal() {
         this.matchs[this.currentMatchId].update();
         let info = this.matchs[this.currentMatchId].getGameState();
-        if (info.running == false) {
+        if (info.running == false && this.launch) {
             let win = info.tracker.winner;
-            if (win) {
+            if (win)
                 this.appendWinner(win);
-            }
             this.currentMatchId++;
-            if (this.currentMatchId >= this.confs.length && this.winner.length > 1) {
+            console.log(this.currentMatchId, this.confs.length, this.winner.length);
+            console.log(this.launch);
+            if (this.currentMatchId >= this.confs.length && this.winner.length > 1 && this.launch) {
+                console.log(this.launch);
                 this.buildConfs(this.winner);
                 this.startMatchs(this.currentMatchId);
-                //this.startTour();
             }
-            else if (this.currentMatchId < this.confs.length)
+            else if (this.currentMatchId < this.confs.length && this.launch)
                 this.startMatchs(this.currentMatchId);
         }
         return info;
@@ -87,6 +85,6 @@ export class Tournament {
         }
     }
     isFinished() {
-        return (this.winner.length == 1 && this.currentMatchId == this.matchs.length);
+        return (this.winner.length == 1 && this.confs.length == 1);
     }
 }
