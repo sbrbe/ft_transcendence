@@ -232,7 +232,6 @@ wss.on('connection', (ws, req) => {
                         safeSend(ws, { type: 'info', code: 'conf_invalid' });
                         return;
                     }
-                    conf.Online = false; // mode offline/sequentiel
                     try {
                         sess.t = new tournament_js_1.Tournament(CANVAS_W, CANVAS_H, conf);
                         safeSend(ws, { type: 'start', w: CANVAS_W, h: CANVAS_H });

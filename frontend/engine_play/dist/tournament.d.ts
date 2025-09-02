@@ -1,4 +1,3 @@
-import { GameLogic } from "./game_logic.js";
 import type { GameState } from './types.js';
 import { Tracker } from './tracker.js';
 import { Player } from './player.js';
@@ -9,7 +8,6 @@ export interface contender {
 }
 export interface buildTournament {
     players: contender[];
-    Online: boolean;
 }
 export interface infoMatch {
     tracked: Tracker[];
@@ -26,7 +24,6 @@ export declare class Tournament {
     private startTour;
     private buildConfs;
     playLocal(): GameState;
-    playOnline(): GameLogic[];
     redirectTournament(key: string, isPressed: boolean): void;
     appendWinner(winner: Player | CPU | string): void;
     isFinished(): boolean;

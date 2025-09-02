@@ -247,7 +247,6 @@ wss.on('connection', (ws: WebSocket, req) => {
             safeSend(ws, { type: 'info', code: 'conf_invalid' });
             return;
           }
-          conf.Online = false; // mode offline/sequentiel
 
           try {
             sess.t = new Tournament(CANVAS_W, CANVAS_H, conf);

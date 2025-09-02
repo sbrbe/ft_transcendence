@@ -9,10 +9,7 @@ export class Tournament {
         this.canvasH = canvasH;
         this.canvasW = canvasW;
         this.buildConfs(info.players);
-        if (info.Online)
-            this.startTour();
-        else
-            this.startMatchs(this.currentMatchId);
+        this.startMatchs(this.currentMatchId);
     }
     startMatchs(id) {
         this.matchs[id] = new GameLogic(this.canvasW, this.canvasH, this.confs[id]);
@@ -51,25 +48,6 @@ export class Tournament {
                 this.startMatchs(this.currentMatchId);
         }
         return info;
-    }
-    playOnline() {
-        let results = [];
-        for (let i = 0; i < this.matchs.length; i++) {
-            this.matchs[i].update();
-            let info = this.matchs[i].getGameState();
-            results.push(info);
-            if (!info.running) {
-                let win = info.tracker.winner;
-                if (win)
-                    this.appendWinner(win);
-            }
-        }
-        let allDone = results.every(r => r.running === false);
-        if (allDone && this.winner.length > 1) {
-            this.buildConfs(this.winner);
-            this.startTour();
-        }
-        return this.matchs;
     }
     redirectTournament(key, isPressed) {
         this.matchs[this.currentMatchId].setPlayerInput(key, isPressed);

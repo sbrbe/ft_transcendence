@@ -9,11 +9,6 @@ class GameRenderer {
         this.ctx = ctx;
         this.startTime = performance.now();
     }
-    // newStart()
-    // {
-    //   this.startTime = performance.now();
-    //   console.log('hey');
-    // }
     drawDashedLine(pattern) {
         this.ctx.strokeStyle = 'white';
         this.ctx.setLineDash(pattern);
@@ -176,7 +171,6 @@ class GameApp {
                     this.online?.sendContinue();
                     this.betweenStage = 'idle';
                     this.renderer?.clearRender(); // le serveur renverra le prochain 'state'
-                    // this.renderer?.newStart();
                     return;
                 }
             }
@@ -366,7 +360,7 @@ class GameApp {
         const size = this.getSelectedTournamentSize();
         const players = this.getTournamentPlayersFromInputs(size);
         // config locale (séquentielle)
-        this.configTournament = { Online: false, players };
+        this.configTournament = { players };
         // renderer (le serveur envoie les states)
         this.renderer = new GameRenderer(this.canvas);
         // client WS /ws/local

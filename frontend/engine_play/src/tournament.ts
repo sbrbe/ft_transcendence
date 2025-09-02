@@ -11,7 +11,6 @@ export interface contender{
 
 export interface buildTournament {
     players: contender[];
-    Online: boolean;
 }
 
 export interface infoMatch {
@@ -33,10 +32,7 @@ export class Tournament {
         this.canvasH = canvasH;
         this.canvasW = canvasW;
         this.buildConfs(info.players);
-        if (info.Online)
-            this.startTour();
-        else
-            this.startMatchs(this.currentMatchId);
+        this.startMatchs(this.currentMatchId);
     }
     
     private startMatchs(id: number)
@@ -88,32 +84,6 @@ export class Tournament {
         }
         return info;
     }
-
-public playOnline(): GameLogic[] 
-{
-    let results: GameState[] = [];
-
-    for (let i = 0; i < this.matchs.length; i++) 
-    {
-        this.matchs[i].update();
-        let info = this.matchs[i].getGameState();
-        results.push(info);
-        if (!info.running) 
-        {
-            let win = info.tracker.winner;
-            if (win)
-                this.appendWinner(win);
-        }
-    }
-    let allDone = results.every(r => r.running === false);
-    if (allDone && this.winner.length > 1) 
-    {
-            this.buildConfs(this.winner);
-            this.startTour();
-    }
-    return this.matchs;
-}
-
 
 	public redirectTournament(key: string, isPressed: boolean)
 	{

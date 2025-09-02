@@ -439,7 +439,7 @@ this.startBtn.addEventListener('click', () => {
       const players = this.getTournamentPlayersFromInputs(size);
     
       // config locale (séquentielle)
-      this.configTournament = { Online: false, players };
+      this.configTournament = { players };
     
       // renderer (le serveur envoie les states)
       this.renderer = new GameRenderer(this.canvas);
