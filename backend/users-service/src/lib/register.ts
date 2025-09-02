@@ -28,7 +28,7 @@ async function createUser(userId: string, username: string, lastName: string,
 	console.log(existingUser);
 	if (existingUser)
 		throw new Error('Username already used');
-	const avatarPath = '/default.png';
+	const avatarPath = '/avatar/default.png';
 	const stmt = db.prepare(`INSERT INTO users (userId, lastName, firstName, username, avatarPath)
 		VALUES (?, ?, ?, ?, ?)`);
 	const info = stmt.run(userId, lastName, firstName, username, avatarPath);

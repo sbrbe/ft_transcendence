@@ -25,7 +25,7 @@ export default async function updateProfileRoute(app: FastifyInstance) {
 						lastName: { type: 'string', minLength: 1, maxLength: 20 },
 						firstName: { type: 'string', minLength: 1, maxLength: 20 },
 						username: { type: 'string', minLength: 1, maxLength: 20 },
-						avatarPath: { type: 'string', minLength: 1, maxLength: 20 },
+						avatarPath: { type: 'string', minLength: 1 },
 					},
 					anyOf: [
 						{ required: ['lastName'] },
@@ -41,7 +41,7 @@ export default async function updateProfileRoute(app: FastifyInstance) {
 							lastName: { type: 'string', minLength: 1, maxLength: 20 },
 							firstName: { type: 'string', minLength: 1, maxLength: 20 },
 							username: { type: 'string', minLength: 1, maxLength: 20 },
-							avatarPath: { type: 'string', minLength: 1, maxLength: 20 }
+							avatarPath: { type: 'string', minLength: 1 }
 						}
 					},
 					400: {

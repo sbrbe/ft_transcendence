@@ -178,17 +178,7 @@ const ProfilePage: (container: HTMLElement) => void = (container) => {
     if (!el) throw new Error(`Element not found: ${sel}`);
     return el;
   };
-/*  const setMsg = (el: HTMLElement, text = '', kind?: 'success'|'error') => {
-    el.textContent = text;
-    el.className = `text-sm ${kind === 'success' ? 'text-green-600' : kind === 'error' ? 'text-red-600' : ''}`;
-  };
-  const lockBtn = (btn: HTMLButtonElement, disabled: boolean, label?: string) => {
-    btn.disabled = disabled;
-    btn.classList.toggle('opacity-70', disabled);
-    btn.classList.toggle('cursor-not-allowed', disabled);
-    if (label && disabled) btn.textContent = label;
-  };
-*/
+
   /* ---------- refs ---------- */
   const profile = {
     firstName: $<HTMLInputElement>('#pf-firstName'),

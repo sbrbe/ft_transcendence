@@ -1,5 +1,5 @@
 import { FastifyInstance } from "fastify";
-import { sendFriendRequest, acceptRequest, rejectRequest } from "../lib/friends";
+import { sendFriendRequest, acceptRequest, rejectRequest, getPendingRequest, PendingRequest } from "../lib/friends";
 
 export default async function friendsRequestRoute(app: FastifyInstance) {
 	app.post<{
@@ -117,5 +117,45 @@ export default async function friendsRequestRoute(app: FastifyInstance) {
 				}
 			},
 		}
-	}, rejectRequest )
+	}, rejectRequest);
+
+	app.get<{
+		Params: { userId: string };
+		Reply: 
+			| PendingRequest[]
+			| { error: string };}>
+			('/friends/request?status=pending/:userId', {
+		preHandler: app.authenticate,
+		schema: {
+			params: {
+				type: 'object',
+				required: ['userId'],
+				properties: {
+					userId: { type: 'string', format: 'uuid' }
+				}
+			},
+			response: {
+				200: {
+					type: 'array',
+					items: {
+						type: 'object',
+						properties: {
+							id: { type: 'string' },
+							userId: { type: 'string', format: 'uuid' },
+							username: { type: 'string' },
+							avatarPath: { type: 'string' }
+						}
+					}
+				},
+				500: {
+					type: 'object',
+					required: ['error'],
+					properties: {
+						error: { type: 'string' }
+					}
+				}
+			},
+		},
+	}, getPendingRequest);
+
 }	

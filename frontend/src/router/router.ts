@@ -31,7 +31,7 @@ let mountEl: HTMLElement;
  */
 function parseHash(): string 
 {
-  const hash = window.location.hash || '#/';
+  const hash = window.location.hash || '/';
   const path = hash.replace(/^#/, '');
   return path || '/';
 }

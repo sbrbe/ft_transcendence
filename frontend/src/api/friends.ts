@@ -7,7 +7,7 @@ export async function searchUser(username: string) {
 	const res = await fetch(`/users/friends/searchUser/${encodeURIComponent(username)}`, {
 		method: 'GET',
 		credentials: 'include',
-		headers: { 'Content-Type': 'appliaction/json' },
+		headers: { Accept: 'application/json' },
 	});
 	const data = await res.json();
 	if (!res.ok) {
@@ -40,7 +40,7 @@ export async function sendFriendRequest(userId: string, friendUsername: string) 
 	}
 	catch {}
 	if (!res.ok) {
-		throw new Error(data?.error || res.statusText || 'Invitation échouée');
+		throw new Error(data?.error || res.statusText || 'Invitation failed');
 	}
 }
 
@@ -64,7 +64,7 @@ export async function acceptRequest(userId: string, requestId: number) {
 	}
 	catch {}
 	if (!res.ok) {
-		throw new Error(data?.error || res.statusText || "Validation demande d'ami échouée");
+		throw new Error(data?.error || res.statusText || '');
 	}
 }
 
@@ -162,4 +162,18 @@ export async function removeFriend(userId: string, targetName: string) {
 	if (!res.ok) {
 		throw new Error(data?.error || res.statusText || "Vous ne pouvez pas retirer ce joueur de vos amis");
 	}
+}
+
+export async function loadPendingRequest(userId: string) {
+	const res = await fetch(`/friends/request?status=pending/${encodeURIComponent(userId)}`, {
+		method: 'GET',
+		credentials: 'include',
+		headers: { Accept: 'application/json' }
+	});
+	const data = await res.json();
+
+	if (!res.ok) {
+		throw new Error(data?.error || res.statusText);
+	}
+	return data;
 }

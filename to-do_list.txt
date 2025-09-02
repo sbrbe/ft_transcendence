@@ -2,17 +2,14 @@ Function :
 
 	- Ajouter les tokens dans le frontend
 	- Friends:
-		- Faire la DB
-		- Pouvoir faire une recherche de joueurs
-		- Pouvoir envoyer une demande d'ami
-		- Pouvoir recevoir une demande d'ami
 		- Voir le status des amis: online/offline
+		- Faire une requete qui recupère la liste d'amis et leur status
+		- Faire une requete qui recupère les demandes d'amis en attente
+		- gérer les avatars
+		- search user: ne pas pouvoir se search soit meme
+		
 
 Upload avatar par url
-Changer le nom de la variable avatarPath par avatarPath
-
-mettre modsecurity
-Faire la comm entre les conteneurs
 
 Supprimer de la DB le password en clair
 

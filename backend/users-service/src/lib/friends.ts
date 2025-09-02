@@ -3,18 +3,25 @@ import { getUserByUsername, getUserById, getFriendship } from './utils.js';
 import { User } from "../types/fastify.js";
 import { db } from "../init_db.js";
 
-interface requestForm {
+interface RequestForm {
 	userId: string;
 	friendUsername: string;
 }
 
-interface utilsForm {
+interface UtilsForm {
 	userId: string;
 	targetName: string;
 }
 
+export interface PendingRequest {
+	id: string;
+	userId: string;
+	friendId: string;
+	avatarPath: string;
+}
+
 export async function sendFriendRequest(
-	req: FastifyRequest<{ Body: requestForm }>,
+	req: FastifyRequest<{ Body: RequestForm }>,
 	reply: FastifyReply) {
 		const { userId, friendUsername } = req.body;
 		try {
@@ -89,7 +96,7 @@ export async function rejectRequest(
 }
 
 export async function blockUser(
-	req: FastifyRequest<{ Body: utilsForm }>,
+	req: FastifyRequest<{ Body: UtilsForm }>,
 	reply: FastifyReply) {
 		const { userId, targetName } = req.body;
 		try {
@@ -110,7 +117,7 @@ export async function blockUser(
 }
 
 export async function unblockUser(
-	req: FastifyRequest<{ Body: utilsForm }>,
+	req: FastifyRequest<{ Body: UtilsForm }>,
 	reply: FastifyReply) {
 		const { userId, targetName } = req.body;
 
@@ -133,7 +140,7 @@ export async function unblockUser(
 }
 
 export async function removeFriend(
-	req: FastifyRequest<{ Body: utilsForm }>,
+	req: FastifyRequest<{ Body: UtilsForm }>,
 	reply: FastifyReply) {
 		const { userId, targetName } = req.body;
 
@@ -153,3 +160,23 @@ export async function removeFriend(
 			return reply.status(500).send({ error: error.message });
 		}
 }
+
+export async function getPendingRequest(
+	req: FastifyRequest<{ Params: { userId: string } }>,
+	reply: FastifyReply) {
+		const userId = req.params;
+
+		try {
+			const stmt = db.prepare(`
+				SELECT f.id, u.userId, u.username, u.avatarPath
+				FROM friendships f
+				JOIN users u ON u.userId = fr.userId
+				WHERE f.friendId = ? and f.status = ?
+				ORDER BY f.createdAt DESC
+				`);
+			const requests = stmt.all(userId, 'pending') as PendingRequest[];
+			return reply.status(200).send({ requests });
+		} catch (error: any) {
+			return reply.status(500).send({ error: error.message });
+		}
+	}
