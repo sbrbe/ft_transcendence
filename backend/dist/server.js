@@ -4,6 +4,7 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
 };
 Object.defineProperty(exports, "__esModule", { value: true });
 // server.ts
+const init_db_1 = require("./init_db");
 const fastify_1 = __importDefault(require("fastify"));
 const ws_1 = require("ws");
 const url_1 = require("url");
@@ -323,6 +324,17 @@ setInterval(() => {
         // avance la simu
         room.engine.update();
         if (!room.engine.getStatus()) {
+            if (!init_db_1.db)
+                (0, init_db_1.initDB)(); // il faut initialiser la DB au démarrage
+            const data_match = room.engine.getGameState();
+            (0, init_db_1.saveMatch)({
+                player1: data_match.paddles[0]?.name ?? 'Player 1',
+                player2: data_match.paddles[1]?.name ?? 'Player 2',
+                score: `${data_match.scores.A} - ${data_match.scores.B}`,
+                totalExchanges: data_match.tracker.totalExchanges,
+                maxExchanges: data_match.tracker.maxRally,
+                date: new Date().toISOString().split("T")[0]
+            });
             endedRooms.push(room);
         }
     }
@@ -354,6 +366,10 @@ setInterval(() => {
    Routes
    ========= */
 app.get('/', async () => ({ ok: true }));
+app.get('/ws/match', async (req, reply) => {
+    const rows = (0, init_db_1.getAllMatches)();
+    return rows; // Fastify renvoie ça en JSON automatiquement
+});
 const PORT = Number(process.env.PORT) || 3002;
 app.listen({ port: PORT, host: '0.0.0.0' }).then(() => {
     console.log('🚀 HTTP on', PORT, '| WS via httpUpgrade for /ws and /ws/local');

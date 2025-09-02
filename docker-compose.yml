@@ -9,6 +9,8 @@ services:
       - "3002:3002"
     networks:
       - appnet
+    volumes:
+      - ./database:/app/database
 
   users:
     build:

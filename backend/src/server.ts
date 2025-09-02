@@ -1,4 +1,5 @@
 // server.ts
+import { saveMatch, initDB, getAllMatches, db } from './init_db';
 import Fastify from 'fastify';
 import { WebSocketServer, WebSocket, RawData } from 'ws';
 import { parse as parseUrl } from 'url';
@@ -345,6 +346,17 @@ setInterval(() => {
     room.engine.update();
 
     if (!room.engine.getStatus()) {
+      if (!db)
+        initDB(); // il faut initialiser la DB au démarrage
+      const data_match = room.engine.getGameState();
+      saveMatch({
+        player1: data_match.paddles[0]?.name ?? 'Player 1',
+        player2: data_match.paddles[1]?.name ?? 'Player 2',
+        score: `${data_match.scores.A} - ${data_match.scores.B}`,
+        totalExchanges: data_match.tracker.totalExchanges,
+        maxExchanges: data_match.tracker.maxRally,
+        date: new Date().toISOString().split("T")[0]
+  });
       endedRooms.push(room);
     }
   }
@@ -376,6 +388,10 @@ setInterval(() => {
    Routes
    ========= */
 app.get('/', async () => ({ ok: true }));
+app.get('/ws/match', async (req, reply) => {
+  const rows = getAllMatches();
+  return rows; // Fastify renvoie ça en JSON automatiquement
+});
 
 const PORT = Number(process.env.PORT) || 3002;
 app.listen({ port: PORT, host: '0.0.0.0' }).then(() => {
