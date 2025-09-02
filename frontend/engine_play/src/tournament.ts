@@ -52,6 +52,8 @@ export class Tournament {
     {
         this.currentMatchId = 0;
         this.confs = [];
+        this.winner = [];
+        this.matchs = [];
         for (let i = 0; i < list.length; i += 2) {
             if (i + 1 < list.length) {
                 this.confs.push({
@@ -77,8 +79,12 @@ export class Tournament {
                 this.appendWinner(win);
             }
             this.currentMatchId++;
-            if (this.currentMatchId >= this.confs.length && this.winner.length > 1) 
+            if (this.currentMatchId >= this.confs.length && this.winner.length > 1)
+            {
                 this.buildConfs(this.winner);
+                this.startMatchs(this.currentMatchId);
+                //this.startTour();
+            }
             else if (this.currentMatchId < this.confs.length)
                 this.startMatchs(this.currentMatchId);
         }
@@ -119,7 +125,6 @@ export class Tournament {
 	  }
     public isFinished(): boolean 
 	{
-
 		return (this.winner.length == 1 && this.currentMatchId == this.matchs.length);
 	}
 }

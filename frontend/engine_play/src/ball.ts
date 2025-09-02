@@ -1,4 +1,3 @@
-import { escapeLeadingUnderscores } from "typescript";
 import { Paddle } from "./paddle";
 import { Tracker } from "./tracker";
 

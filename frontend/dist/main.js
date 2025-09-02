@@ -155,61 +155,60 @@ class GameApp {
         this.rafId = null;
         this.betweenStage = 'idle';
         this._prevRunning = null;
-        // Handlers (références pour add/remove)
         this.keyDownHandler = (e) => {
-            const isSpace = e.code === 'Space' || e.key === ' ';
-            if (isSpace) {
-                if (isSpace && this.betweenStage === 'winner') {
+            const code = e.code;
+            if (code === 'Space') {
+                if (this.betweenStage === 'winner') {
                     e.preventDefault();
                     this.betweenStage = 'next';
-                    this.showNextMatchScreen(); // async, gère l'affichage quand c'est prêt
+                    this.showNextMatchScreen();
                     return;
                 }
                 if (this.betweenStage === 'next') {
                     e.preventDefault();
-                    // 2e espace : on relance côté serveur
                     this.online?.sendContinue();
                     this.betweenStage = 'idle';
-                    this.renderer?.clearRender(); // le serveur renverra le prochain 'state'
+                    this.renderer?.clearRender();
                     return;
                 }
             }
-            if (e.key === 'ArrowUp' || e.key === 'ArrowDown')
+            // Empêche le scroll avec les flèches
+            if (code === 'ArrowUp' || code === 'ArrowDown')
                 e.preventDefault();
             if (this.online) {
-                const code = e.code; // 'ArrowUp' | 'ArrowDown' | 'KeyW' | 'KeyS'
                 if (code === 'ArrowUp' || code === 'ArrowDown' || code === 'KeyW' || code === 'KeyS') {
                     e.preventDefault();
                     this.online.sendKey(code, true);
-                    return; // ne pas tomber dans la logique locale
+                    return;
                 }
             }
-            if (this.tournament)
-                this.tournament?.redirectTournament(e.key, true);
-            else {
-                this.game?.setPlayerInput(e.key, true);
-            }
-        };
-        this.keyUpHandler = (e) => {
-            const isNextKey = e.code === 'Space' || e.key === ' ';
-            if (isNextKey && (this.betweenStage === 'winner' || this.betweenStage === 'next')) {
-                e.preventDefault(); // n'envoie pas T au moteur local
+            if (this.tournament) {
+                this.tournament.redirectTournament(code, true);
                 return;
             }
-            if (e.key === 'ArrowUp' || e.key === 'ArrowDown')
+            this.game?.setPlayerInput(e.key, true);
+        };
+        this.keyUpHandler = (e) => {
+            const code = e.code;
+            // Espace “between stages” (tournoi)
+            if (code === 'Space' && (this.betweenStage === 'winner' || this.betweenStage === 'next')) {
+                e.preventDefault();
+                return;
+            }
+            if (code === 'ArrowUp' || code === 'ArrowDown')
                 e.preventDefault();
             if (this.online) {
-                const code = e.code;
                 if (code === 'ArrowUp' || code === 'ArrowDown' || code === 'KeyW' || code === 'KeyS') {
                     e.preventDefault();
                     this.online.sendKey(code, false);
                     return;
                 }
             }
-            if (this.tournament)
-                this.tournament.redirectTournament(e.code, false);
-            else
-                this.game?.setPlayerInput(e.code, false);
+            if (this.tournament) {
+                this.tournament.redirectTournament(code, false);
+                return;
+            }
+            this.game?.setPlayerInput(e.key, false);
         };
         // Boutons : handlers tactile
         this.btnUpDownHandler = (ev) => {
@@ -236,6 +235,7 @@ class GameApp {
                 return;
             this.online.sendDir('stop');
         };
+        this.tournamentKeysActive = false;
         this.loopTimer = null;
         this.lobbyId = null;
         this.canvas = document.getElementById('gameCanvas');
@@ -353,68 +353,72 @@ class GameApp {
         this.renderer?.clearRender();
         this.renderer?.drawMessage(`Prochain match : ${label}\n\n[ESPACE] pour commencer`);
     }
+    isMovementKey(code) {
+        return code === 'ArrowUp' || code === 'ArrowDown' || code === 'KeyW' || code === 'KeyS';
+    }
     startTournament() {
-        // UI
         this.showView('view-game');
-        // lecture joueurs “locaux”
         const size = this.getSelectedTournamentSize();
         const players = this.getTournamentPlayersFromInputs(size);
-        // config locale (séquentielle)
         this.configTournament = { players };
-        // renderer (le serveur envoie les states)
         this.renderer = new GameRenderer(this.canvas);
-        // client WS /ws/local
+        // Ici on garde keyDownHandler / keyUpHandler pour Espace & UI, mais PAS pour mouvements.
+        window.removeEventListener('keydown', this.keyDownHandler);
+        window.removeEventListener('keyup', this.keyUpHandler);
+        window.addEventListener('keydown', this.keyDownHandler, { passive: false });
+        window.addEventListener('keyup', this.keyUpHandler, { passive: false });
+        // Focus canvas pour capter le clavier
+        document.activeElement?.blur?.();
+        this.canvas.tabIndex = 0;
+        this.canvas.focus();
+        // Installe le handler “authoritative” (mouvements seulement)
+        this.attachLocalAuthoritativeInputs();
+        // WS
         this.online?.dispose();
-        this.online = new OnlineClient(
-        // onState
-        (snap) => {
+        this.online = new OnlineClient((snap) => {
             if (!this.renderer)
                 return;
             this.renderer.draw(snap);
-            // déclenche endScreen UNIQUEMENT à la transition true -> false
             if (this._prevRunning === true && snap.running === false) {
                 this.renderer.endScreen(snap);
                 this.betweenStage = 'winner';
             }
             this._prevRunning = !!snap.running;
-        }, 
-        // onInfo
-        (msg) => {
+        }, (msg) => {
             if (msg.type === 'tournament_end') {
+                this.betweenStage = 'end';
                 this.renderer?.clearRender();
                 this.renderer?.drawMessage('Tournoi terminé !');
-                // this.showView('Tournois')
             }
         }, '/ws/local');
-        // connexion + envoi conf
         this.online.connect().then(() => {
             if (this.configTournament)
                 this.online.sendConfTournament(this.configTournament);
         });
-        // détache au cas où (évite doublons si on relance)
-        window.removeEventListener('keydown', this.keyDownHandler);
-        window.removeEventListener('keyup', this.keyUpHandler);
-        // attache T + le reste de ta logique
-        window.addEventListener('keydown', this.keyDownHandler);
-        window.addEventListener('keyup', this.keyUpHandler);
-        // s'assurer que le clavier n’est pas capté par un <input>
-        document.activeElement?.blur?.();
-        this.canvas.tabIndex = 0;
-        this.canvas.focus();
-        // puis garde tes flèches/W/S
-        this.attachLocalAuthoritativeInputs();
     }
     // Envoie les 4 touches: flèches (joueur 1) + WS (joueur 2)
     attachLocalAuthoritativeInputs() {
-        const handler = (e) => {
-            const code = e.code; // 'ArrowUp' | 'ArrowDown' | 'KeyW' | 'KeyS' ...
-            if (code === 'ArrowUp' || code === 'ArrowDown' || code === 'KeyW' || code === 'KeyS') {
-                this.online?.sendKey(code, e.type === 'keydown');
-                e.preventDefault();
-            }
+        // Nettoie d'abord au cas où
+        this.detachLocalAuthoritativeInputs();
+        this.localKeysHandler = (e) => {
+            const code = e.code;
+            if (!this.isMovementKey(code))
+                return; // ne gère QUE mouvements
+            e.preventDefault();
+            const isDown = e.type === 'keydown';
+            this.online?.sendKey(code, isDown);
         };
-        window.addEventListener('keydown', handler);
-        window.addEventListener('keyup', handler);
+        window.addEventListener('keydown', this.localKeysHandler, { passive: false });
+        window.addEventListener('keyup', this.localKeysHandler, { passive: false });
+        this.tournamentKeysActive = true;
+    }
+    detachLocalAuthoritativeInputs() {
+        if (this.localKeysHandler) {
+            window.removeEventListener('keydown', this.localKeysHandler);
+            window.removeEventListener('keyup', this.localKeysHandler);
+            this.localKeysHandler = undefined;
+        }
+        this.tournamentKeysActive = false;
     }
     startOnline() {
         // nettoie un éventuel local game
@@ -517,6 +521,9 @@ class GameApp {
         this.game = null;
         this.online?.dispose?.();
         this.online = null;
+        this.detachLocalAuthoritativeInputs();
+        window.removeEventListener('keydown', this.keyDownHandler);
+        window.removeEventListener('keyup', this.keyUpHandler);
         this.tournament?.dispose?.();
         this.tournament = null;
         if (this.renderer)
