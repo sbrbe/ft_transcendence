@@ -157,21 +157,30 @@ function startLocalTicker(sess: LocalSession) {
     if (!sess.t) return;
     if (sess.awaitingContinue) return;     // ⛔ gel
 
-    const snap = (sess.t as any).playLocal?.();
-    if (snap) {
-      safeSend(sess.ws, { type: 'state', state: snap });
-      if (!snap.running) {
-        // manche finie → on fige. AUCUN autre message.
-        sess.awaitingContinue = true;
-        sess.continueCount = 0;
-      }
-    }
-
-    if ((sess.t as any).isFinished?.()) {
+    if ((sess.t as any).isFinished?.())
+    {
       safeSend(sess.ws, { type: 'tournament_end' });
       clearInterval(sess.ticker!);
       sess.ticker = undefined;
+      return;
     }
+
+    const snap = (sess.t as any).playLocal?.();
+    if (snap) {
+      safeSend(sess.ws, { type: 'state', state: snap });
+      if (!snap.running && !(sess.t as any).isFinished?.()) {
+          // manche finie → on fige. AUCUN autre message.
+        sess.awaitingContinue = true;
+        sess.continueCount = 0;
+        }
+      }
+      else {
+        safeSend(sess.ws, { type: 'tournament_end' });
+        clearInterval(sess.ticker!);
+        sess.ticker = undefined;
+        return;
+      }
+
   }, FRAME_MS);
 }
 
