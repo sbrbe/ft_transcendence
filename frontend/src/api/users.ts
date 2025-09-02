@@ -1,57 +1,29 @@
-// src/api/users.ts
+import { RegisterFormData } from "../utils/interface";
+import { refreshOnce } from "./A2F";
+import { logout } from "./auth";
 
-/* ------------------------------------------------------------------ *
- * [TYPES] Données utiles côté UI / Users service
- * ------------------------------------------------------------------ */
-export interface RegisterFormData {
-  firstName: string;
-  lastName: string;
-  username: string;
-  email: string;     // pas envoyé à /users/register
-  password: string;  // pas envoyé à /users/register
-}
-
-export interface UpdateUserPartial {
+interface UpdateUserPartial {
   firstName?: string;
   lastName?: string;
   username?: string;
   avatarPath?: string;
 }
-export interface UpdatedUserResponse {
+interface UpdatedUserResponse {
   firstName: string;
   lastName: string;
   username: string;
   avatarPath: string;
 }
 
-/* ------------------------------------------------------------------ *
- * [UTIL] Helper HTTP JSON
- * ------------------------------------------------------------------ */
-const JSON_HEADERS = { 'Content-Type': 'application/json' } as const;
-
-/** [UTIL] requestJSON :
- * fetch + parse JSON + gestion d'erreur homogène.
- */
-async function requestJSON<T>(url: string, init?: RequestInit): Promise<T> {
-  const res = await fetch(url, init);
-  const data = (await res.json().catch(() => ({}))) as any;
-  if (!res.ok) throw new Error(data?.error || res.statusText || 'Request error');
-  return data as T;
-}
-
-/* ------------------------------------------------------------------ *
- * [API] Users service (/users/*)
- * ------------------------------------------------------------------ */
-
 /** [API] createUserProfile :
  * POST /users/register — crée le profil utilisateur côté users-service.
  * N'envoie que les champs profil (pas l'email ni le mdp).
  */
 export async function createUserProfile(userId: string, d: RegisterFormData): Promise<void> {
-  await requestJSON<{ message?: string }>('/users/register', {
+  const res = await fetch('/users/register', {
     method: 'POST',
     credentials: 'include',
-    headers: JSON_HEADERS,
+    headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({
       userId,
       firstName: d.firstName,
@@ -59,6 +31,11 @@ export async function createUserProfile(userId: string, d: RegisterFormData): Pr
       username: d.username,
     }),
   });
+
+  const data = await res.json();
+  if (!res.ok) {
+    throw new Error(`Create user profile error: ${data.error || res.statusText}`);
+  }
 }
 
 /** [API] updateUser :
@@ -67,7 +44,8 @@ export async function createUserProfile(userId: string, d: RegisterFormData): Pr
  */
 export async function updateUser(
   userId: string,
-  partial: UpdateUserPartial
+  partial: UpdateUserPartial,
+  retried = false
 ): Promise<UpdatedUserResponse> {
   const body = Object.fromEntries(
     Object.entries({
@@ -79,10 +57,25 @@ export async function updateUser(
     }).filter(([, v]) => v !== '')
   );
 
-  return requestJSON<UpdatedUserResponse>(`/users/${encodeURIComponent(userId)}`, {
+    const res = await fetch(`/users/${encodeURIComponent(userId)}`, {
     method: 'PUT',
     credentials: 'include',
-    headers: JSON_HEADERS,
+    headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify(body),
   });
+
+  if (res.status === 401 && !retried) {
+    const ok = await refreshOnce();
+    if (ok) {
+      return updateUser(userId, partial, true);
+    } else {
+      await logout();
+    }
+  }
+
+  const data = await res.json();
+  if (!res.ok) {
+    throw new Error(`Update user error: ${ data.error || res.statusText}`);
+  }
+  return data as UpdatedUserResponse;
 }

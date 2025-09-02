@@ -1,7 +1,8 @@
-// src/pages/A2F.ts
 import { navigateTo } from '../router/router';
-import { setLoggedInUser, AppUser } from '../api/auth';
-import { verify2FA, fetchUser, getPendingUserId, clearPendingUserId } from '../api/A2F';
+import { setLoggedInUser } from '../utils/ui';
+import { AppUser } from '../utils/interface';
+import { verify2FA, fetchUser } from '../api/A2F';
+import { getPendingUserId, clearPendingUserId} from '../utils/ui';
 import { setStatusMessage, clearStatusMessage, lockButton } from '../utils/ui';
 
 
@@ -51,20 +52,23 @@ const A2F: (container: HTMLElement) => void = (container) => {
     e.preventDefault();
     clearStatusMessage(msgEl);
 
-    if (!pendingUserId) setStatusMessage(msgEl, 'Session expired. Please login again.', 'error');
+    if (!pendingUserId) {
+      setStatusMessage(msgEl, 'Session expired. Please login again.', 'error');
+    }
 
     const code = codeEl.value.trim();
-    if (code.length !== 6) return setStatusMessage(msgEl, 'Enter a 6 digits code.', 'error');
+    if (code.length !== 6) {
+      return setStatusMessage(msgEl, 'Enter a 6 digits code.', 'error');
+    } 
 
     lockButton(verifyBtn, true, 'Checking…');
 
-    
     try 
     {
       await verify2FA(pendingUserId, code);
 
-      const user = await fetchUser(pendingUserId); // profil + email
-      setLoggedInUser(user as AppUser);
+      const user = await fetchUser(pendingUserId) as AppUser;
+      setLoggedInUser(user);
 
       // Notifie la navbar (si elle écoute `auth:changed`)
       window.dispatchEvent(new CustomEvent('auth:changed', { detail: user }));
@@ -74,7 +78,7 @@ const A2F: (container: HTMLElement) => void = (container) => {
     } 
     catch (err: any) 
     {
-      setStatusMessage(msgEl, err?.message || 'Checking failed', 'error');
+      setStatusMessage(msgEl, err?.message || 'Checking 2FA failed', 'error');
     } 
     finally 
     {

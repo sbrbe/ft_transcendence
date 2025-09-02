@@ -1,4 +1,4 @@
-import { getPendingUserId } from "./A2F.js";
+import { getPendingUserId } from "../utils/ui";
 
 const fileInput = document.getElementById('file-input') as HTMLInputElement;
 const changeBtn = document.getElementById('change-btn') as HTMLButtonElement;

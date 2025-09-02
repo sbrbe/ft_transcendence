@@ -1,7 +1,6 @@
-// src/api/A2F.ts
-// Regroupe toutes les requêtes 2FA + helpers de "pending userId"
+import { logout } from "./auth";
 
-export type A2FUser = {
+interface A2FUser {
   userId: string;
   username: string;
   email: string;
@@ -10,22 +9,6 @@ export type A2FUser = {
   avatarPath?: string;
 };
 
-/* ---------------- Session helpers (pending userId) ---------------- */
-
-const PENDING_KEY = 'pendingUserId';
-
-export function setPendingUserId(userId: string) {
-  sessionStorage.setItem(PENDING_KEY, userId);
-}
-export function getPendingUserId(): string | null {
-  return sessionStorage.getItem(PENDING_KEY);
-}
-export function clearPendingUserId() {
-  sessionStorage.removeItem(PENDING_KEY);
-}
-
-/* -------------------------- API calls ----------------------------- */
-
 /**
  * Vérifie un code 2FA (6 chiffres) pour un utilisateur donné.
  * Attend un 200/204 ; si erreur -> lève une exception.
@@ -33,19 +16,17 @@ export function clearPendingUserId() {
 export async function verify2FA(userId: string, code: string): Promise<void> {
   const res = await fetch('/auth/2fa/verify', {
     method: 'POST',
-    credentials: 'include', // décommente si vous utilisez des cookies
+    credentials: 'include',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({ userId, code })
   });
+  
+  if (res.ok && res.status === 200)
+    return;
 
-  // Beaucoup d’API renvoient 204 No Content en succès
-  if (res.ok && res.status === 204) return;
-
-  // Sinon on tente de lire le JSON pour remonter un message
-  let data: any = null;
-  try { data = await res.json(); } catch {}
+  const data = await res.json();
   if (!res.ok) {
-    throw new Error(data?.error || res.statusText || 'Vérification échouée');
+    throw new Error(data?.error || res.statusText || '2FA failed');
   }
 }
 
@@ -61,33 +42,41 @@ export async function fetchUser(userId: string, retried = false): Promise<A2FUse
   ]);
   if ((userRes.status === 401 || authRes.status === 401) && !retried ) {
       const ok = await refreshOnce();
-      if (ok) return (fetchUser(userId, true));
+      if (ok) {
+        return (fetchUser(userId, true));
+      } else {
+        await logout();
+      }
   }
+  const usersData = await userRes.json();
+  const authData = await authRes.json();
   if (!userRes.ok || !authRes.ok) {
-    const t1 = await userRes.text().catch(() => '');
-    const t2 = await authRes.text().catch(() => '');
-    throw new Error(
-      `User fetch error. users:${userRes.status} ${t1} | auth:${authRes.status} ${t2}`
-    );
+    throw new Error(usersData.error || authData.error);
   }
 
-  const [user, auth] = await Promise.all([userRes.json(), authRes.json()]);
   return {
-    ...user,
-    email: auth.email,
-    userId: auth.userId
+    userId: authData.userId,
+    username: usersData.username,
+    email: authData.email,
+    firstName: usersData.firstName,
+    lastName: usersData.lastName,
+    avatarPath: usersData.avatarPath
   };
 }
 
+/**
+ * Lance une requete pour refresh les JWT lorsque l'accessToken est expiré.
+ * Retourne le nouvel accessToken
+ */
 
 let refreshPromise: Promise<boolean> | null = null;
 
-async function refreshOnce(): Promise<boolean> {
+export async function refreshOnce(): Promise<boolean> {
   if (!refreshPromise) {
     refreshPromise = fetch('/auth/refresh', {
       method: 'POST',
       credentials: 'include',
-      headers: { 'Content-Type': 'application/json' },
+      headers: { Accept: 'application/json' },
     })
       .then(r => r.ok)
       .finally(() => { refreshPromise = null; });

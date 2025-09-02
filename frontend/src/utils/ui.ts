@@ -1,8 +1,44 @@
-// src/utils/ui.ts
+import { AppUser } from "./interface";
 
 // A Modif
 
 export type StatusKind = 'success' | 'error' | undefined;
+
+/* ---------------- Session helpers (pending userId) ---------------- */
+
+const PENDING_KEY = 'pendingUserId';
+
+export function setPendingUserId(userId: string) {
+  sessionStorage.setItem(PENDING_KEY, userId);
+}
+export function getPendingUserId(): string | null {
+  return sessionStorage.getItem(PENDING_KEY);
+}
+export function clearPendingUserId() {
+  sessionStorage.removeItem(PENDING_KEY);
+}
+
+
+/** [STATE] setLoggedInUser :
+ * Sauvegarde l'utilisateur et notifie l'app (navbar, etc.) via "auth:changed".
+ */
+export function setLoggedInUser(user: AppUser) {
+  localStorage.setItem('user', JSON.stringify(user));
+  window.dispatchEvent(new CustomEvent('auth:changed', { detail: user }));
+}
+
+/** [STATE] clearUser :
+ * Supprime l'utilisateur du localStorage et notifie l'app.
+ */
+export function clearUser() {
+  localStorage.removeItem('user');
+  window.dispatchEvent(new CustomEvent('auth:changed', { detail: null }));
+}
+
+export function getSavedUser<T = AppUser>(): T | null {
+  try { return JSON.parse(localStorage.getItem('user') || 'null'); }
+  catch { return null; }
+}
 
 /** [UTIL][UI] setStatusMessage :
  * Affiche un message de statut (succès/erreur) avec des classes Tailwind cohérentes.
@@ -60,4 +96,23 @@ export function bindPasswordToggle
   };
   button.addEventListener('click', onClick);
   return () => button.removeEventListener('click', onClick);
+}
+
+export function normaliseAvatar(input?: string | null): string {
+  if (!input) return '';
+  const s = input.trim();
+  if (!s) return '';
+  if (/^(https?:|data:|blob:)/i.test(s)) return s;
+  const p = s.replace(/^\/+/, '');
+  if (p.startsWith('avatar/')) return '/' + p;
+  if (!p.includes('/')) return '/avatar/' + p;
+  return '/' + p;
+}
+
+export function escapeHtml(s: string) {
+  return s.replace(/[&<>"']/g, (m) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[m]!));
+}
+
+export function escapeAttr(s: string) {
+  return escapeHtml(s).replace(/"/g, '&quot;');
 }

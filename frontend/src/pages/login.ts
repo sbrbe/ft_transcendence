@@ -1,7 +1,6 @@
-// src/pages/login.ts
 import { navigateTo } from '../router/router';
-import { loginUser } from '../api/auth';              // API
-import { setPendingUserId } from '../api/A2F';        // State - clé session
+import { loginUser } from '../api/auth';
+import { setPendingUserId } from '../utils/ui';
 import { bindPasswordToggle, setStatusMessage, clearStatusMessage, lockButton } from '../utils/ui';
 
 /**
@@ -73,14 +72,13 @@ const Login: (container: HTMLElement) => void = (container) => {
     const email = emailEl.value.trim();
     const password = pwdEl.value.trim();
     if (!email || !password) return setStatusMessage(msgEl, 'Please enter your email and password.', 'error');
-    //if (!email || !password) return setMsg('Veuillez saisir email et mot de passe.', 'error');
 
     lockButton(submitBtn, true, 'Connection…');
 
     try 
     {
       const { userId } = await loginUser(email, password); 
-      setPendingUserId(String(userId));                    
+      setPendingUserId(userId);                    
       navigateTo('/a2f');
     } 
     catch (err: any) 

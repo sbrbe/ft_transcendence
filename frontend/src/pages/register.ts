@@ -1,7 +1,7 @@
-// src/pages/register.ts
 import { navigateTo } from '../router/router';
 import { createAuthAccount, deleteAuthAccount } from '../api/auth';
-import { createUserProfile, type RegisterFormData } from '../api/users';
+import { createUserProfile } from '../api/users';
+import { RegisterFormData } from '../utils/interface';
 import { bindPasswordToggle, setStatusMessage, clearStatusMessage, lockButton } from '../utils/ui';
 import { getInputValue } from '../utils/dom';
 

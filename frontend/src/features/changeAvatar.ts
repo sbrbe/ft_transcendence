@@ -1,6 +1,6 @@
-// src/features/changeAvatar.ts
 import { updateUser } from '../api/users';
-import { getSavedUser, setLoggedInUser, AppUser } from '../api/auth';
+import { getSavedUser, setLoggedInUser} from '../utils/ui';
+import { AppUser } from '../utils/interface';
 
 export type ChangeAvatarOptions = {
 

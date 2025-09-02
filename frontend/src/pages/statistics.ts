@@ -1,5 +1,3 @@
-// src/pages/stats.ts
-
 const statistiques: (container: HTMLElement) => void = (container) => {
   container.innerHTML = `
 

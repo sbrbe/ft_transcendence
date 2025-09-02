@@ -1,6 +1,7 @@
 import { acceptRequest, removeFriend, searchUser, sendFriendRequest, loadPendingRequest } from "../api/friends";
 import { clearStatusMessage, lockButton, setStatusMessage } from "../utils/ui";
-import { getSavedUser, setLoggedInUser, AppUser } from '../api/auth';
+import { getSavedUser, setLoggedInUser } from '../utils/ui';
+import { AppUser } from "../utils/interface";
 import { navigateTo } from '../router/router';
 
 type SearchUserResult = {

@@ -28,12 +28,6 @@ export default async function updatePasswordRoute(app: FastifyInstance)
 				}
 			},
 			response: {
-				200: {
-					type: 'object',
-					properties: {
-						userId: { type: 'string', format: 'uuid' },
-					}
-				},
 				404: {
 					type: 'object',
 					properties: {

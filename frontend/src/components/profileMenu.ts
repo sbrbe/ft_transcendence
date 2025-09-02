@@ -1,6 +1,6 @@
-// src/components/profileMenu.ts
 import { navigateTo } from '../router/router';
-import { logout, AppUser } from '../api/auth';
+import { logout } from '../api/auth';
+import { AppUser } from '../utils/interface';
 
 interface AttachOptions {
   onLogoutSuccess?: () => void;

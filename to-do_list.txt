@@ -7,6 +7,8 @@ Function :
 		- Faire une requete qui recupère les demandes d'amis en attente
 		- gérer les avatars
 		- search user: ne pas pouvoir se search soit meme
+
+ajouter un update ui dans la fonction logout pour les fails de refresh
 		
 
 Upload avatar par url

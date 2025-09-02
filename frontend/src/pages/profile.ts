@@ -1,9 +1,10 @@
-// src/pages/profile.ts
 import { navigateTo } from '../router/router';
-import { getSavedUser, setLoggedInUser, AppUser } from '../api/auth';
-import { updateUser, updateEmail, updatePassword } from '../api/profile';
+import { getSavedUser, setLoggedInUser } from '../utils/ui';
+import { AppUser } from '../utils/interface';
+import { updateEmail, updatePassword } from '../api/auth';
+import { updateUser } from '../api/users';
 import { initChangeAvatar } from '../features/changeAvatar';
-import { setStatusMessage, clearStatusMessage, lockButton } from '../utils/ui';
+import { setStatusMessage, clearStatusMessage, lockButton, normaliseAvatar, escapeAttr, escapeHtml } from '../utils/ui';
 
 const AVATARS = [
   '/avatar/default.png',
@@ -14,7 +15,7 @@ const AVATARS = [
   '/avatar/avatar5.png',
 ];
 
-type ProfileForm = {
+interface ProfileForm {
   firstName: string;
   lastName: string;
   email: string;
@@ -171,43 +172,39 @@ const ProfilePage: (container: HTMLElement) => void = (container) => {
       </div>
     </div>
   `;
+  const pwdForm = container.querySelector<HTMLFormElement>('#pwd-form')!;
+  const profileForm = container.querySelector<HTMLFormElement>('#profile-form')!;
 
-  /* ---------- helpers (scopés au container) ---------- */
-  const $ = <T extends HTMLElement>(sel: string): T => {
-    const el = container.querySelector<T>(sel);
-    if (!el) throw new Error(`Element not found: ${sel}`);
-    return el;
-  };
-
-  /* ---------- refs ---------- */
   const profile = {
-    firstName: $<HTMLInputElement>('#pf-firstName'),
-    lastName: $<HTMLInputElement>('#pf-lastName'),
-    email: $<HTMLInputElement>('#pf-email'),
-    username: $<HTMLInputElement>('#pf-username'),
-    saveBtn: $<HTMLButtonElement>('#pf-save'),
-    cancelBtn: $<HTMLButtonElement>('#pf-cancel'),
-    msg: $<HTMLParagraphElement>('#pf-msg'),
+    firstName: container.querySelector<HTMLInputElement>('#pf-firstName')!,
+    lastName: container.querySelector<HTMLInputElement>('#pf-lastName')!,
+    email: container.querySelector<HTMLInputElement>('#pf-email')!,
+    username: container.querySelector<HTMLInputElement>('#pf-username')!,
+    saveBtn: container.querySelector<HTMLButtonElement>('#pf-save')!,
+    cancelBtn: container.querySelector<HTMLButtonElement>('#pf-cancel')!,
+    msg: container.querySelector<HTMLParagraphElement>('#pf-msg')!,
     card: {
-      avatar: $<HTMLImageElement>('#pp-avatar'),
-      username: $<HTMLDivElement>('#pp-username'),
-      email: $<HTMLDivElement>('#pp-email'),
-      firstName: $<HTMLDivElement>('#pp-firstName'),
-      lastName: $<HTMLDivElement>('#pp-lastName'),
+      avatar: container.querySelector<HTMLImageElement>('#pp-avatar')!,
+      username: container.querySelector<HTMLDivElement>('#pp-username')!,
+      email: container.querySelector<HTMLDivElement>('#pp-email')!,
+      firstName: container.querySelector<HTMLDivElement>('#pp-firstName')!,
+      lastName: container.querySelector<HTMLDivElement>('#pp-lastName')!,
     },
   };
+
   const avatar = {
-    grid: $<HTMLDivElement>('#avatar-grid'),
-    urlInput: $<HTMLInputElement>('#pf-avatarPath'),
-    applyUrlBtn: $<HTMLButtonElement>('#btn-apply-url'),
-    msg: $<HTMLParagraphElement>('#av-msg'),
+    grid: container.querySelector<HTMLDivElement>('#avatar-grid')!,
+    urlInput: container.querySelector<HTMLInputElement>('#pf-avatarPath')!,
+    applyUrlBtn: container.querySelector<HTMLButtonElement>('#btn-apply-url')!,
+    msg: container.querySelector<HTMLParagraphElement>('#av-msg')!,
   };
+
   const pwd = {
-    old: $<HTMLInputElement>('#pf-oldpwd'),
-    n1: $<HTMLInputElement>('#pf-newpwd'),
-    n2: $<HTMLInputElement>('#pf-newpwd2'),
-    saveBtn: $<HTMLButtonElement>('#pwd-save'),
-    msg: $<HTMLParagraphElement>('#pwd-msg'),
+    old: container.querySelector<HTMLInputElement>('#pf-oldpwd')!,
+    n1: container.querySelector<HTMLInputElement>('#pf-newpwd')!,
+    n2: container.querySelector<HTMLInputElement>('#pf-newpwd2')!,
+    saveBtn: container.querySelector<HTMLButtonElement>('#pwd-save')!,
+    msg: container.querySelector<HTMLParagraphElement>('#pwd-msg')!,
   };
 
   // fallback preview identité si l’image casse
@@ -237,7 +234,7 @@ const ProfilePage: (container: HTMLElement) => void = (container) => {
   });
 
   /* ---------- Enregistrer (infos de base + email) ---------- */
-  ($<HTMLFormElement>('#profile-form')).addEventListener('submit', async (e) => {
+  profileForm.addEventListener('submit', async (e) => {
     e.preventDefault();
 
     const data: ProfileForm = {
@@ -289,7 +286,7 @@ const ProfilePage: (container: HTMLElement) => void = (container) => {
   });
 
   /* ---------- Changer mot de passe ---------- */
-  ($<HTMLFormElement>('#pwd-form')).addEventListener('submit', async (e) => {
+  pwdForm.addEventListener('submit', async (e) => {
     e.preventDefault();
     setStatusMessage(pwd.msg);
 
@@ -315,22 +312,3 @@ const ProfilePage: (container: HTMLElement) => void = (container) => {
 };
 
 export default ProfilePage;
-
-/* ------------------------------ Utils ------------------------------ */
-
-function normaliseAvatar(input?: string | null): string {
-  if (!input) return '';
-  const s = input.trim();
-  if (!s) return '';
-  if (/^(https?:|data:|blob:)/i.test(s)) return s;
-  const p = s.replace(/^\/+/, '');
-  if (p.startsWith('avatar/')) return '/' + p;
-  if (!p.includes('/')) return '/avatar/' + p;
-  return '/' + p;
-}
-function escapeHtml(s: string) {
-  return s.replace(/[&<>"']/g, (m) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[m]!));
-}
-function escapeAttr(s: string) {
-  return escapeHtml(s).replace(/"/g, '&quot;');
-}

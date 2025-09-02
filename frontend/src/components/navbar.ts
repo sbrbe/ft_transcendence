@@ -1,8 +1,4 @@
-// src/components/navbar.ts
-
-// A mettre au propre
-// use -> dossier -> utils
-import { getSavedUser } from '../api/auth';
+import { getSavedUser } from '../utils/ui';
 
 export function createNavbar(onNavigate: (path: string) => void) {
   const nav = document.createElement('nav');
