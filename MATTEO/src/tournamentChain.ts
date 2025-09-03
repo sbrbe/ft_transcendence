@@ -21,15 +21,14 @@ function getContract(): ethers.Contract
 }
 
 export type TSPlayer = { name: string; score: number };
-export type TSMatch  = { round: number; player1: TSPlayer; player2: TSPlayer; };
-export type TSSummary = { tournamentId: number; winnerName: string; matches: TSMatch[]; };
+export type TSMatch  = { player1: TSPlayer; player2: TSPlayer; };
+export type TSSummary = { tournamentId: string; winnerName: string; matches: TSMatch[]; };
 
 export async function sendTournamentSummary( s: TSSummary): Promise<{ txHash: string; blockNumber: number; snowtraceTx: string }>
 {
   const c = getContract();
 
   const matchesForAbi = s.matches.map((m) => ({
-    round: m.round,
     player1: { name: m.player1.name, score: BigInt(m.player1.score) },
     player2: { name: m.player2.name, score: BigInt(m.player2.score) },
   }));

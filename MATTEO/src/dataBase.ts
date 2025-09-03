@@ -2,7 +2,7 @@ import Database from "better-sqlite3";
 import type { Database as Database_type} from "better-sqlite3";
 
 export type tournoiValues = {
-	tournoiId: number;
+	tournoiId: string;
 	snowtrace_link: string;
 };
 
@@ -14,7 +14,7 @@ export function initDB()
 		return (db);
 	try
 	{
-		db = new Database('./database/database.db');
+		db = new Database('./database_mat/database.db');
 		db.exec(createTournamentTable);
 		console.log('✅ SQLite AUTH_DB connected');
 		return(db);
@@ -28,7 +28,7 @@ export function initDB()
 
 const createTournamentTable = 
 	`CREATE TABLE IF NOT EXISTS tournaments (
-        tournoiId INTEGER PRIMARY KEY,
+        tournoiId TEXT PRIMARY KEY,
         snowtrace_link TEXT NOT NULL
 		)`;
 

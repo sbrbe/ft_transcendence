@@ -139,27 +139,17 @@ function startLocalTicker(sess) {
             return;
         if (sess.awaitingContinue)
             return; // ⛔ gel
-        if (sess.t.isFinished?.()) {
-            safeSend(sess.ws, { type: 'tournament_end' });
-            clearInterval(sess.ticker);
-            sess.ticker = undefined;
-            return;
-        }
         const snap = sess.t.playLocal?.();
+        if (snap.running == false)
+            console.log('fin envoie a matt');
         sess.t.launch = false;
         if (snap) {
             safeSend(sess.ws, { type: 'state', state: snap });
-            if (!snap.running && !sess.t.isFinished?.()) {
+            if (!snap.running) {
                 // manche finie → on fige. AUCUN autre message.
                 sess.awaitingContinue = true;
                 sess.continueCount = 0;
             }
-        }
-        else {
-            safeSend(sess.ws, { type: 'tournament_end' });
-            clearInterval(sess.ticker);
-            sess.ticker = undefined;
-            return;
         }
     }, FRAME_MS);
 }

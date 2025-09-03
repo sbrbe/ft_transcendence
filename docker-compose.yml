@@ -17,7 +17,7 @@ services:
     ports:
       - "3004:3004"
     volumes:
-      - ./database:/app/database
+      - ./database:/app/database_mat
     networks:
       - appnet
 

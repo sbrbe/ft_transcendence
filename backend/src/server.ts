@@ -158,32 +158,20 @@ function startLocalTicker(sess: LocalSession) {
     if (sess.awaitingContinue)
       return;     // ⛔ gel
 
-    if ((sess.t as any).isFinished?.())
-    {
-      safeSend(sess.ws, { type: 'tournament_end' });
-      clearInterval(sess.ticker!);
-      sess.ticker = undefined;
-      return;
+    const snap = sess.t.playLocal?.();
+    if (snap.running === false) {
+      maybeSendTournamentSummary(snap);
     }
-
-    const snap = (sess.t as any).playLocal?.();
-    if (snap.running == false)
+      
     sess.t.launch = false;
     if (snap) {
       safeSend(sess.ws, { type: 'state', state: snap });
-      if (!snap.running && !(sess.t as any).isFinished?.()) {
+      if (!snap.running) {
         // manche finie → on fige. AUCUN autre message.
         sess.awaitingContinue = true;
         sess.continueCount = 0;
       }
     }
-    else {
-      safeSend(sess.ws, { type: 'tournament_end' });
-      clearInterval(sess.ticker!);
-      sess.ticker = undefined;
-      return;
-    }
-
   }, FRAME_MS);
 }
 
@@ -395,6 +383,52 @@ setInterval(() => {
     endAndCleanupRoom(r, 'game_over');
   }
 }, TICK_MS);
+
+/* =========
+   Envoi Mat
+   ========= */
+
+  // Appelle ceci dans ton onState / quand snap.running devient false
+async function maybeSendTournamentSummary(snap: any) {
+  try {
+    if (!snap)
+      return;
+
+    const nameA = (snap.paddles[0]?.name) || 'Player 1';
+    const nameB = (snap.paddles[1]?.name) || 'Player 2';
+    const scoreA = snap.score.A;
+    const scoreB = snap.score.B
+
+    let winnerName = snap.tracker.winner;
+    const tournamentId = String(snap.id ?? '');
+
+    const payload = {
+      tournamentId,
+      winnerName,
+      matches: [
+        {
+          player1: { name: nameA, score: scoreA },
+          player2: { name: nameB, score: scoreB },
+        },
+      ],
+    };
+    console.log('fin envoie a matt: payload =', payload);
+    const res = await fetch('/tournaments/summary', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(payload),
+    });
+
+    if (!res.ok) {
+      const text = await res.text().catch(() => '');
+      console.error('[summary] POST /tournaments/summary failed', res.status, text);
+      return;
+    }
+  } catch (err) {
+    console.error('[summary] Erreur envoi tournoi:', err);
+  }
+}
+
 
 /* =========
    Routes

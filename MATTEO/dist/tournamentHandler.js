@@ -1,0 +1,20 @@
+import { sendTournamentSummary } from "./tournamentChain.js";
+import { saveValues } from "./dataBase.js";
+export async function postTournamentSummary(req, reply) {
+    try {
+        const summary = req.body;
+        const r = await sendTournamentSummary(summary);
+        saveValues({ tournoiId: summary.tournamentId, snowtrace_link: r.snowtraceTx });
+        return (reply.status(200).send({
+            ok: true,
+            tournamentId: summary.tournamentId,
+            txHash: r.txHash,
+            blockNumber: r.blockNumber,
+            snowtraceTx: r.snowtraceTx
+        }));
+    }
+    catch (e) {
+        req.log.error({ err: e }, "recordTournamentSummary failed");
+        return (reply.status(500).send({ error: "Blockchain write failed", details: e?.message ?? "unknown" }));
+    }
+}
