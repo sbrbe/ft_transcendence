@@ -12,15 +12,15 @@ services:
     volumes:
       - ./database:/app/database
 
-  # blockchain:
-  #   build: ./MATTEO
-  #   ports:
-  #     - "3004:3004"
-  #   volumes:
-  #     - ./database:/app/database
-  #     - /app/node_modules   # <-- protège les node_modules construits dans l’image
-  #   networks:
-  #     - appnet
+  blockchain:
+    build: ./matt
+    ports:
+      - "3004:3004"
+    volumes:
+      - ./database:/app/databases
+      - /app/node_modules   # <-- protège les node_modules construits dans l’image
+    networks:
+      - appnet
 
   users:
     build:
