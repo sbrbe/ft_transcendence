@@ -202,7 +202,7 @@ private detachMobileTouch() {
   private game: GameLogic | null = null;
   private rafId: number | null = null;
   
-  private betweenStage: 'idle'|'winner'|'next' | 'end' = 'idle';
+  private betweenStage: 'idle' | 'winner' |'next' | 'end' | 'endOln' | 'endLcl' = 'idle';
   private _prevRunning: boolean | null = null;
   
   
@@ -222,6 +222,18 @@ private detachMobileTouch() {
         this.online?.sendContinue();
         this.betweenStage = 'idle';
         this.renderer?.clearRender();
+        return;
+      }
+      if (this.betweenStage === 'end' || this.betweenStage === 'endOln' || this.betweenStage === 'endLcl') {
+        e.preventDefault();
+        this.stopAndReturnToMenu();
+        if (this.betweenStage === 'end')
+          this.showView('Tournois');
+        else if (this.betweenStage === 'endOln')
+          this.showView('online-options');
+        else
+        this.showView('menu-game-config');
+        this.betweenStage = 'idle';
         return;
       }
     }
@@ -249,7 +261,7 @@ private detachMobileTouch() {
     const code = e.code;
     
     // Espace “between stages” (tournoi)
-    if (code === 'Space' && (this.betweenStage === 'winner' || this.betweenStage === 'next')) {
+    if (code === 'Space' && (this.betweenStage === 'winner' || this.betweenStage === 'next' || this.betweenStage === 'end')) {
       e.preventDefault();
       return;
     }
@@ -445,7 +457,6 @@ this.startBtn.addEventListener('click', () => {
     }
     
     private localKeysHandler?: (e: KeyboardEvent) => void;
-    private tournamentKeysActive = false;
     
     
     private startTournament() {
@@ -484,8 +495,8 @@ this.startBtn.addEventListener('click', () => {
         (msg) => {
           if (msg.type === 'tournament_end') {
             this.betweenStage = 'end';
-            this.renderer?.clearRender();
-            this.renderer?.drawMessage('Tournoi terminé !');
+            this.renderer.clearRender();
+            this.renderer.drawMessage('Tournoi terminé !\n\n\n\nAppuez sur [ESPACE] pour QUITTER !');
           }
         },
         '/ws/local'
@@ -513,7 +524,6 @@ this.startBtn.addEventListener('click', () => {
       window.addEventListener('keydown', this.localKeysHandler, { passive: false });
       window.addEventListener('keyup', this.localKeysHandler, { passive: false });
     
-      this.tournamentKeysActive = true;
     }
     
     private detachLocalAuthoritativeInputs() {
@@ -522,7 +532,6 @@ this.startBtn.addEventListener('click', () => {
         window.removeEventListener('keyup', this.localKeysHandler);
         this.localKeysHandler = undefined;
       }
-      this.tournamentKeysActive = false;
     }
     
     
@@ -540,6 +549,7 @@ this.startBtn.addEventListener('click', () => {
         if (!this.renderer) return;
         this.renderer.draw(snap);
         if (!snap.running) {
+          this.betweenStage = 'endOln';
           this.renderer.endScreen(snap);
         }
       },
@@ -547,9 +557,9 @@ this.startBtn.addEventListener('click', () => {
       (msg) => {
 
         if (msg.type === "waiting") {
-          console.log('Y')
           this.renderer.clearRender();
           this.renderer.drawMessage("Matchmaking...");
+          console.log('yo');
         }
       },
   '/ws'
@@ -565,7 +575,7 @@ this.startBtn.addEventListener('click', () => {
     return selects.map((sel, index) => ({
       type: sel.value as "human" | "cpu" | null,
       playerId: index + 1,
-      name: null
+      name: "player"
     }));
   }
   
@@ -614,6 +624,7 @@ this.startBtn.addEventListener('click', () => {
       if (state.running) {
         this.rafId = requestAnimationFrame(loop);
       } else {
+        this.betweenStage = 'endLcl';
         this.renderer.endScreen(state as unknown as GameState);
       }
     };

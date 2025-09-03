@@ -15,6 +15,7 @@ export interface infoMatch {
 export declare class Tournament {
     private canvasH;
     private canvasW;
+    private finish;
     private matchs;
     private confs;
     private currentMatchId;
@@ -24,6 +25,7 @@ export declare class Tournament {
     private startMatchs;
     private buildConfs;
     playLocal(): GameState;
+    getNextMatch(): [string | null, string | null];
     redirectTournament(key: string, isPressed: boolean): void;
     appendWinner(winner: Player | CPU | string): void;
     isFinished(): boolean;

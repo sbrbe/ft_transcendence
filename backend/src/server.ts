@@ -300,19 +300,19 @@ wss.on('connection', (ws: WebSocket, req) => {
         case 'info_players': {
           try {
             if (sess.t) {
-              const res = sess.t.playLocal?.();
-              if (res) {
-                
-                const names = res.paddles
-                  .filter((p: any) => p !== null)
-                  .map((p: any) => p.name ?? 'Inconnu');
+              const res = sess.t.getNextMatch();   
+              const player1 = res[0];
+              const player2 = res[1];
+              if (!player1)
+              {
+                safeSend(sess.ws, { type: 'tournament_end' });
+                clearInterval(sess.ticker!);
+                sess.ticker = undefined;
+                break;
+              }     
+              const player = `${player1} VS ${player2}`;
         
-                const player1 = names[0] ?? 'Player1';
-                const player2 = names[1] ?? 'Player2';
-                const player = `${player1} VS ${player2}`;
-        
-                safeSend(sess.ws, { type: 'info_players', player });
-              }
+              safeSend(sess.ws, { type: 'info_players', player });
             }
           } catch (err) {
             console.error('info_players error', err);

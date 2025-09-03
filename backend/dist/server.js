@@ -146,6 +146,7 @@ function startLocalTicker(sess) {
             return;
         }
         const snap = sess.t.playLocal?.();
+        sess.t.launch = false;
         if (snap) {
             safeSend(sess.ws, { type: 'state', state: snap });
             if (!snap.running && !sess.t.isFinished?.()) {
@@ -160,7 +161,6 @@ function startLocalTicker(sess) {
             sess.ticker = undefined;
             return;
         }
-        sess.t.launch = false;
     }, FRAME_MS);
 }
 /* ==========================================
@@ -284,16 +284,17 @@ wss.on('connection', (ws, req) => {
                 case 'info_players': {
                     try {
                         if (sess.t) {
-                            const res = sess.t.playLocal?.();
-                            if (res) {
-                                const names = res.paddles
-                                    .filter((p) => p !== null)
-                                    .map((p) => p.name ?? 'Inconnu');
-                                const player1 = names[0] ?? 'Player1';
-                                const player2 = names[1] ?? 'Player2';
-                                const player = `${player1} VS ${player2}`;
-                                safeSend(sess.ws, { type: 'info_players', player });
+                            const res = sess.t.getNextMatch();
+                            const player1 = res[0];
+                            const player2 = res[1];
+                            if (!player1) {
+                                safeSend(sess.ws, { type: 'tournament_end' });
+                                clearInterval(sess.ticker);
+                                sess.ticker = undefined;
+                                break;
                             }
+                            const player = `${player1} VS ${player2}`;
+                            safeSend(sess.ws, { type: 'info_players', player });
                         }
                     }
                     catch (err) {

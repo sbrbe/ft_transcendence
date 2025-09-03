@@ -21,6 +21,7 @@ export class Tournament {
    // private id: UUID
     private canvasH: number;
     private canvasW: number;
+    private finish: boolean = false;
     private matchs: GameLogic[] = [];
     private confs: gameConfig[] = [];
     private currentMatchId: number =0;
@@ -70,49 +71,51 @@ export class Tournament {
             let win = info.tracker.winner
             if (win)
                 this.appendWinner(win);
-            this.currentMatchId++;            
+            this.currentMatchId++;
+
             if (this.currentMatchId >= this.confs.length && this.winner.length > 1)
             {
                 this.buildConfs(this.winner);
                 this.startMatchs(this.currentMatchId);
             }
-            else if (this.currentMatchId < this.confs.length && this.launch)
+            else if (this.currentMatchId < this.confs.length)
                 this.startMatchs(this.currentMatchId);
         }
         return info;
+    }
+
+    public getNextMatch() : [string | null, string | null]
+    {
+        let P1: string | null = null;
+        let P2: string | null = null;
+        if (this.currentMatchId < this.confs.length - 1)
+        {
+            P1 = this.confs[this.currentMatchId + 1].playerSetup[0].name;
+            P2 = this.confs[this.currentMatchId + 1].playerSetup[1].name;
+        }
+        else
+        {
+            if (this.winner.length > 1)
+            {
+                P1 = this.winner[0].name;
+                P2 = this.winner[1].name;
+            }
+            else if (this.currentMatchId > 0 && this.winner.length > 0)
+            {
+                let win = this.matchs[this.currentMatchId].getGameState().tracker.winner?.name;
+                if (win)
+                    P2 = win;
+                P1 = this.winner[0].name;
+            }
+
+        }
+        return [P1,P2];
     }
 
 	public redirectTournament(key: string, isPressed: boolean)
 	{
 		this.matchs[this.currentMatchId].setPlayerInput(key, isPressed);
 	}
-
-    public getPrevMatch()
-    {	
-        this.matchs[this.currentMatchId].update();
-        let info = this.matchs[this.currentMatchId].getGameState();
-      
-        if (info.running == false) 
-        {
-            let win = info.tracker.winner
-            if (win)
-                this.appendWinner(win);
-            this.currentMatchId++;            
-            if (this.currentMatchId >= this.confs.length && this.winner.length > 1)
-            {
-                this.buildConfs(this.winner);
-                this.playLocal();
-                //this.startMatchs(this.currentMatchId);
-            }
-            else if (this.currentMatchId < this.confs.length)
-                this.playLocal();
-                //this.startMatchs(this.currentMatchId);
-        }  
-	}
-
-    public getConf(): gameConfig[] {return this.confs;}
-    public getCurrentIdx(): number {return this.currentMatchId;}
-    public getWinner() : contender[] {return this.winner;}
 
     public appendWinner(winner: Player | CPU | string) {
 		const conf = this.confs[this.currentMatchId];
@@ -143,6 +146,6 @@ export class Tournament {
 	  }
     public isFinished(): boolean 
 	{
-		return (this.winner.length == 1 && this.confs.length == 1);
+		return (this.finish == true && this.confs.length == 1);
 	}
 }

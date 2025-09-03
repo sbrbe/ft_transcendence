@@ -170,6 +170,18 @@ class GameApp {
                     this.renderer?.clearRender();
                     return;
                 }
+                if (this.betweenStage === 'end' || this.betweenStage === 'endOln' || this.betweenStage === 'endLcl') {
+                    e.preventDefault();
+                    this.stopAndReturnToMenu();
+                    if (this.betweenStage === 'end')
+                        this.showView('Tournois');
+                    else if (this.betweenStage === 'endOln')
+                        this.showView('online-options');
+                    else
+                        this.showView('menu-game-config');
+                    this.betweenStage = 'idle';
+                    return;
+                }
             }
             // Empêche le scroll avec les flèches
             if (code === 'ArrowUp' || code === 'ArrowDown')
@@ -190,7 +202,7 @@ class GameApp {
         this.keyUpHandler = (e) => {
             const code = e.code;
             // Espace “between stages” (tournoi)
-            if (code === 'Space' && (this.betweenStage === 'winner' || this.betweenStage === 'next')) {
+            if (code === 'Space' && (this.betweenStage === 'winner' || this.betweenStage === 'next' || this.betweenStage === 'end')) {
                 e.preventDefault();
                 return;
             }
@@ -386,8 +398,8 @@ class GameApp {
         }, (msg) => {
             if (msg.type === 'tournament_end') {
                 this.betweenStage = 'end';
-                this.renderer?.clearRender();
-                this.renderer?.drawMessage('Tournoi terminé !');
+                this.renderer.clearRender();
+                this.renderer.drawMessage('Tournoi terminé !\n\n\n\nAppuez sur [ESPACE] pour QUITTER !');
             }
         }, '/ws/local');
         this.online.connect().then(() => {
@@ -430,15 +442,16 @@ class GameApp {
                 return;
             this.renderer.draw(snap);
             if (!snap.running) {
+                this.betweenStage = 'endOln';
                 this.renderer.endScreen(snap);
             }
         }, 
         // onInfo (optionnel)
         (msg) => {
             if (msg.type === "waiting") {
-                console.log('Y');
                 this.renderer.clearRender();
                 this.renderer.drawMessage("Matchmaking...");
+                console.log('yo');
             }
         }, '/ws');
         this.online.connect();
@@ -449,7 +462,7 @@ class GameApp {
         return selects.map((sel, index) => ({
             type: sel.value,
             playerId: index + 1,
-            name: null
+            name: "player"
         }));
     }
     attachInputListeners() {
@@ -490,6 +503,7 @@ class GameApp {
                 this.rafId = requestAnimationFrame(loop);
             }
             else {
+                this.betweenStage = 'endLcl';
                 this.renderer.endScreen(state);
             }
         };
