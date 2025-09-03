@@ -9,7 +9,7 @@ export async function postTournamentSummary( req: FastifyRequest<{ Body: TSSumma
     const summary = req.body;
     const r = await sendTournamentSummary(summary);
 
-    saveValues({ tournoiId: Number(summary.tournamentId),snowtrace_link: r.snowtraceTx });
+    saveValues({ tournoiId: summary.tournamentId, snowtrace_link: r.snowtraceTx });
 
     return (reply.status(200).send({
       ok: true,

@@ -21,7 +21,7 @@ export function initDB()
 
 const createTournamentTable = 
 	`CREATE TABLE IF NOT EXISTS tournaments (
-        tournoiId INTEGER PRIMARY KEY,
+        tournoiId TEXT PRIMARY KEY,
         snowtrace_link TEXT NOT NULL
 		)`;
 

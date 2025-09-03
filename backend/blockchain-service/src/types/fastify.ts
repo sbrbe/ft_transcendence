@@ -9,7 +9,7 @@ declare module 'fastify'
 }
 
 export type tournoiValues = {
-	tournoiId: number;
+	tournoiId: string;
 	snowtrace_link: string;
 };
 
