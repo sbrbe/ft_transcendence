@@ -140,8 +140,9 @@ function startLocalTicker(sess) {
         if (sess.awaitingContinue)
             return; // ⛔ gel
         const snap = sess.t.playLocal?.();
-        if (snap.running == false)
-            console.log('fin envoie a matt');
+        if (snap.running === false) {
+            maybeSendTournamentSummary(snap);
+        }
         sess.t.launch = false;
         if (snap) {
             safeSend(sess.ws, { type: 'state', state: snap });
@@ -361,6 +362,46 @@ setInterval(() => {
         endAndCleanupRoom(r, 'game_over');
     }
 }, TICK_MS);
+/* =========
+   Envoi Mat
+   ========= */
+// Appelle ceci dans ton onState / quand snap.running devient false
+async function maybeSendTournamentSummary(snap) {
+    try {
+        if (!snap)
+            return;
+        const nameA = (snap.paddles[0]?.name) || 'Player 1';
+        const nameB = (snap.paddles[1]?.name) || 'Player 2';
+        const scoreA = snap.score.A;
+        const scoreB = snap.score.B;
+        let winnerName = snap.tracker.winner;
+        const tournamentId = String(snap.id ?? '');
+        const payload = {
+            tournamentId,
+            winnerName,
+            matches: [
+                {
+                    player1: { name: nameA, score: scoreA },
+                    player2: { name: nameB, score: scoreB },
+                },
+            ],
+        };
+        console.log('fin envoie a matt: payload =', payload);
+        const res = await fetch('/tournaments/summary', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(payload),
+        });
+        if (!res.ok) {
+            const text = await res.text().catch(() => '');
+            console.error('[summary] POST /tournaments/summary failed', res.status, text);
+            return;
+        }
+    }
+    catch (err) {
+        console.error('[summary] Erreur envoi tournoi:', err);
+    }
+}
 /* =========
    Routes
    ========= */
