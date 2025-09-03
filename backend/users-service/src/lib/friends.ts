@@ -13,7 +13,7 @@ interface UtilsForm {
 	targetName: string;
 }
 
-export interface PendingRequest {
+export interface FriendsRequest {
 	id: string;
 	userId: string;
 	friendId: string;
@@ -165,7 +165,6 @@ export async function getPendingRequest(
 	req: FastifyRequest<{ Params: { userId: string } }>,
 	reply: FastifyReply) {
 		const { userId } = req.params;
-	console.log('typeof userId =', typeof userId, 'value =', userId);
 		try {
 			const stmt = db.prepare(`
 				SELECT f.id, u.userId, u.username, u.avatarPath
@@ -174,8 +173,27 @@ export async function getPendingRequest(
 				WHERE f.friendId = ? and f.status = ?
 				ORDER BY f.createdAt DESC
 				`);
-			const requests = stmt.all(userId, 'pending') as PendingRequest[];
+			const requests = stmt.all(userId, 'pending') as FriendsRequest[];
 			return reply.status(200).send(requests);
+		} catch (error: any) {
+			return reply.status(500).send({ error: error.message });
+		}
+}
+
+export async function getFriendsList(
+	req: FastifyRequest<{ Params: { userId: string }}>,
+	reply: FastifyReply) {
+		const { userId } = req.params;
+		try {
+			const stmt = db.prepare(`
+				SELECT f.id, u.userId, u.username, u.avatarPath
+				FROM friendships f
+				JOIN users u ON u.userId = f.userId
+				WHERE f.friendId = ? and f.status = ?
+				ORDER BY f.createdAt DESC
+				`);
+			const list = stmt.all(userId, 'accepted') as FriendsRequest[];
+			return reply.status(200).send(list);
 		} catch (error: any) {
 			return reply.status(500).send({ error: error.message });
 		}

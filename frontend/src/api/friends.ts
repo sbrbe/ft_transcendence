@@ -178,3 +178,18 @@ export async function loadPendingRequest(userId: string) {
 	}
 	return data;
 }
+
+export async function loadFriendsList(userId: string) {
+	const res = await fetch(`/users/friends/my-friends/${encodeURIComponent(userId)}`, {
+		method: 'GET',
+		credentials: 'include',
+		headers: { Accept: 'application/json' }
+	});
+
+	const data = await res.json();
+
+	if (!res.ok) {
+		 throw new Error(data?.error || res.statusText);
+	}
+	return data;
+}

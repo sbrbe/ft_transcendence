@@ -35,14 +35,30 @@ services:
     networks:
     - transcendence
 
+  blockchain-service:
+    build: ./backend/blockchain-service
+    ports:
+      - "3003:3003"
+    volumes:
+      - blockchain-db:/app/database  
+      - ./nginx/pki/issued/auth-service.crt:/run/certs/blockchain-service.crt:ro
+      - ./nginx/pki/private/auth-service.key:/run/certs/blockchain-service.key:ro
+      - ./nginx/pki/ca/ca.crt:/run/certs/ca.crt:ro
+    environment:
+      - JWT_ACCESS_SECRET=${JWT_ACCESS_SECRET}
+      - COOKIE_SECRET=${COOKIE_SECRET}
+    networks:
+      - transcendence
+
   nginx:
     build: .
     depends_on:
       - users-service
       - auth-service
+      - blockchain-service
     ports:
       - "443:443"
-      - "8080:80"
+      - "8080:8080"
     volumes:
     - ./nginx/pki/issued/nginx-4443.crt:/etc/nginx/mtls/server.crt:ro
     - ./nginx/pki/private/nginx-4443.key:/etc/nginx/mtls/server.key:ro
@@ -59,3 +75,4 @@ networks:
 volumes:
   user-db:
   auth-db:
+  blockchain-db:

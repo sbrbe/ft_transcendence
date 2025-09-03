@@ -1,0 +1,4 @@
+subjectAltName=DNS:blockchain-service
+basicConstraints=CA:FALSE
+keyUsage = digitalSignature, keyEncipherment
+extendedKeyUsage = serverAuth

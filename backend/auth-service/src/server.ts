@@ -2,7 +2,7 @@ import fastify, {FastifyInstance, FastifyReply, FastifyRequest} from 'fastify';
 import fs from 'node:fs';
 import { db, initDB } from './init_db.js';
 import registerAllRoutes from './routes/index.js';
-import jwtSetup from './plugins.js';
+import jwtSetup from './plugins/plugins.js';
 import { registerInternal } from './internal.js';
 
 const app : FastifyInstance = fastify( {

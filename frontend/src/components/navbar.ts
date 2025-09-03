@@ -64,7 +64,7 @@ export function createNavbar(onNavigate: (path: string) => void) {
   // Rendu dynamique (public ↔ connecté)
   const renderRight = async () => {
     const right = nav.querySelector<HTMLDivElement>('#nav-right')!;
-    const user = getSavedUser<{ username: string; avatarUrl?: string }>();
+    const user = getSavedUser<{ username: string; avatarPath?: string }>();
 
     if (!user) {
       right.innerHTML = `
@@ -84,7 +84,7 @@ export function createNavbar(onNavigate: (path: string) => void) {
       return;
     }
 
-    const avatarSrc = resolveAvatarSrc(user.avatarUrl);
+    const avatarSrc = resolveAvatarSrc(user.avatarPath);
     right.innerHTML = `
       <button type="button" id="btn-profile"
         class="flex items-center gap-2 rounded-xl px-3 py-1.5 hover:bg-gray-100 focus:outline-none

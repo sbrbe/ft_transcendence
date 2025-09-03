@@ -1,4 +1,4 @@
-import { acceptRequest, removeFriend, searchUser, sendFriendRequest, loadPendingRequest, rejectRequest } from "../api/friends";
+import { acceptRequest, removeFriend, searchUser, sendFriendRequest, loadPendingRequest, rejectRequest, loadFriendsList } from "../api/friends";
 import { clearStatusMessage, lockButton, setStatusMessage } from "../utils/ui";
 import { getSavedUser, setLoggedInUser } from '../utils/ui';
 import { AppUser } from "../utils/interface";
@@ -16,6 +16,14 @@ type PendingRequest = {
   username: string;
   avatarPath?: string;
 };
+
+type Friend = {
+  requestId: number;
+  id: string;
+  username: string;
+  avatarPath: string;
+};
+
 
 const friends: (container: HTMLElement) => void = (container) => {
     const saved = getSavedUser<AppUser>();
@@ -35,64 +43,15 @@ const friends: (container: HTMLElement) => void = (container) => {
       <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
 
 <!-- Colonne principale : Liste d'amis -->
-        <section class="lg:col-span-2 rounded-2xl border bg-white shadow-sm p-6">
-          <ul class="mt-5 divide-y divide-gray-100">
+      <section class="rounded-2xl border bg-white shadow-sm p-6">
+         <h2 class="text-sm uppercase tracking-wider text-gray-500 mb-3">Mes amis</h2>
 
-<!-- exemples statiques -->
-
-            <li class="py-3 flex items-center gap-4">
-              <img src="/avatar/avatar1.png" class="h-10 w-10 rounded-xl ring-1 ring-black/10 object-cover" alt="">
-              <div class="min-w-0 flex-1">
-                <div class="flex items-center gap-2">
-                  <p class="font-medium truncate">Nora</p>
-                  <span class="inline-flex items-center gap-1 text-xs text-green-700 bg-green-100 px-2 py-0.5 rounded-full">
-                    <span class="h-2 w-2 rounded-full bg-green-500"></span> En ligne
-                  </span>
-                </div>
-              </div>
-              <button class="px-3 py-1.5 rounded-lg border text-sm hover:bg-gray-50 text-red-600">Delete</button>
-            </li>
-
-            <li class="py-3 flex items-center gap-4">
-              <img src="/avatar/avatar2.png" class="h-10 w-10 rounded-xl ring-1 ring-black/10 object-cover" alt="">
-              <div class="min-w-0 flex-1">
-                <div class="flex items-center gap-2">
-                  <p class="font-medium truncate">Luca</p>
-                  <span class="inline-flex items-center gap-1 text-xs text-gray-700 bg-gray-100 px-2 py-0.5 rounded-full">
-                    <span class="h-2 w-2 rounded-full bg-gray-400"></span> Hors ligne
-                  </span>
-                </div>
-              </div>
-              <button class="px-3 py-1.5 rounded-lg border text-sm hover:bg-gray-50 text-red-600">Delete</button>
-            </li>
-
-            <li class="py-3 flex items-center gap-4">
-              <img src="/avatar/avatar3.png" class="h-10 w-10 rounded-xl ring-1 ring-black/10 object-cover" alt="">
-              <div class="min-w-0 flex-1">
-                <div class="flex items-center gap-2">
-                  <p class="font-medium truncate">Maya</p>
-                  <span class="inline-flex items-center gap-1 text-xs text-green-700 bg-green-100 px-2 py-0.5 rounded-full">
-                    <span class="h-2 w-2 rounded-full bg-green-500"></span> En ligne
-                  </span>
-                </div>
-              </div>
-              <button class="px-3 py-1.5 rounded-lg border text-sm hover:bg-gray-50 text-red-600">Delete</button>
-            </li>
+        <div id="friends-loading" class="text-sm text-gray-500 hidden">Chargement…</div>
+        <ul id="friends-list" class="space-y-3"></ul>
+        <p id="friends-msg" class="text-sm mt-2 min-h-5" aria-live="polite"></p>
+      </section>
 
 
-            <li class="py-3 flex items-center gap-4">
-              <img src="/avatar/avatar3.png" class="h-10 w-10 rounded-xl ring-1 ring-black/10 object-cover" alt="">
-              <div class="min-w-0 flex-1">
-                <div class="flex items-center gap-2">
-                  <p class="font-medium truncate">Maya</p>
-                  <span class="inline-flex items-center gap-1 text-xs text-green-700 bg-green-100 px-2 py-0.5 rounded-full">
-                    <span class="h-2 w-2 rounded-full bg-green-500"></span> En ligne
-                  </span>
-                </div>
-              </div>
-              <button class="px-3 py-1.5 rounded-lg border text-sm hover:bg-gray-50 text-red-600">Delete</button>
-            </li>
-          </ul>
 
           <div class="mt-4 flex justify-between items-center text-sm">
             <p class="text-gray-500">View 1–10</p>
@@ -139,6 +98,7 @@ const friends: (container: HTMLElement) => void = (container) => {
   `;
 
   renderPendingRequest(saved);
+  renderFriendsList(saved);
 
   const form = container.querySelector<HTMLFormElement>('#add-friend-form')!;
   const usernameEl = container.querySelector<HTMLInputElement>('#Username')!;
@@ -344,8 +304,49 @@ const friends: (container: HTMLElement) => void = (container) => {
       setStatusMessage(msg, error?.message || "Can't load pending request", 'error');
       list.innerHTML = `<li class="text-sm text-gray-500">-</li>`;
     }
-  }
+  };
 
+  async function renderFriendsList(saved: AppUser) {
+    const list = document.querySelector('#friends-list')!;
+    const msg = document.querySelector<HTMLParagraphElement>('#friends-msg')!;
+    const loading = document.querySelector('#friends-loading')!;
+
+    list.innerHTML= '';
+    
+    try {
+      const res = await loadFriendsList(saved.userId) as Friend[];
+
+       if (!res.length) {
+         list.innerHTML = `<li class="text-sm text-gray-500">Aucun ami pour le moment.</li>`;
+          return;
+      }
+      const frag = document.createDocumentFragment();
+      res.forEach((p) => {
+        const li = document.createElement('li');
+        li.className = 'flex items-center gap-3';
+        li.dataset.friendId = p.id;
+
+        li.innerHTML = `
+          <img src="${p.avatarPath}" class="h-9 w-9 rounded-xl ring-1 ring-black/10 object-cover" alt="">
+          <div class="min-w-0 flex-1">
+            <p class="font-medium truncate">${p.username}</p>
+          </div>
+          <!-- Boutons optionnels, mêmes styles que pending -->
+          <div class="flex items-center gap-2">
+            <button data-action="message" class="px-3 py-1.5 rounded-lg border text-sm hover:bg-gray-50">Message</button>
+            <button data-action="unfriend" class="px-3 py-1.5 rounded-lg border text-sm hover:bg-gray-50 text-red-600">Retirer</button>
+          </div>
+        `;
+
+        frag.appendChild(li);
+    });
+
+    list.appendChild(frag);
+    } catch (error: any) {
+      setStatusMessage(msg, error?.message || "Can't load friends list");
+      list.innerHTML = `<li class="text-sm text-gray-500">—</li>`; 
+    }
+  }
 };
 
 export default friends;
