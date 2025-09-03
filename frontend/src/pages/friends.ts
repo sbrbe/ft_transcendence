@@ -1,4 +1,4 @@
-import { acceptRequest, removeFriend, searchUser, sendFriendRequest, loadPendingRequest } from "../api/friends";
+import { acceptRequest, removeFriend, searchUser, sendFriendRequest, loadPendingRequest, rejectRequest } from "../api/friends";
 import { clearStatusMessage, lockButton, setStatusMessage } from "../utils/ui";
 import { getSavedUser, setLoggedInUser } from '../utils/ui';
 import { AppUser } from "../utils/interface";
@@ -6,7 +6,14 @@ import { navigateTo } from '../router/router';
 
 type SearchUserResult = {
   userId: string;
-  username?: string;
+  username: string;
+  avatarPath: string;
+};
+
+type PendingRequest = {
+  requestId: number;
+  userId: string;
+  username: string;
   avatarPath?: string;
 };
 
@@ -16,7 +23,6 @@ const friends: (container: HTMLElement) => void = (container) => {
       navigateTo('/connexion');
       return;
     }
-
   container.innerHTML = `
     <div class="container-page my-10 space-y-6">
       <header class="rounded-2xl border bg-white shadow-sm px-6 py-5 flex items-center justify-between">
@@ -121,32 +127,18 @@ const friends: (container: HTMLElement) => void = (container) => {
 
           </section>
 
-          <!-- Demandes en attente (exemples) -->
+          <!-- Demandes en attente -->
           <section class="rounded-2xl border bg-white shadow-sm p-6">
             <h2 class="text-sm uppercase tracking-wider text-gray-500 mb-3">Pending requests</h2>
-            <ul class="space-y-3">
-              <li class="flex items-center gap-3">
-                <img src="/avatar/avatar2.png" class="h-9 w-9 rounded-xl ring-1 ring-black/10 object-cover" alt="">
-                <div class="min-w-0 flex-1"><p class="font-medium truncate">Sam</p></div>
-                <div class="flex items-center gap-2">
-                  <button class="px-3 py-1.5 rounded-lg border text-sm hover:bg-gray-50">Accept</button>
-                  <button class="px-3 py-1.5 rounded-lg border text-sm hover:bg-gray-50 text-red-600">Decline</button>
-                </div>
-              </li>
-              <li class="flex items-center gap-3">
-                <img src="/avatar/avatar1.png" class="h-9 w-9 rounded-xl ring-1 ring-black/10 object-cover" alt="">
-                <div class="min-w-0 flex-1"><p class="font-medium truncate">Zoé</p></div>
-                <div class="flex items-center gap-2">
-                  <button class="px-3 py-1.5 rounded-lg border text-sm hover:bg-gray-50">Accept</button>
-                  <button class="px-3 py-1.5 rounded-lg border text-sm hover:bg-gray-50 text-red-600">Decline</button>
-                </div>
-              </li>
-            </ul>
+            <ul id="pending-list" class="space-y-3"></ul>
+            <p id="pending-msg" class="text-sm min-h-5 mt-2" aria-live="polite"></p>
           </section>
         </div>
       </div>
     </div>
   `;
+
+  renderPendingRequest(saved);
 
   const form = container.querySelector<HTMLFormElement>('#add-friend-form')!;
   const usernameEl = container.querySelector<HTMLInputElement>('#Username')!;
@@ -154,8 +146,6 @@ const friends: (container: HTMLElement) => void = (container) => {
   const searchBtn = container.querySelector<HTMLButtonElement>('#searchBtn')!;
   const resultsEl = container.querySelector<HTMLDivElement>('#search-results')!;
 
-
-  const addBtn = container.querySelector<HTMLButtonElement>('#addBtn')!;
   const acceptBtn = container.querySelector<HTMLButtonElement>('#acceptBtn')!;
   const rejectBtn = container.querySelector<HTMLButtonElement>('#rejectBtn')!;
   const pendingMsg = container.querySelector<HTMLParagraphElement>('#pending-msg')!;
@@ -171,23 +161,26 @@ const friends: (container: HTMLElement) => void = (container) => {
       return setStatusMessage(addMsg, 'Please enter a username', 'error');
     };
 
+    if (username === saved.username) {
+      return setStatusMessage(addMsg, "You can't search yourself", 'error');
+    }
+
     lockButton(searchBtn, true);
 
     try {
-      const res = await searchUser(username) as Partial<SearchUserResult>;
-      const userId = res.userId;
-      const name = res.username || username;
+      const res = await searchUser(username) as SearchUserResult;
+      const searchedUserId = res.userId;
       const avatar = res.avatarPath || "/avatar/default.png";
 
       resultsEl.innerHTML = `
           <div class="flex items-center justify-between rounded-xl p-3">
             <div class="flex items-center gap-3 min-w-0">
               <img src="${avatar}" alt="" class="h-12 w-12 rounded-xl object-cover shrink-0">
-              <div class="font-medium text-sm sm:text-base truncate">${name}</div>
+              <div class="font-medium text-sm sm:text-base truncate">${username}</div>
             </div>
               <button id="addBtn" type="button"
                       class="px-3 py-1.5 rounded-lg bg-green-600 hover:bg-green-700 text-white text-sm"
-                      data-user-id="${userId}" data-username="${name}">
+                      data-user-id="${searchedUserId}" data-username="${username}">
                 Add
               </button>
           </div>
@@ -198,13 +191,13 @@ const friends: (container: HTMLElement) => void = (container) => {
         clearStatusMessage(addMsg);
         lockButton(addBtn, true);
         try {
-          await sendFriendRequest(addBtn.dataset.userId!, addBtn.dataset.username!);
+          await sendFriendRequest(saved.userId, addBtn.dataset.username!);
           setStatusMessage(addMsg, "Friend request sent", "success");
           addBtn.textContent = "Sent";
           addBtn.disabled = true;
           addBtn.className = "px-3 py-1.5 rounded-lg bg-gray-300 text-white text-sm cursor-not-allowed";
           } catch (err: any) {
-          setStatusMessage(addMsg, err?.message || "Invitation échouée", "error");
+          setStatusMessage(addMsg, err?.message || "Friend request failed", "error");
           lockButton(addBtn, false);
         }
       });
@@ -216,21 +209,7 @@ const friends: (container: HTMLElement) => void = (container) => {
     }
   });
 
-  addBtn.addEventListener('click', async (e) => {
-    clearStatusMessage(addMsg);
-
-    lockButton(addBtn, true);
-
-    try {
-      await sendFriendRequest(saved.userId, username);
-    } catch (error: any) {
-      setStatusMessage(addMsg, error.message || 'Failed to send invitation', 'error');
-    }
-    finally {
-      lockButton(addBtn, false);
-    }
-  });
-
+  /*
   acceptBtn.addEventListener('click', async (e) => {
     clearStatusMessage(addMsg);
 
@@ -275,27 +254,97 @@ const friends: (container: HTMLElement) => void = (container) => {
       lockButton(removeBtn, false);
     }
   }); 
+*/
 
-  async function renderPendingRequest() {
-    const list = document.querySelector('#pending-list');
-    if (!list) return;
+  async function renderPendingRequest(saved: AppUser) {
+    const list = document.querySelector('#pending-list')!;
+    const msg = document.querySelector<HTMLParagraphElement>('#pending-msg')!;
 
     list.innerHTML = ''; // à voir si ça sert
 
     try {
-      const pending = await loadPendingRequest(saved.userId);
+      const res = await loadPendingRequest(saved.userId) as any[];
+
+      const pending: PendingRequest[] = res.map((r: {
+        id: number;
+        userId: string;
+        username: string;
+        avatarPath: string;
+      }) => ({
+        requestId: r.id,
+        userId: r.userId,
+        username: r.username,
+        avatarPath: r.avatarPath
+      }));
       if (!pending.length) {
         list.innerHTML = `<li class="text-sm text-gray-500">Aucune demande en attente.</li>`;
         return;
-      } 
-    } catch (error) {
-      
+      }
+
+      const frag = document.createDocumentFragment();
+
+      pending.forEach((p) => {
+        const li = document.createElement('li');
+        li.className = 'flex items-center gap-3';
+
+        li.innerHTML = `
+          <img src="${p.avatarPath || '/avatar/default.png'}"
+             class="h-9 w-9 rounded-xl ring-1 ring-black/10 object-cover" alt="">
+          <div class="min-w-0 flex-1">
+          <p class="font-medium truncate">${p.username}</p>
+          </div>
+          <div class="flex items-center gap-2">
+            <button class="accept px-3 py-1.5 rounded-lg border text-sm hover:bg-gray-50">Accept</button>
+            <button class="decline px-3 py-1.5 rounded-lg border text-sm hover:bg-gray-50 text-red-600">Decline</button>
+          </div>
+      `;
+
+      li.querySelector<HTMLButtonElement>('button.accept')!.addEventListener('click', async (e) => {
+        const btn = e.currentTarget as HTMLButtonElement;
+        lockButton(btn, true);
+        clearStatusMessage(msg);
+        try {
+          await acceptRequest(saved.userId, p.requestId);
+          li.remove();
+          if (!list.children.length) {
+            list.innerHTML = `<li class="text-sm text-gray-500">No pending request</li>`;
+          }
+          setStatusMessage(msg, `You're now friend with ${p.username}`, 'success');
+        } catch (error: any) {
+          setStatusMessage(msg, error?.message || 'Failed to accept request', 'error');
+        } finally {
+          lockButton(btn, false);
+        }
+      });
+
+
+      li.querySelector<HTMLButtonElement>('button.decline')!.addEventListener('click', async (e) => {
+        const btn = e.currentTarget as HTMLButtonElement;
+        lockButton(btn, true);
+        clearStatusMessage(msg);
+        try {
+          await rejectRequest(saved.userId, p.requestId);
+          li.remove();
+          if (!list.children.length) {
+            list.innerHTML = `<li class="text-sm text-gray-500">No pending request</li>`;
+          }
+          setStatusMessage(msg, 'Friend request declined', 'success');
+        } catch (error: any) {
+          setStatusMessage(msg, error?.message || 'Failed to decline request', 'error');
+        } finally {
+          lockButton(btn, false);
+        }
+      });
+
+      frag.appendChild(li);
+      });
+
+      list.appendChild(frag);
+    } catch (error: any) {
+      setStatusMessage(msg, error?.message || "Can't load pending request", 'error');
+      list.innerHTML = `<li class="text-sm text-gray-500">-</li>`;
     }
   }
-
-
-
-
 
 };
 
