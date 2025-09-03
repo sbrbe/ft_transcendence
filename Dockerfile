@@ -9,7 +9,6 @@ RUN npm ci
 # 2) Sources
 COPY backend ./backend
 COPY users ./users
-COPY chat ./chat
 # 👉 on ajoute le moteur (cas B)
 COPY frontend/engine_play ./frontend/engine_play
 

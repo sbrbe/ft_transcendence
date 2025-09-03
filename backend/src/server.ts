@@ -167,6 +167,7 @@ function startLocalTicker(sess: LocalSession) {
     }
 
     const snap = (sess.t as any).playLocal?.();
+    if (snap.running == false)
     sess.t.launch = false;
     if (snap) {
       safeSend(sess.ws, { type: 'state', state: snap });

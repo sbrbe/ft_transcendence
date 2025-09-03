@@ -12,6 +12,15 @@ services:
     volumes:
       - ./database:/app/database
 
+  blockchain:
+    build: ./MATTEO
+    ports:
+      - "3004:3004"
+    volumes:
+      - ./database:/app/database
+    networks:
+      - appnet
+
   users:
     build:
       context: .
@@ -23,17 +32,6 @@ services:
     networks:
       - appnet
 
-  chat:
-    build:
-      context: .
-      dockerfile: Dockerfile
-    working_dir: /app
-    command: npm run start:chat
-    ports:
-      - "3004:3004"
-    networks:
-      - appnet
-
   nginx:
     image: nginx
     ports:
@@ -41,7 +39,7 @@ services:
     depends_on:
       - backend
       - users
-      - chat
+      - blockchain
     volumes:
       - ./nginx_conf:/etc/nginx/conf.d
       - ./frontend:/usr/share/nginx/html
