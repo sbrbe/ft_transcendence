@@ -46,7 +46,8 @@ class GameRenderer {
         ctx.save();
         ctx.textAlign = opts.align ?? 'center';
         ctx.textBaseline = 'middle';
-        ctx.font = ctx.font || '20px sans-serif';
+        ctx.font = '30px sans-serif';
+        ctx.fillStyle = 'white';
         const x = opts.x ?? width / 2;
         // centre verticalement le bloc de lignes
         let y = opts.y ?? (height / 2 - ((lines.length - 1) * lineHeight) / 2);
@@ -87,7 +88,7 @@ class GameRenderer {
                     this.ctx.textAlign = "right";
                     x = paddle.x + paddle.width;
                 }
-                this.ctx.fillText(paddle.name, x, paddle.y - 15);
+                this.ctx.fillText(paddle.name.substring(0, 10), x, paddle.y - 15);
             });
         }
         // score
@@ -246,7 +247,6 @@ class GameApp {
                 return;
             this.online.sendDir('stop');
         };
-        this.tournamentKeysActive = false;
         this.loopTimer = null;
         this.lobbyId = null;
         this.canvas = document.getElementById('gameCanvas');
@@ -421,7 +421,6 @@ class GameApp {
         };
         window.addEventListener('keydown', this.localKeysHandler, { passive: false });
         window.addEventListener('keyup', this.localKeysHandler, { passive: false });
-        this.tournamentKeysActive = true;
     }
     detachLocalAuthoritativeInputs() {
         if (this.localKeysHandler) {
@@ -429,7 +428,6 @@ class GameApp {
             window.removeEventListener('keyup', this.localKeysHandler);
             this.localKeysHandler = undefined;
         }
-        this.tournamentKeysActive = false;
     }
     startOnline() {
         this.showView('view-game');
@@ -451,7 +449,7 @@ class GameApp {
             if (msg.type === "waiting") {
                 this.renderer.clearRender();
                 this.renderer.drawMessage("Matchmaking...");
-                console.log('yo');
+                console.log('efijnzbguhzbiu');
             }
         }, '/ws');
         this.online.connect();

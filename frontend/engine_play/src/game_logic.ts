@@ -91,7 +91,7 @@ export class GameLogic {
 
   isEnd() : boolean
   {
-    if ((this.scoreA >= 2 ||this.scoreB >= 2) && 
+    if ((this.scoreA >= 11 ||this.scoreB >= 11) && 
       Math.abs(this.scoreA - this.scoreB) > 1
     )
     {

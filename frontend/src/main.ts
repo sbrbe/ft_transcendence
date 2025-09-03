@@ -62,7 +62,8 @@ drawMessage(
   ctx.save();
   ctx.textAlign = opts.align ?? 'center';
   ctx.textBaseline = 'middle';
-  ctx.font = ctx.font || '20px sans-serif';
+  ctx.font = '30px sans-serif';
+  ctx.fillStyle = 'white'; 
 
   const x = opts.x ?? width / 2;
   // centre verticalement le bloc de lignes
@@ -108,7 +109,7 @@ drawMessage(
           this.ctx.textAlign = "right";
           x = paddle.x + paddle.width;
         }
-        this.ctx.fillText(paddle.name, x, paddle.y - 15);
+        this.ctx.fillText(paddle.name.substring(0, 10), x, paddle.y - 15);
       });
     }
 
@@ -557,9 +558,9 @@ this.startBtn.addEventListener('click', () => {
       (msg) => {
 
         if (msg.type === "waiting") {
-          this.renderer.clearRender();
-          this.renderer.drawMessage("Matchmaking...");
-          console.log('yo');
+            this.renderer.clearRender();
+            this.renderer.drawMessage("Matchmaking...");
+            console.log('efijnzbguhzbiu')
         }
       },
   '/ws'

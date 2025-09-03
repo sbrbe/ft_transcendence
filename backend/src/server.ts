@@ -198,7 +198,7 @@ wss.on('connection', (ws: WebSocket, req) => {
   // ---------- 1) 1v1 en ligne ----------
   if (pathname === '/ws') {
     const client: ClientInfo = { ws, role: 'left', lastDir: 'stop' };
-
+    
     if (!pending) {
       client.role = 'left';
       pending = client;
@@ -208,7 +208,7 @@ wss.on('connection', (ws: WebSocket, req) => {
       const a = pending; pending = null;
       createRoom(a!, client);
     }
-
+    
     ws.on('message', (raw: RawData) => {
       try {
         const msg = JSON.parse(raw.toString());
@@ -300,7 +300,7 @@ wss.on('connection', (ws: WebSocket, req) => {
         case 'info_players': {
           try {
             if (sess.t) {
-              const res = sess.t.getNextMatch();   
+              const res = sess.t.getNextMatch(); 
               const player1 = res[0];
               const player2 = res[1];
               if (!player1)
