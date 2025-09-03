@@ -68,6 +68,11 @@ export class Tournament {
                     P2 = win;
                 P1 = this.winner[0].name;
             }
+            else {
+                let win = this.matchs[this.currentMatchId].getGameState().tracker.winner?.name;
+                if (win)
+                    P2 = win;
+            }
         }
         return [P1, P2];
     }
