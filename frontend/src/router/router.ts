@@ -15,8 +15,7 @@ const routes: Record<string, () => Promise<{ default: RouteHandler }>> =
   '/profil': () => import('../pages/profile'),
   '/friends': () => import('../pages/friends'),
   '/statistics': () => import('../pages/statistics'),
-  '/pong': () => import('../pages/pongLocl_Oln'),
-  '/pong_local': () => import('../pages/pongLocal'),
+  '/pong': () => import('../pages/pong'),
   '/teams': () => import('../pages/teams')
   // tu peux ajouter d'autres routes ici
   // jsp moi, page truc truc => import ../truc/truc
