@@ -45,9 +45,9 @@ openssl x509 -req -sha256 -days 825 \
 openssl genrsa -out nginx/pki/private/users-service.key 2048
 
 # CSR
-openssl req -new -sha256 -key nginx/pki/private/users-service.key \
-  -out nginx/pki/csr/users-service.csr \
-  -subj "/CN=users-service"
+openssl req -new -sha256 -key nginx/pki/private/blockchain-service.key \
+  -out nginx/pki/csr/blockchain-service.csr \
+  -subj "/CN=blockchain-service"
 
 # SAN (tu as déjà un fichier, sinon:)
 cat > nginx/pki/ext/users-service.san.cnf <<'EOF'

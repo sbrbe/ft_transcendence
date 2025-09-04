@@ -1,5 +1,5 @@
 import { FastifyInstance } from "fastify";
-import { sendFriendRequest, acceptRequest, rejectRequest, getPendingRequest, PendingRequest } from "../lib/friends";
+import { sendFriendRequest, acceptRequest, rejectRequest, getPendingRequest, FriendsRequest, getFriendsList } from "../lib/friends.js";
 
 export default async function friendsRequestRoute(app: FastifyInstance) {
 	app.post<{
@@ -12,7 +12,7 @@ export default async function friendsRequestRoute(app: FastifyInstance) {
 		schema: {
 			body: {
 				type: 'object',
-				required: ['userId', 'friendId'],
+				required: ['userId', 'friendUsername'],
 				properties: {
 					userId: { type: 'string', format: 'uuid' },
 					friendUsername: { type: 'string', minLength: 1, maxLength: 20 }
@@ -85,7 +85,7 @@ export default async function friendsRequestRoute(app: FastifyInstance) {
 		Reply: 
 			| { message: string }
 			| { error: string };}>
-			('/friend/reject', {
+			('/friends/reject', {
 		preHandler: app.authenticate,
 		schema: {
 			body: {
@@ -122,9 +122,9 @@ export default async function friendsRequestRoute(app: FastifyInstance) {
 	app.get<{
 		Params: { userId: string };
 		Reply: 
-			| PendingRequest[]
+			| FriendsRequest[]
 			| { error: string };}>
-			('/friends/request?status=pending/:userId', {
+			('/friends/request-pending/:userId', {
 		preHandler: app.authenticate,
 		schema: {
 			params: {
@@ -157,5 +157,44 @@ export default async function friendsRequestRoute(app: FastifyInstance) {
 			},
 		},
 	}, getPendingRequest);
+
+	app.get<{
+		Params: { userId: string };
+		Reply: 
+			| FriendsRequest[]
+			| { error: string };}>
+			('/friends/my-friends/:userId', {
+		preHandler: app.authenticate,
+		schema: {
+			params: {
+				type: 'object',
+				required: ['userId'],
+				properties: {
+					userId: { type: 'string', format: 'uuid' }
+				}
+			},
+			response: {
+				200: {
+					type: 'array',
+					items: {
+						type: 'object',
+						properties: {
+							id: { type: 'string' },
+							userId: { type: 'string', format: 'uuid' },
+							friendName: { type: 'string' },
+							avatarPath: { type: 'string' }
+						}
+					}
+				},
+				500: {
+					type: 'object',
+					required: ['error'],
+					properties: {
+						error: { type: 'string' }
+					}
+				}
+			},
+		},
+	}, getFriendsList);
 
 }	

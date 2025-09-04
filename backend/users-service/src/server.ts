@@ -19,7 +19,6 @@ const app : FastifyInstance = fastify( {
 	}
 });
 
-
 if (!process.env.JWT_ACCESS_SECRET || !process.env.COOKIE_SECRET) {
 	throw new Error('JWT_ACCESS_SECRET or COOKIE_SECRET not set');
 }
@@ -28,8 +27,6 @@ await app.register(jwtSetup);
 await app.register(multipartsPlugin);
 await app.register(staticAvatarsPlugin);
 
-console.log('DB ready?', Boolean(db));
-//console.log('typeof usersRoutes =', typeof registerAllRoutes); // doit afficher "function"
 
 initDB();
 app.decorate('db', db);
@@ -49,12 +46,12 @@ app.get('/users/ma-route', async (request: FastifyRequest, reply: FastifyReply) 
 });
 
 app.get('/users/ping', async () => {
-    return { message: 'user-profile-service pong' };
-  });
+	return { message: 'user-profile-service pong' };
+});
 
-app.get('/users/health', async (_req, reply) => {
+app.get('/users/health', async (req, reply) => {
 	return reply.status(200).send({ status: 'ok' });
-  });
+});
 
 registerInternal(app, {
 	prefix: '/internal',
@@ -65,14 +62,13 @@ registerInternal(app, {
 });
 
 await app.ready();
-//console.log('ROUTES = ', app.printRoutes()); // <- DOIT afficher "POST /users/logout"
 
 app.listen({ port: 3001, host: '0.0.0.0'}, (err, address) => {
 	if (err) {
 		console.error(err);
 		process.exit(1);
 	}
-	console.log(`✅ Users-services running on ${address}`)
+	console.log(`✅ Users-service running on ${address}`)
 });
 
 export default app;

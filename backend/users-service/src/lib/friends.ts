@@ -13,7 +13,7 @@ interface UtilsForm {
 	targetName: string;
 }
 
-export interface PendingRequest {
+export interface FriendsRequest {
 	id: string;
 	userId: string;
 	friendId: string;
@@ -52,7 +52,7 @@ async function createRequest(user: User, friend: User) {
 		throw new Error('This player blocked you');
 	}
 
-	const res = db.prepare(`INSERT INTO (friendships userId, friendId, status) VALUES (?, ?, 'pending')`)
+	const res = db.prepare(`INSERT INTO friendships (userId, friendId, status) VALUES (?, ?, 'pending')`)
 		.run(user.userId, friend.userId);
 	console.log(`FRIEND REQUEST = ${res.lastInsertRowid}`);
 }
@@ -164,19 +164,37 @@ export async function removeFriend(
 export async function getPendingRequest(
 	req: FastifyRequest<{ Params: { userId: string } }>,
 	reply: FastifyReply) {
-		const userId = req.params;
-
+		const { userId } = req.params;
 		try {
 			const stmt = db.prepare(`
 				SELECT f.id, u.userId, u.username, u.avatarPath
 				FROM friendships f
-				JOIN users u ON u.userId = fr.userId
+				JOIN users u ON u.userId = f.userId
 				WHERE f.friendId = ? and f.status = ?
 				ORDER BY f.createdAt DESC
 				`);
-			const requests = stmt.all(userId, 'pending') as PendingRequest[];
-			return reply.status(200).send({ requests });
+			const requests = stmt.all(userId, 'pending') as FriendsRequest[];
+			return reply.status(200).send(requests);
 		} catch (error: any) {
 			return reply.status(500).send({ error: error.message });
 		}
-	}
+}
+
+export async function getFriendsList(
+	req: FastifyRequest<{ Params: { userId: string }}>,
+	reply: FastifyReply) {
+		const { userId } = req.params;
+		try {
+			const stmt = db.prepare(`
+				SELECT f.id, u.userId, u.username, u.avatarPath
+				FROM friendships f
+				JOIN users u ON u.userId = f.userId
+				WHERE f.friendId = ? and f.status = ?
+				ORDER BY f.createdAt DESC
+				`);
+			const list = stmt.all(userId, 'accepted') as FriendsRequest[];
+			return reply.status(200).send(list);
+		} catch (error: any) {
+			return reply.status(500).send({ error: error.message });
+		}
+}

@@ -15,6 +15,7 @@ export async function searchUser(username: string) {
 	}
 	return {
 		userId: data.userId,
+		username,
 		avatarPath: data.avatarPath
 	};
 }
@@ -72,7 +73,7 @@ export async function acceptRequest(userId: string, requestId: number) {
  * Rejette une demande d'ami.
  * Attend un 200 ; si erreur -> lève une exception.
  */
-export async function rejectRequest(userId: string, requestId: string) {
+export async function rejectRequest(userId: string, requestId: number) {
 		const res = await fetch('/users/friends/reject', {
 		method: 'PUT',
 		credentials: 'include',
@@ -88,7 +89,7 @@ export async function rejectRequest(userId: string, requestId: string) {
 	}
 	catch {}
 	if (!res.ok) {
-		throw new Error(data?.error || res.statusText || "Rejet de la demande d'ami échoué");
+		throw new Error(data?.error || res.statusText || "Failed to reject friend request");
 	}
 }
 
@@ -165,7 +166,7 @@ export async function removeFriend(userId: string, targetName: string) {
 }
 
 export async function loadPendingRequest(userId: string) {
-	const res = await fetch(`/friends/request?status=pending/${encodeURIComponent(userId)}`, {
+	const res = await fetch(`users/friends/request-pending/${encodeURIComponent(userId)}`, {
 		method: 'GET',
 		credentials: 'include',
 		headers: { Accept: 'application/json' }
@@ -174,6 +175,21 @@ export async function loadPendingRequest(userId: string) {
 
 	if (!res.ok) {
 		throw new Error(data?.error || res.statusText);
+	}
+	return data;
+}
+
+export async function loadFriendsList(userId: string) {
+	const res = await fetch(`/users/friends/my-friends/${encodeURIComponent(userId)}`, {
+		method: 'GET',
+		credentials: 'include',
+		headers: { Accept: 'application/json' }
+	});
+
+	const data = await res.json();
+
+	if (!res.ok) {
+		 throw new Error(data?.error || res.statusText);
 	}
 	return data;
 }

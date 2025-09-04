@@ -1,12 +1,10 @@
 Function :
 
-	- Ajouter les tokens dans le frontend
 	- Friends:
 		- Voir le status des amis: online/offline
 		- Faire une requete qui recupère la liste d'amis et leur status
 		- Faire une requete qui recupère les demandes d'amis en attente
 		- gérer les avatars
-		- search user: ne pas pouvoir se search soit meme
 
 ajouter un update ui dans la fonction logout pour les fails de refresh
 		
