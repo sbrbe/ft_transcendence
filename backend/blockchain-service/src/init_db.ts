@@ -21,65 +21,53 @@ export function initDB()
 
 const createTournamentTable = 
 	`CREATE TABLE IF NOT EXISTS tournaments (
-        userId TEXT PRIMARY KEY,
-		tournoiId 
-        snowtrace_link TEXT NOT NULL
-		players TEXT NOT NULL '[]'
+        tournoiId TEXT PRIMARY KEY,
+		userId TEXT NOT NULL,
+        snowtrace_link TEXT NOT NULL,
+		players TEXT NOT NULL DEFAULT '[]'
 		)`;
 
 export function saveValues(input: tournoiValues)
 {
-  const check = db.prepare("SELECT 1 FROM tournaments WHERE userId = ?");
-  const exists = check.get(input.userId);
+  const check = db.prepare("SELECT 1 FROM tournaments WHERE tournoiId = ?");
+  const exists = check.get(input.tournoiId);
 
   if (!exists)
   {
-    const stmt = db.prepare("INSERT INTO tournaments (userId, snowtrace_link) VALUES (?, ?)");
-    stmt.run(input.userId, input.snowtrace_link);
+    const stmt = db.prepare("INSERT INTO tournaments (tournoiId, userId, snowtrace_link, players) VALUES (?, ?, ?, ?)");
+    stmt.run(input.tournoiId, input.userId, input.snowtrace_link, JSON.stringify(input.players ?? []));
+	console.log(`✅ tournoi ${input.tournoiId} créé`);
   }
   else 
   {
-    console.log(`⚠️ userId ${input.userId} existe déjà`);
+    console.log(`⚠️ userId ${input.tournoiId} existe déjà`);
   }
-};
-
-export function addSnowtraceLink(userId: string, link: string): string[]
-{
-	const tx: (uid: string, l: string) => string[] = db.transaction((uid: string, l: string): string[] =>
-	{
-		const row = db
-			.prepare("SELECT snowtrace_link FROM tournaments WHERE userId = ?")
-        	.get(uid) as { snowtrace_links: string } | undefined;
-		
-		const links: string[] = row ? JSON.parse(row.snowtrace_links) : [];
-		
-		if (!links.includes(l))
-			links.push(l);
-
-      	const json = JSON.stringify(links);
-
-      	if (row)
-	  	{
-        	db.prepare("UPDATE player_tournaments SET snowtrace_links = ? WHERE user_id = ?").run(json, uid);
-      	}
-	  	else
-	  	{
-        	db.prepare("INSERT INTO player_tournaments (user_id, snowtrace_links) VALUES (?, ?)").run(uid, json);
-      	}
-
-      	return links;
-    });
-
-	return tx(userId, link);
 }
 
+export function getValues(userId: string): Array<tournoiValues> {
+  const rows = db.prepare(`
+    SELECT tournoiId, userId, snowtrace_link, players
+    FROM tournaments
+    WHERE userId = ?
+    ORDER BY rowid DESC
+  `).all(userId) as Array<{ tournoiId: string; userId: string; snowtrace_link: string; players: string }>;
 
-export function getValues()
-{
-	const stmt = db.prepare(`
-		SELECT userId, snowtrace_link
-		FROM tournaments
-		ORDER BY rowid DESC
-	`);
-	return (stmt.all());
+  return rows.map(r => ({
+    tournoiId: r.tournoiId,
+    userId: r.userId,
+    snowtrace_link: r.snowtrace_link,
+    players: safeParsePlayers(r.players),
+  }));
+}
+
+function safeParsePlayers(json: string): string[] {
+  try
+  {
+    const v = JSON.parse(json);
+    return Array.isArray(v) ? v : [];
+  }
+  catch
+  {
+    return [];
+  }
 }

@@ -1,6 +1,6 @@
 import fastify, {FastifyInstance, FastifyReply, FastifyRequest} from "fastify";
 import postTournamentSummaryRoute from "./routes/tournamentRoute.js";
-import { initDB, getValues, db } from "./init_db.js";
+import { initDB, getValues } from "./init_db.js";
 import fs from 'node:fs';
 import jwtSetup from './plugins/authPlugin.js';
 

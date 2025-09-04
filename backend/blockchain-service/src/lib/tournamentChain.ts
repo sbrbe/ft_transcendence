@@ -2,11 +2,11 @@ import "dotenv/config";
 import { ethers } from "ethers";
 import abi from "./tournamentABI.js";
 
+let _contract: ethers.Contract | null = null;
+
 const RPC = process.env.FUJI_RPC!;
 const CONTRACT_ADDR = process.env.CONTRACT_ADDR!;
 const KEEPER_PK = process.env.KEEPER_PK!;
-
-let _contract: ethers.Contract | null = null;
 
 function getContract(): ethers.Contract
 {
@@ -21,8 +21,22 @@ function getContract(): ethers.Contract
 }
 
 export type TSPlayer = { name: string; score: number };
-export type TSMatch  = { player1: TSPlayer; player2: TSPlayer; };
-export type TSSummary = { tournamentId: string; winnerName: string; matches: TSMatch[]; };
+export type TSMatch  = { player1: TSPlayer; player2: TSPlayer };
+export type TSSummary = { tournamentId: string; userId: string; winnerName: string; matches: TSMatch[] };
+
+export function addPlayers(matches: TSMatch[]): string[]
+{
+  const playerNumber = matches.length + 1;
+  const roundSize = playerNumber / 2;
+  const playerArr: string[] = [];
+  
+  for (let i = 0; i < roundSize; i++)
+  {
+    const match = matches[i];
+    playerArr.push(match.player1.name, match.player2.name);
+  }
+  return playerArr.slice(0, playerNumber);
+}
 
 export async function sendTournamentSummary( s: TSSummary): Promise<{ txHash: string; blockNumber: number; snowtraceTx: string }>
 {
