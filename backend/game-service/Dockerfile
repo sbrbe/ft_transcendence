@@ -1,15 +1,31 @@
-FROM node:22
+FROM node:22-bookworm-slim AS build
 
 WORKDIR /app
 
+RUN apt-get update \
+	&& apt-get install -y --no-install-recommends python3 build-essential \
+	&& rm -rf /var/lib/apt/lists/*
+
 COPY package*.json ./
+RUN	npm ci
 
-RUN npm ci
-
-COPY . .
-
+COPY tsconfig.json ./
+COPY src ./src
+COPY frontend ./frontend
 RUN npm run build
 
-CMD ["node", "dist/server.js"]
+RUN npm rebuild better-sqlite3 bcrypt --build-from-source || true
 
-#CMD ["node","-e","console.log('Use docker-compose command')"]
+RUN npm prune --omit=dev
+
+FROM node:22-bookworm-slim AS runtime
+ENV NODE_ENV=production
+
+WORKDIR /app
+
+COPY --from=build /app/dist ./dist
+COPY --from=build /app/node_modules ./node_modules
+COPY package*.json ./
+
+
+CMD ["node", "dist/server.js"]

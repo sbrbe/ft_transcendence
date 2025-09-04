@@ -41,15 +41,14 @@ app.get('/game/health', async (req, reply) => {
 	return reply.status(200).send({ status: 'ok' });
 });
 
-app.get('/', async () => ({ ok: true }));
-app.get('/ws/match', async (req, reply) => {
+app.get('/game/match', async (req, reply) => {
   const rows = getAllMatches();
   return rows;
 });
 
 await app.ready();
 
-app.listen({ port: 3001, host: '0.0.0.0'}, (err, address) => {
+app.listen({ port: 3004, host: '0.0.0.0'}, (err, address) => {
 	if (err) {
 		console.error(err);
 		process.exit(1);
