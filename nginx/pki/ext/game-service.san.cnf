@@ -1,0 +1,4 @@
+subjectAltName=DNS:game-service
+basicConstraints=CA:FALSE
+keyUsage = digitalSignature, keyEncipherment
+extendedKeyUsage = serverAuth

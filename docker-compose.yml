@@ -41,8 +41,23 @@ services:
       - "3003:3003"
     volumes:
       - blockchain-db:/app/database  
-      - ./nginx/pki/issued/auth-service.crt:/run/certs/blockchain-service.crt:ro
-      - ./nginx/pki/private/auth-service.key:/run/certs/blockchain-service.key:ro
+      - ./nginx/pki/issued/blockchain-service.crt:/run/certs/blockchain-service.crt:ro
+      - ./nginx/pki/private/blockchain-service.key:/run/certs/blockchain-service.key:ro
+      - ./nginx/pki/ca/ca.crt:/run/certs/ca.crt:ro
+    environment:
+      - JWT_ACCESS_SECRET=${JWT_ACCESS_SECRET}
+      - COOKIE_SECRET=${COOKIE_SECRET}
+    networks:
+      - transcendence
+
+  game-service:
+    build: ./backend/game-service
+    ports:
+      - "3004:3004"
+    volumes:
+      - game-db:/app/database  
+      - ./nginx/pki/issued/game-service.crt:/run/certs/game-service.crt:ro
+      - ./nginx/pki/private/game-service.key:/run/certs/game-service.key:ro
       - ./nginx/pki/ca/ca.crt:/run/certs/ca.crt:ro
     environment:
       - JWT_ACCESS_SECRET=${JWT_ACCESS_SECRET}
@@ -56,6 +71,7 @@ services:
       - users-service
       - auth-service
       - blockchain-service
+      - game-service
     ports:
       - "443:443"
       - "8080:8080"
@@ -76,3 +92,4 @@ volumes:
   user-db:
   auth-db:
   blockchain-db:
+  game-db:
