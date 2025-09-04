@@ -8,9 +8,10 @@ export default async function postTournamentSummaryRoute(app: FastifyInstance)
       description: "1 tournoi, 1 transaction",
       body: {
         type: "object",
-        required: [ "tournamentId", "winnerName", "matches" ],
+        required: [ "tournamentId", "userId", "winnerName", "matches" ],
         properties: {
           tournamentId: { type: "string" },
+          userId: { type: "string" },
           winnerName: { type: "string" },
           matches: {
             type: "array",

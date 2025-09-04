@@ -21,30 +21,63 @@ export function initDB()
 
 const createTournamentTable = 
 	`CREATE TABLE IF NOT EXISTS tournaments (
-        tournoiId TEXT PRIMARY KEY,
+        userId TEXT PRIMARY KEY,
+		tournoiId 
         snowtrace_link TEXT NOT NULL
+		players TEXT NOT NULL '[]'
 		)`;
 
 export function saveValues(input: tournoiValues)
 {
-  const check = db.prepare("SELECT 1 FROM tournaments WHERE tournoiId = ?");
-  const exists = check.get(input.tournoiId);
+  const check = db.prepare("SELECT 1 FROM tournaments WHERE userId = ?");
+  const exists = check.get(input.userId);
 
   if (!exists)
   {
-    const stmt = db.prepare("INSERT INTO tournaments (tournoiId, snowtrace_link) VALUES (?, ?)");
-    stmt.run(input.tournoiId, input.snowtrace_link);
+    const stmt = db.prepare("INSERT INTO tournaments (userId, snowtrace_link) VALUES (?, ?)");
+    stmt.run(input.userId, input.snowtrace_link);
   }
   else 
   {
-    console.log(`⚠️ tournoiId ${input.tournoiId} existe déjà`);
+    console.log(`⚠️ userId ${input.userId} existe déjà`);
   }
 };
+
+export function addSnowtraceLink(userId: string, link: string): string[]
+{
+	const tx: (uid: string, l: string) => string[] = db.transaction((uid: string, l: string): string[] =>
+	{
+		const row = db
+			.prepare("SELECT snowtrace_link FROM tournaments WHERE userId = ?")
+        	.get(uid) as { snowtrace_links: string } | undefined;
+		
+		const links: string[] = row ? JSON.parse(row.snowtrace_links) : [];
+		
+		if (!links.includes(l))
+			links.push(l);
+
+      	const json = JSON.stringify(links);
+
+      	if (row)
+	  	{
+        	db.prepare("UPDATE player_tournaments SET snowtrace_links = ? WHERE user_id = ?").run(json, uid);
+      	}
+	  	else
+	  	{
+        	db.prepare("INSERT INTO player_tournaments (user_id, snowtrace_links) VALUES (?, ?)").run(uid, json);
+      	}
+
+      	return links;
+    });
+
+	return tx(userId, link);
+}
+
 
 export function getValues()
 {
 	const stmt = db.prepare(`
-		SELECT tournoiId, snowtrace_link
+		SELECT userId, snowtrace_link
 		FROM tournaments
 		ORDER BY rowid DESC
 	`);
