@@ -10,6 +10,7 @@ const ws_1 = require("ws");
 const url_1 = require("url");
 const game_logic_js_1 = require("../../frontend/engine_play/dist/game_logic.js");
 const tournament_js_1 = require("../../frontend/engine_play/dist/tournament.js");
+const crypto_1 = require("crypto");
 /* =========
    Constantes
    ========= */
@@ -141,7 +142,7 @@ function startLocalTicker(sess) {
             return; // ⛔ gel
         const snap = sess.t.playLocal?.();
         if (snap.running === false) {
-            maybeSendTournamentSummary(snap);
+            maybeSendTournamentSummary(snap, sess);
         }
         sess.t.launch = false;
         if (snap) {
@@ -214,9 +215,9 @@ wss.on('connection', (ws, req) => {
     }
     // ---------- 2) Tournoi local ----------
     if (pathname === '/ws/local') {
-        const sess = { ws, t: null };
+        const sess = { ws, t: null, tournamentId: (0, crypto_1.randomUUID)(), historTournmnt: [] };
         safeSend(ws, { type: 'info', code: 'waiting_conf' });
-        ws.on('message', (raw) => {
+        ws.on('message', async (raw) => {
             let msg;
             try {
                 msg = JSON.parse(raw.toString());
@@ -278,10 +279,33 @@ wss.on('connection', (ws, req) => {
                             const res = sess.t.getNextMatch();
                             const player1 = res[0];
                             const player2 = res[1];
+                            // … ton code …
                             if (!player1) {
-                                safeSend(sess.ws, { type: 'tournament_end' });
+                                const winnerName = player2;
+                                safeSend(sess.ws, { type: "tournament_end" });
                                 clearInterval(sess.ticker);
                                 sess.ticker = undefined;
+                                console.log(sess.tournamentId, winnerName, sess.historTournmnt);
+                                try {
+                                    const res = await fetch('http://localhost:3004/tournaments/summary', {
+                                        method: "POST",
+                                        headers: { "Content-Type": "application/json" },
+                                        body: JSON.stringify({
+                                            tournamentId: sess.tournamentId,
+                                            winnerName,
+                                            matches: sess.historTournmnt,
+                                        }),
+                                    });
+                                    if (!res.ok) {
+                                        const txt = await res.text().catch(() => "");
+                                        throw new Error(`POST /tournaments/summary -> ${res.status} ${txt}`);
+                                    }
+                                    const data = await res.json().catch(() => ({}));
+                                    console.log("✅ Tournament summary posted:", data);
+                                }
+                                catch (err) {
+                                    console.error("❌ Tournament summary POST failed:", err);
+                                }
                                 break;
                             }
                             const player = `${player1} VS ${player2}`;
@@ -366,37 +390,21 @@ setInterval(() => {
    Envoi Mat
    ========= */
 // Appelle ceci dans ton onState / quand snap.running devient false
-async function maybeSendTournamentSummary(snap) {
+async function maybeSendTournamentSummary(snap, sess) {
     try {
         if (!snap)
             return;
         const nameA = (snap.paddles[0]?.name) || 'Player 1';
         const nameB = (snap.paddles[1]?.name) || 'Player 2';
-        const scoreA = snap.score.A;
-        const scoreB = snap.score.B;
-        let winnerName = snap.tracker.winner;
-        const tournamentId = String(snap.id ?? '');
+        const scoreA = snap.scores.A;
+        const scoreB = snap.scores.B;
         const payload = {
-            tournamentId,
-            winnerName,
-            matches: [
-                {
-                    player1: { name: nameA, score: scoreA },
-                    player2: { name: nameB, score: scoreB },
-                },
-            ],
+            matches: {
+                player1: { name: nameA, score: scoreA },
+                player2: { name: nameB, score: scoreB },
+            },
         };
-        console.log('fin envoie a matt: payload =', payload);
-        const res = await fetch('/tournaments/summary', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify(payload),
-        });
-        if (!res.ok) {
-            const text = await res.text().catch(() => '');
-            console.error('[summary] POST /tournaments/summary failed', res.status, text);
-            return;
-        }
+        sess.historTournmnt.push(payload);
     }
     catch (err) {
         console.error('[summary] Erreur envoi tournoi:', err);

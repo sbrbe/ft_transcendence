@@ -4,7 +4,7 @@ import { initDB, getValues, db } from "./dataBase.js";
 const app = fastify({ logger: true, });
 if (!db)
     initDB();
-app.get('/db', async (req, reply) => {
+app.get('/tournaments/summary/db', async (req, reply) => {
     const rows = getValues();
     return (rows); // Fastify renvoie ça en JSON automatiquement
 });

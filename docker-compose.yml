@@ -13,7 +13,7 @@ services:
       - ./database:/app/database
 
   blockchain:
-    build: ./matt
+    build: ./blockchain
     ports:
       - "3004:3004"
     volumes:
@@ -40,7 +40,7 @@ services:
     depends_on:
       - backend
       - users
-      # - blockchain
+      - blockchain
     volumes:
       - ./nginx_conf:/etc/nginx/conf.d
       - ./frontend:/usr/share/nginx/html

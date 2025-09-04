@@ -92,6 +92,7 @@ const friendsRoutes = async (
       res.status(500).send({ error: err.message });
     }
   });
+  fetch ('/users/friends/:userId')
 
   fastify.get('/friends/:userId', async (req: FastifyRequest, res: FastifyReply) => {
     const userId = (req.params as UserIdParams).userId;

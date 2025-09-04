@@ -3,7 +3,7 @@ import { saveMatch, initDB, getAllMatches, db } from './init_db';
 import Fastify from 'fastify';
 import { WebSocketServer, WebSocket, RawData } from 'ws';
 import { parse as parseUrl } from 'url';
-import { gameConfig } from '../../frontend/engine_play/dist/types.js';
+import { gameConfig, GameState } from '../../frontend/engine_play/dist/types.js';
 import { GameLogic } from '../../frontend/engine_play/dist/game_logic.js';
 import { Tournament, buildTournament } from '../../frontend/engine_play/dist/tournament.js';
 import { randomUUID } from 'crypto';
@@ -173,7 +173,7 @@ function startLocalTicker(sess: LocalSession) {
 
     const snap = sess.t.playLocal?.();
     if (snap.running === false) {
-      maybeSendTournamentSummary(snap);
+      maybeSendTournamentSummary(snap, sess);
     }
       
     sess.t.launch = false;
@@ -194,7 +194,7 @@ function startLocalTicker(sess: LocalSession) {
 /* ==========================================
    Branche WS unique → routing par pathname
    ========================================== */
-wss.on('connection', (ws: WebSocket, req) => {
+wss.on('connection', (ws: WebSocket, req)  => {
   const pathname = (ws as any).__pathname as string;
 
   // ---------- 1) 1v1 en ligne ----------
@@ -249,7 +249,7 @@ wss.on('connection', (ws: WebSocket, req) => {
     const sess: LocalSession = { ws, t: null, tournamentId: randomUUID(), historTournmnt: []};
     safeSend(ws, { type: 'info', code: 'waiting_conf' });
 
-    ws.on('message', (raw: RawData) => {
+    ws.on('message', async (raw: RawData) => {
       let msg: any;
       try { msg = JSON.parse(raw.toString()); } catch { return; }
 
@@ -305,14 +305,38 @@ wss.on('connection', (ws: WebSocket, req) => {
               const res = sess.t.getNextMatch(); 
               const player1 = res[0];
               const player2 = res[1];
-              if (!player1)
-              {
-                // post tournaments/summary body : sess.histor
-                safeSend(sess.ws, { type: 'tournament_end' });
+            // … ton code …
+              if (!player1) {
+                const winnerName = player2
+                safeSend(sess.ws, { type: "tournament_end" });
                 clearInterval(sess.ticker!);
                 sess.ticker = undefined;
+                console.log(sess.tournamentId, winnerName, sess.historTournmnt);
+              
+                try {
+                  const res = await fetch('http://localhost:3004/tournaments/summary', {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify({
+                      tournamentId: sess.tournamentId,
+                      winnerName,
+                      matches: sess.historTournmnt,
+                    }),
+                  });
+                
+                  if (!res.ok) {
+                    const txt = await res.text().catch(() => "");
+                    throw new Error(`POST /tournaments/summary -> ${res.status} ${txt}`);
+                  }
+                
+                  const data = await res.json().catch(() => ({}));
+                  console.log("✅ Tournament summary posted:", data);
+                } catch (err) {
+                  console.error("❌ Tournament summary POST failed:", err);
+                }
+              
                 break;
-              }     
+              }
               const player = `${player1} VS ${player2}`;
         
               safeSend(sess.ws, { type: 'info_players', player });
@@ -403,15 +427,15 @@ setInterval(() => {
    ========= */
 
   // Appelle ceci dans ton onState / quand snap.running devient false
-async function maybeSendTournamentSummary(snap: any) {
+async function maybeSendTournamentSummary(snap: GameState, sess: LocalSession) {
   try {
     if (!snap)
       return;
 
     const nameA = (snap.paddles[0]?.name) || 'Player 1';
     const nameB = (snap.paddles[1]?.name) || 'Player 2';
-    const scoreA = snap.score.A;
-    const scoreB = snap.score.B
+    const scoreA = snap.scores.A;
+    const scoreB = snap.scores.B;
 
     const payload: Payload = {
       matches:
@@ -421,7 +445,7 @@ async function maybeSendTournamentSummary(snap: any) {
         },
     };
 
-    snap.historTournmnt.push(payload);
+    sess.historTournmnt.push(payload);
   } catch (err) {
     console.error('[summary] Erreur envoi tournoi:', err);
   }
