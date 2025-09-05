@@ -21,39 +21,39 @@ export function initDB()
 
 const createTournamentTable = 
 	`CREATE TABLE IF NOT EXISTS tournaments (
-        tournoiId TEXT PRIMARY KEY,
+    tournamentId TEXT PRIMARY KEY,
 		userId TEXT NOT NULL,
-        snowtrace_link TEXT NOT NULL,
+    snowtrace_link TEXT NOT NULL,
 		players TEXT NOT NULL DEFAULT '[]'
 		)`;
 
 export function saveValues(input: tournoiValues)
 {
-  const check = db.prepare("SELECT 1 FROM tournaments WHERE tournoiId = ?");
-  const exists = check.get(input.tournoiId);
+  const check = db.prepare("SELECT 1 FROM tournaments WHERE tournamentId = ?");
+  const exists = check.get(input.tournamentId);
 
   if (!exists)
   {
-    const stmt = db.prepare("INSERT INTO tournaments (tournoiId, userId, snowtrace_link, players) VALUES (?, ?, ?, ?)");
-    stmt.run(input.tournoiId, input.userId, input.snowtrace_link, JSON.stringify(input.players ?? []));
-	console.log(`✅ tournoi ${input.tournoiId} créé`);
+    const stmt = db.prepare("INSERT INTO tournaments (tournamentId, userId, snowtrace_link, players) VALUES (?, ?, ?, ?)");
+    stmt.run(input.tournamentId, input.userId, input.snowtrace_link, JSON.stringify(input.players ?? []));
+	console.log(`✅ tournamentId ${input.tournamentId} créé`);
   }
   else 
   {
-    console.log(`⚠️ userId ${input.tournoiId} existe déjà`);
+    console.log(`⚠️ tournamentId ${input.tournamentId} existe déjà`);
   }
 }
 
 export function getValues(userId: string): Array<tournoiValues> {
   const rows = db.prepare(`
-    SELECT tournoiId, userId, snowtrace_link, players
+    SELECT tournamentId, userId, snowtrace_link, players
     FROM tournaments
     WHERE userId = ?
     ORDER BY rowid DESC
-  `).all(userId) as Array<{ tournoiId: string; userId: string; snowtrace_link: string; players: string }>;
+  `).all(userId) as Array<{ tournamentId: string; userId: string; snowtrace_link: string; players: string }>;
 
   return rows.map(r => ({
-    tournoiId: r.tournoiId,
+    tournamentId: r.tournamentId,
     userId: r.userId,
     snowtrace_link: r.snowtrace_link,
     players: safeParsePlayers(r.players),

@@ -1,40 +1,8 @@
 {
-  "tournamentId": "12345",
-  "userId": "jeaneud",
+  "tournamentId": "1000",
+  "userId": "rot13",
   "winnerName": "jiji",
   "matches": [
-    {
-      "player1": { "name": "Jesus", "score": 11 },
-      "player2": { "name": "Buscemi",   "score": 71  }
-    },
-    {
-      "player1": { "name": "pomme", "score": 644  },
-      "player2": { "name": "Buscemi",  "score": 1104 }
-    },
-    {
-      "player1": { "name": "poire", "score": 600  },
-      "player2": { "name": "franze",  "score": 11000 }
-    },
-    {
-      "player1": { "name": "Jesus", "score": 12301 },
-      "player2": { "name": "ronaldhino",   "score": 701  }
-    },
-    {
-      "player1": { "name": "pomme", "score": 698  },
-      "player2": { "name": "rougail",  "score": 111 }
-    },
-    {
-      "player1": { "name": "Buscemi", "score": 110 },
-      "player2": { "name": "filipin",   "score": 85  }
-    },
-    {
-      "player1": { "name": "pas_ok", "score": 67  },
-      "player2": { "name": "ok",  "score": 1425 }
-    },
-    {
-      "player1": { "name": "rien", "score": 6666 },
-      "player2": { "name": "zouzou",   "score": 44  }
-    },
     {
       "player1": { "name": "eau_letale", "score": 69  },
       "player2": { "name": "cactus",  "score": 23 }

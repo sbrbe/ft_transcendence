@@ -2,11 +2,16 @@ import "dotenv/config";
 import { ethers } from "ethers";
 import abi from "./tournamentABI.js";
 
-let _contract: ethers.Contract | null = null;
-
 const RPC = process.env.FUJI_RPC!;
 const CONTRACT_ADDR = process.env.CONTRACT_ADDR!;
 const KEEPER_PK = process.env.KEEPER_PK!;
+
+if (!process.env.FUJI_RPC || !process.env.CONTRACT_ADDR || !process.env.KEEPER_PK) {
+	throw new Error('FUJI_RPC, CONTRACT_ADDR or KEEPER_PK not set');
+}
+
+let _contract: ethers.Contract | null = null;
+
 
 function getContract(): ethers.Contract
 {

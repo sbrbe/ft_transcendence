@@ -1,6 +1,6 @@
 import fastify, {FastifyInstance, FastifyReply, FastifyRequest} from "fastify";
 import postTournamentSummaryRoute from "./routes/tournamentRoute.js";
-import { initDB, getValues } from "./init_db.js";
+import { initDB, getValues, db } from "./init_db.js";
 import fs from 'node:fs';
 import jwtSetup from './plugins/authPlugin.js';
 
@@ -27,7 +27,7 @@ await app.register(postTournamentSummaryRoute);
 
 app.get('/blockchain/ma-route', async (request: FastifyRequest, reply: FastifyReply) => {
 	try {
-		const rows = getValues();
+		const rows = getValues("rot13");
 		return reply.send({ rows });
 	} catch (err: any) {
 		return reply.status(500).send({ error: err.message });

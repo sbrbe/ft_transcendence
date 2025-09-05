@@ -44,7 +44,8 @@ export default async function postTournamentSummaryRoute(app: FastifyInstance)
           type: "object",
           properties: {
             ok: { type: "boolean" },
-            tournamentId: { type: "number" },
+            tournamentId: { type: "string" },
+            userId: {type: "string"},
             txHash: { type: "string" },
             blockNumber: { type: "number" },
             snowtraceTx: { type: "string" }
