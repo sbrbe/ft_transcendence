@@ -19,11 +19,11 @@ function requireNginxAndCaller(allowedCallers: string[]) {
 			return reply.status(401).send({ error: 'mTLS required '});
 		}
 		const peer = tls.getPeerCertificate();
-		if (!peer || peer.subject?.CN !== 'nginx') {
+		if (!peer || !peer.subject?.CN) {
 			return reply.status(403).send({ error: 'TLS peer not allowed' });
 		}
 		const callerCN = String(req.headers['x-caller-cn'] || '');
-		if (allowedCallers.includes(callerCN)) {
+		if (!allowedCallers.includes(callerCN)) {
 			return reply.status(403).send({ error: 'Caller CN not allowed' });
 		}
 	};

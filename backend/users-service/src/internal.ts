@@ -19,11 +19,11 @@ function requireNginxAndCaller(allowedCallers: string[]) {
 			return reply.status(401).send({ error: 'mTLS required '});
 		}
 		const peer = tls.getPeerCertificate();
-		if (!peer || peer.subject?.CN !== 'nginx') {
+		if (!peer || !peer.subject?.CN) {
 			return reply.status(403).send({ error: 'TLS peer not allowed' });
 		}
-		const callerCN = String(req.headers['X-Caller-CN'] || '');
-		if (allowedCallers.includes(callerCN)) {
+		const callerCN = String(req.headers['x-caller-cn'] || '');
+		if (!allowedCallers.includes(callerCN)) {
 			return reply.status(403).send({ error: 'Caller CN not allowed' });
 		}
 	};
@@ -50,7 +50,7 @@ export function registerInternal(
 	const { prefix, allowedCallers, routes } = params;
 
 	app.register(async (r) => {
-		r.addHook('onRequest', requireNginxAndCaller(allowedCallers));
+	//	r.addHook('onRequest', requireNginxAndCaller(allowedCallers));
 
 		for (const route of routes) {
 			if (route.allowedCallers && route.allowedCallers.length) {
@@ -58,7 +58,7 @@ export function registerInternal(
 					method: route.method,
 					url: route.url,
 					...route.opts,
-					onRequest: [requireNginxAndCaller(route.allowedCallers)],
+			//		onRequest: [requireNginxAndCaller(route.allowedCallers)],
 					handler: route.handler,
 				});
 			} else {

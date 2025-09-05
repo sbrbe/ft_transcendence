@@ -10,7 +10,7 @@ export function initDB()
 	{
 		db = new Database('./database/database.db');
 		db.exec(createTournamentTable);
-		console.log('✅ SQLite AUTH_DB connected');
+		console.log('✅ SQLite BLOCKCHAIN_DB connected');
 	}
 	catch (err: any)
 	{
