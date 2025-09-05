@@ -10,14 +10,14 @@ interface RequestForm {
 
 interface UtilsForm {
 	userId: string;
-	targetName: string;
+	friendUsername: string;
 }
 
 export interface FriendsRequest {
-	id: string;
-	userId: string;
+	id: number;
 	friendId: string;
-	avatarPath: string;
+	friendUsername: string;
+	friendAvatarPath: string;
 }
 
 export async function sendFriendRequest(
@@ -95,59 +95,15 @@ export async function rejectRequest(
 	}
 }
 
-export async function blockUser(
-	req: FastifyRequest<{ Body: UtilsForm }>,
-	reply: FastifyReply) {
-		const { userId, targetName } = req.body;
-		try {
-			const target = getUserByUsername(targetName);
-			if (!target) {
-				return reply.status(404).send({ error: 'Player not found' });
-			}
-			db.prepare(`DELETE FROM friendships WHERE (userId = ? AND friendId = ?) OR (userId = ? AND friendId = ?)`)
-				.run(userId, target.userId, target.userId, userId);
-
-			const res = db.prepare(`INSERT INTO friendships (userId, friendId, status) VALUES (?, ?, 'blocked')`)
-				.run(userId, target.userId);
-			console.log(`BLOCK USER = ${res.lastInsertRowid}`);
-			return reply.status(200).send({ message: 'Player blocked' });
-		} catch (error: any) {
-			return reply.status(500).send({ error: error.message });
-		}
-}
-
-export async function unblockUser(
-	req: FastifyRequest<{ Body: UtilsForm }>,
-	reply: FastifyReply) {
-		const { userId, targetName } = req.body;
-
-		try {
-			const target = getUserByUsername(targetName);
-			if (!target) {
-				return reply.status(404).send({ error: 'Player not found' });
-			}
-			const request = getFriendship(userId, target.userId);
-			if (!request) {
-				return reply.status(400).send({ error: 'Player not blocked' });
-			}
-			const res = db.prepare(`DELETE FROM friendships WHERE (userId = ? AND friendId = ?) OR (userId = ? AND friendId = ?)`)
-				.run(userId, target.userId, target.userId, userId);
-			console.log(`UNBLOCK USER = ${res.changes}`);
-			return reply.status(200).send({ message: 'Player unblocked' });
-		} catch (error: any) {
-			return reply.status(500).send({ error: error.message });
-		}
-}
-
 export async function removeFriend(
 	req: FastifyRequest<{ Body: UtilsForm }>,
 	reply: FastifyReply) {
-		const { userId, targetName } = req.body;
+		const { userId, friendUsername } = req.body;
 
 		try {
-			const target = getUserByUsername(targetName);
+			const target = getUserByUsername(friendUsername);
 			if (!target) {
-				return reply.status(404).send({ error: 'Player not found' });
+				return reply.status(200).send({ message: 'Player removed from friends list'});
 			}
 			const res = db.prepare(`DELETE FROM friendships WHERE (userId = ? AND friendId = ?) OR (userId = ? AND friendId = ?)`)
 				.run(userId, target.userId, target.userId, userId);
@@ -167,13 +123,18 @@ export async function getPendingRequest(
 		const { userId } = req.params;
 		try {
 			const stmt = db.prepare(`
-				SELECT f.id, u.userId, u.username, u.avatarPath
+				SELECT
+					f.id AS id,
+					u.userId AS friendId,
+					u.username AS friendUsername,
+					u.avatarPath AS friendAvatarPath
 				FROM friendships f
 				JOIN users u ON u.userId = f.userId
 				WHERE f.friendId = ? and f.status = ?
 				ORDER BY f.createdAt DESC
 				`);
 			const requests = stmt.all(userId, 'pending') as FriendsRequest[];
+			console.log('PENDING REQUEST: ', requests);
 			return reply.status(200).send(requests);
 		} catch (error: any) {
 			return reply.status(500).send({ error: error.message });
@@ -186,13 +147,20 @@ export async function getFriendsList(
 		const { userId } = req.params;
 		try {
 			const stmt = db.prepare(`
-				SELECT f.id, u.userId, u.username, u.avatarPath
+				SELECT
+					f.id AS id,
+					CASE WHEN f.userId = ? THEN f.friendId ELSE f.userId END AS friendId,
+					u.username AS friendUsername,
+					u.avatarPath AS friendAvatarPath,
+					u.isOnline AS isOnline
 				FROM friendships f
-				JOIN users u ON u.userId = f.userId
-				WHERE f.friendId = ? and f.status = ?
+				JOIN users u
+					ON u.userId = CASE WHEN f.userId = ? THEN f.friendId ELSE f.userId END
+				WHERE (f.friendId = ? OR f.userId = ?)
+				AND f.status = ?
 				ORDER BY f.createdAt DESC
 				`);
-			const list = stmt.all(userId, 'accepted') as FriendsRequest[];
+			const list = stmt.all(userId, userId, userId, userId, 'accepted') as FriendsRequest[];
 			return reply.status(200).send(list);
 		} catch (error: any) {
 			return reply.status(500).send({ error: error.message });

@@ -53,7 +53,7 @@ app.listen({ port: 3004, host: '0.0.0.0'}, (err, address) => {
 		console.error(err);
 		process.exit(1);
 	}
-	console.log(`✅ Users-service running on ${address}`)
+	console.log(`✅ Game-service running on ${address}`)
 });
 
 export default app;

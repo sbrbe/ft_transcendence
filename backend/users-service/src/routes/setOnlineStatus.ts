@@ -11,7 +11,7 @@ export const setOnlineStatusRoute: InternalRoute = {
 				type: 'object',
 				required: ['userId', 'online'],
 				properties: {
-					userId: { type: 'string', format: 'uuid'},
+					userId: { type: 'string' },
 					online: { type: 'boolean' }
 				}
 			},
@@ -38,6 +38,7 @@ export const setOnlineStatusRoute: InternalRoute = {
 		const { userId, online } = req.body as { userId: string, online: boolean };
 
 		const user = getUserById(userId);
+		console.log('SET STATUS = ', online);
 		if (!user) {
 			return reply.status(400).send({ success: false, error: 'User not found' });
 		}

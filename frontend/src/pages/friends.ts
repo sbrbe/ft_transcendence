@@ -12,18 +12,18 @@ type SearchUserResult = {
 
 type PendingRequest = {
   requestId: number;
-  userId: string;
-  username: string;
-  avatarPath?: string;
+  friendId: string;
+  friendUsername: string;
+  friendAvatarPath?: string;
 };
 
 type Friend = {
   requestId: number;
-  id: string;
-  username: string;
-  avatarPath: string;
+  friendId: string;
+  friendUsername: string;
+  friendAvatarPath: string;
+  isOnline: boolean;
 };
-
 
 const friends: (container: HTMLElement) => void = (container) => {
     const saved = getSavedUser<AppUser>();
@@ -41,27 +41,22 @@ const friends: (container: HTMLElement) => void = (container) => {
       </header>
 
       <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
-
+      
 <!-- Colonne principale : Liste d'amis -->
       <section class="rounded-2xl border bg-white shadow-sm p-6">
-         <h2 class="text-sm uppercase tracking-wider text-gray-500 mb-3">Mes amis</h2>
+         <h2 class="text-sm uppercase tracking-wider text-gray-500 mb-3">FRIENDS LIST</h2>
 
-        <div id="friends-loading" class="text-sm text-gray-500 hidden">Chargement…</div>
         <ul id="friends-list" class="space-y-3"></ul>
         <p id="friends-msg" class="text-sm mt-2 min-h-5" aria-live="polite"></p>
-      </section>
 
-
-
-          <div class="mt-4 flex justify-between items-center text-sm">
+        <div class="mt-4 flex justify-between items-center text-sm">
             <p class="text-gray-500">View 1–10</p>
             <div class="flex items-center gap-2">
               <button class="px-3 py-1.5 rounded-lg border hover:bg-gray-50">Previous</button>
               <button class="px-3 py-1.5 rounded-lg border hover:bg-gray-50">Next</button>
             </div>
           </div>
-        </section>
-
+      </section>
 
       
         <div class="space-y-6">
@@ -106,10 +101,10 @@ const friends: (container: HTMLElement) => void = (container) => {
   const searchBtn = container.querySelector<HTMLButtonElement>('#searchBtn')!;
   const resultsEl = container.querySelector<HTMLDivElement>('#search-results')!;
 
-  const acceptBtn = container.querySelector<HTMLButtonElement>('#acceptBtn')!;
-  const rejectBtn = container.querySelector<HTMLButtonElement>('#rejectBtn')!;
-  const pendingMsg = container.querySelector<HTMLParagraphElement>('#pending-msg')!;
-  const removeBtn = container.querySelector<HTMLButtonElement>('#acceptBtn')!;
+//  const acceptBtn = container.querySelector<HTMLButtonElement>('#acceptBtn')!;
+//  const rejectBtn = container.querySelector<HTMLButtonElement>('#rejectBtn')!;
+//  const pendingMsg = container.querySelector<HTMLParagraphElement>('#pending-msg')!;
+//  const removeBtn = container.querySelector<HTMLButtonElement>('#acceptBtn')!;
   
   form.addEventListener('submit', async (e) => {
     e.preventDefault();
@@ -227,17 +222,17 @@ const friends: (container: HTMLElement) => void = (container) => {
 
       const pending: PendingRequest[] = res.map((r: {
         id: number;
-        userId: string;
-        username: string;
-        avatarPath: string;
+        friendId: string;
+        friendUsername: string;
+        friendAvatarPath: string;
       }) => ({
         requestId: r.id,
-        userId: r.userId,
-        username: r.username,
-        avatarPath: r.avatarPath
+        friendId: r.friendId,
+        friendUsername: r.friendUsername,
+       friendAvatarPath: r.friendAvatarPath
       }));
       if (!pending.length) {
-        list.innerHTML = `<li class="text-sm text-gray-500">Aucune demande en attente.</li>`;
+        list.innerHTML = `<li class="text-sm text-gray-500">No pending request.</li>`;
         return;
       }
 
@@ -248,10 +243,10 @@ const friends: (container: HTMLElement) => void = (container) => {
         li.className = 'flex items-center gap-3';
 
         li.innerHTML = `
-          <img src="${p.avatarPath || '/avatar/default.png'}"
+          <img src="${p.friendAvatarPath || '/avatar/default.png'}"
              class="h-9 w-9 rounded-xl ring-1 ring-black/10 object-cover" alt="">
           <div class="min-w-0 flex-1">
-          <p class="font-medium truncate">${p.username}</p>
+          <p class="font-medium truncate">${p.friendUsername}</p>
           </div>
           <div class="flex items-center gap-2">
             <button class="accept px-3 py-1.5 rounded-lg border text-sm hover:bg-gray-50">Accept</button>
@@ -269,11 +264,12 @@ const friends: (container: HTMLElement) => void = (container) => {
           if (!list.children.length) {
             list.innerHTML = `<li class="text-sm text-gray-500">No pending request</li>`;
           }
-          setStatusMessage(msg, `You're now friend with ${p.username}`, 'success');
+          setStatusMessage(msg, `You're now friend with ${p.friendUsername}`, 'success');
         } catch (error: any) {
           setStatusMessage(msg, error?.message || 'Failed to accept request', 'error');
         } finally {
           lockButton(btn, false);
+          renderFriendsList(saved);
         }
       });
 
@@ -317,26 +313,46 @@ const friends: (container: HTMLElement) => void = (container) => {
       const res = await loadFriendsList(saved.userId) as Friend[];
 
        if (!res.length) {
-         list.innerHTML = `<li class="text-sm text-gray-500">Aucun ami pour le moment.</li>`;
+         list.innerHTML = `<li class="text-sm text-gray-500">No friends.</li>`;
           return;
       }
       const frag = document.createDocumentFragment();
       res.forEach((p) => {
         const li = document.createElement('li');
         li.className = 'flex items-center gap-3';
-        li.dataset.friendId = p.id;
+        li.dataset.friendId = p.friendId;
 
         li.innerHTML = `
-          <img src="${p.avatarPath}" class="h-9 w-9 rounded-xl ring-1 ring-black/10 object-cover" alt="">
+          <img src="${p.friendAvatarPath}" class="h-9 w-9 rounded-xl ring-1 ring-black/10 object-cover" alt="">
           <div class="min-w-0 flex-1">
-            <p class="font-medium truncate">${p.username}</p>
+            <p class="font-medium truncate">${p.friendUsername}</p>
+          </div>
+          <div class="shrink-0">
+            ${statusBadge(p.isOnline)}
           </div>
           <!-- Boutons optionnels, mêmes styles que pending -->
           <div class="flex items-center gap-2">
-            <button data-action="message" class="px-3 py-1.5 rounded-lg border text-sm hover:bg-gray-50">Message</button>
-            <button data-action="unfriend" class="px-3 py-1.5 rounded-lg border text-sm hover:bg-gray-50 text-red-600">Retirer</button>
+            <button class="remove px-3 py-1.5 rounded-lg border text-sm hover:bg-gray-50 text-red-600">Remove</button>
           </div>
         `;
+
+        li.querySelector<HTMLButtonElement>('button.remove')!.addEventListener('click', async (e) => {
+        const btn = e.currentTarget as HTMLButtonElement;
+        lockButton(btn, true);
+        clearStatusMessage(msg);
+        try {
+          await removeFriend(saved.userId, p.friendUsername);
+          li.remove();
+          if (!list.children.length) {
+            list.innerHTML = `<li class="text-sm text-gray-500">No pending request</li>`;
+          }
+          setStatusMessage(msg, `You have removed ${p.friendUsername} from your friends`, 'success');
+        } catch (error: any) {
+          setStatusMessage(msg, error?.message || 'Failed to remove friend', 'error');
+        } finally {
+          lockButton(btn, false);
+        }
+      });
 
         frag.appendChild(li);
     });
@@ -346,7 +362,18 @@ const friends: (container: HTMLElement) => void = (container) => {
       setStatusMessage(msg, error?.message || "Can't load friends list");
       list.innerHTML = `<li class="text-sm text-gray-500">—</li>`; 
     }
-  }
+  };
+
+  const statusBadge = (isOnline: boolean) => isOnline
+  ? `
+  <span class="inline-flex items-center gap-1 text-xs text-green-700 bg-green-100 px-2 py-0.5 rounded-full">
+    <span class="h-2 w-2 rounded-full bg-green-500"></span> En ligne
+  </span>`
+  : `
+  <span class="inline-flex items-center gap-1 text-xs text-gray-700 bg-gray-100 px-2 py-0.5 rounded-full">
+    <span class="h-2 w-2 rounded-full bg-gray-400"></span> Hors ligne
+  </span>`;
+
 };
 
 export default friends;

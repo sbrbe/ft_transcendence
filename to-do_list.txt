@@ -5,6 +5,7 @@ Function :
 		- Faire une requete qui recupère la liste d'amis et leur status
 		- Faire une requete qui recupère les demandes d'amis en attente
 		- gérer les avatars
+		- ajouter les tokens/refresh dans les fonctions
 
 ajouter un update ui dans la fonction logout pour les fails de refresh
 		

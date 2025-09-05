@@ -97,60 +97,12 @@ export async function rejectRequest(userId: string, requestId: number) {
  * Bloque un player.
  * Attend un 200 ; si erreur -> lève une exception.
  */
-export async function blockUser(userId: string, targetName: string) {
-			const res = await fetch('/users/friends/block', {
-		method: 'POST',
-		credentials: 'include',
-		headers: { 'Content-Type' : 'application/json'},
-		body: JSON.stringify({ userId, targetName })
-	});
-
-	if (res.ok && res.status === 200) return;
-
-	let data: any = null;
-	try {
-		data = await res.json();
-	}
-	catch {}
-	if (!res.ok) {
-		throw new Error(data?.error || res.statusText || "Voud ne pouvez pas bloquer ce joueur");
-	}
-}
-
-/**
- * Débloque un player.
- * Attend un 200 ; si erreur -> lève une exception.
- */
-export async function unblockUser(userId: string, targetName: string) {
-			const res = await fetch('/users/friends/unblock', {
-		method: 'PUT',
-		credentials: 'include',
-		headers: { 'Content-Type' : 'application/json'},
-		body: JSON.stringify({ userId, targetName })
-	});
-
-	if (res.ok && res.status === 200) return;
-
-	let data: any = null;
-	try {
-		data = await res.json();
-	}
-	catch {}
-	if (!res.ok) {
-		throw new Error(data?.error || res.statusText || "Vous ne pouvez pas débloquer ce joueur");
-	}
-}
-
-/**
- * Bloque un player.
- * Attend un 200 ; si erreur -> lève une exception.
- */
-export async function removeFriend(userId: string, targetName: string) {
+export async function removeFriend(userId: string, friendUsername: string) {
 			const res = await fetch('/users/friends/remove', {
 		method: 'PUT',
 		credentials: 'include',
 		headers: { 'Content-Type' : 'application/json'},
-		body: JSON.stringify({ userId, targetName })
+		body: JSON.stringify({ userId, friendUsername })
 	});
 
 	if (res.ok && res.status === 200) return;
