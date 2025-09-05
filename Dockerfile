@@ -6,6 +6,7 @@ COPY frontend/package*.json ./
 
 RUN npm ci --no-audit --no-fund --include=dev --silent || npm i --silent
 
+COPY shared ./shared
 COPY frontend/. .
 
 RUN npx vite build --logLevel warn

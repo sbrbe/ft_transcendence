@@ -1,8 +1,8 @@
 import fastify, {FastifyInstance, FastifyReply, FastifyRequest} from 'fastify';
 import fs from 'node:fs';
-import { db, initDB } from './init_db.js';
 import jwtSetup from './plugins/authPlugin.js';
-import { getAllMatches } from './init_db.js';
+import { initDB, getAllMatches, db } from './init_db.js';
+import { attachWs } from './wssServer.js';
 
 const app : FastifyInstance = fastify( {
 	logger: true,
@@ -14,6 +14,8 @@ const app : FastifyInstance = fastify( {
 		rejectUnauthorized: false,
 	}
 });
+
+
 
 if (!process.env.JWT_ACCESS_SECRET || !process.env.COOKIE_SECRET) {
 	throw new Error('JWT_ACCESS_SECRET or COOKIE_SECRET not set');
@@ -41,19 +43,17 @@ app.get('/game/health', async (req, reply) => {
 	return reply.status(200).send({ status: 'ok' });
 });
 
-app.get('/game/match', async (req, reply) => {
+app.get('/game/match', async () => {
   const rows = getAllMatches();
   return rows;
 });
 
+attachWs(app);
 await app.ready();
 
-app.listen({ port: 3004, host: '0.0.0.0'}, (err, address) => {
-	if (err) {
-		console.error(err);
-		process.exit(1);
-	}
-	console.log(`✅ Game-service running on ${address}`)
+const PORT = Number(process.env.PORT) || 3004;
+ app.listen({ port: PORT, host: '0.0.0.0' }).then(() => {
+   console.log('🚀 HTTP on', PORT, '| WS via httpUpgrade for /game and /game/local');
 });
 
 export default app;
