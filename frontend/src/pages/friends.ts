@@ -305,7 +305,6 @@ const friends: (container: HTMLElement) => void = (container) => {
   async function renderFriendsList(saved: AppUser) {
     const list = document.querySelector('#friends-list')!;
     const msg = document.querySelector<HTMLParagraphElement>('#friends-msg')!;
-    const loading = document.querySelector('#friends-loading')!;
 
     list.innerHTML= '';
     

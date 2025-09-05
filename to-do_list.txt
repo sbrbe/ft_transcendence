@@ -1,11 +1,16 @@
 Function :
 
-	- Friends:
+	- Profil:
 		- gérer les avatars
-		- ajouter les tokens/refresh dans les fonctions
+	- Friends : 
+		- mettre design à jour
+	- Stats:
+		- récupérer : wins / loss / hsitorique de matchs
 
 ajouter un update ui dans la fonction logout pour les fails de refresh
 		
+pages stats à faire
+
 
 Upload avatar par url
 

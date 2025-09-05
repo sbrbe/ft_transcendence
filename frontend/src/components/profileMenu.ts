@@ -46,13 +46,13 @@ export function attachProfileMenu(
 
     <nav class="p-2">
       <a href="#/profil" data-route="/profil"
-         class="block px-3 py-2 rounded-lg text-sm text-gray-800 hover:bg-gray-100">Profil -> [change ALL page]</a>
+         class="block px-3 py-2 rounded-lg text-sm text-gray-800 hover:bg-gray-100">Profil</a>
 
       <a href="#/statistiques" data-route="/statistics"
-         class="block px-3 py-2 rounded-lg text-sm text-gray-800 hover:bg-gray-100">Statistics -> [Add API]</a>
+         class="block px-3 py-2 rounded-lg text-sm text-gray-800 hover:bg-gray-100">Statistics</a>
 
       <a href="#/friends" data-route="/friends"
-         class="block px-3 py-2 rounded-lg text-sm text-gray-800 hover:bg-gray-100">Friends -> [Add API]</a>
+         class="block px-3 py-2 rounded-lg text-sm text-gray-800 hover:bg-gray-100">Friends</a>
     </nav>
 
     <div class="h-px bg-gray-100"></div>

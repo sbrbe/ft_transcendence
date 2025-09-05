@@ -1,4 +1,15 @@
-const statistiques: (container: HTMLElement) => void = (container) => {
+import { navigateTo } from "../router/router";
+import { getSavedUser } from "../utils/ui";
+import { AppUser } from "../utils/interface";
+import { getPlayerStats, getMatchHistory, PlayerStats, Match } from "../api/statistics";
+import { setStatusMessage } from "../utils/ui";
+
+const statistics: (container: HTMLElement) => void = (container) => {
+  const saved = getSavedUser<AppUser>();
+    if (!saved) {
+      navigateTo('/connection');
+      return;
+    }
   container.innerHTML = `
 
     <div class="container-page my-10 space-y-6">
@@ -7,34 +18,34 @@ const statistiques: (container: HTMLElement) => void = (container) => {
         <p class="text-sm text-gray-600">Overview of your statistics</p>
       </header>
 
-<!-- ELO -->
+<!-- WINRATE -->
       <section class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
         <article class="rounded-2xl border bg-white shadow-sm p-5">
-          <div class="text-sm text-gray-600">ELO</div>
-          <div class="mt-1 text-2xl font-semibold">1 482</div>
+          <div class="text-sm text-gray-600">WINRATE</div>
+          <div id="winrate" class="mt-1 text-2xl font-semibold">_</div>
         </article>
 
-<!-- % Victoire -->
+<!-- WINS -->
         <article class="rounded-2xl border bg-white shadow-sm p-5">
-          <div class="text-sm text-gray-600">Win rate</div>
-          <div class="mt-1 text-2xl font-semibold">67%</div>
+          <div class="text-sm text-gray-600">Wins</div>
+          <div id="wins" class="mt-1 text-2xl font-semibold">_</div>
         </article>
 
-<!-- Total Match joués -->
+<!-- DEFEATS -->
         <article class="rounded-2xl border bg-white shadow-sm p-5">
-          <div class="text-sm text-gray-600">Matches played</div>
-          <div class="mt-1 text-2xl font-semibold">72</div>
+          <div class="text-sm text-gray-600">Defeats</div>
+          <div id="defeats" class="mt-1 text-2xl font-semibold">_</div>
         </article>
 
-<!-- Serie de victoire -->
+<!-- TOTAL -->
         <article class="rounded-2xl border bg-white shadow-sm p-5">
-          <div class="text-sm text-gray-600">Current streak</div>
-          <div class="mt-1 text-2xl font-semibold">4 wins</div>
+          <div class="text-sm text-gray-600">Total</div>
+          <div id="total" class="mt-1 text-2xl font-semibold">_</div>
         </article>
       </section>
 
 
-<!-- Tableau Match Récents -->
+<!-- MATCH HISTORY -->
       <section class="rounded-2xl border bg-white shadow-sm p-5">
         <h2 class="text-sm uppercase tracking-wider text-gray-500">Recent matches</h2>
         <div class="mt-4 overflow-x-auto">
@@ -47,37 +58,76 @@ const statistiques: (container: HTMLElement) => void = (container) => {
                 <th class="py-2">Date</th>
               </tr>
             </thead>
-            <tbody class="divide-y divide-gray-100">
-
-
-
-
-<!-- Exemple, a changer avec des vrai stats api -->
-              <tr>
-                <td class="py-2 pr-4 font-medium">Nora</td>
-                <td class="py-2 pr-4">11–8</td>
-                <td class="py-2 pr-4"><span class="px-2 py-0.5 rounded-full text-xs bg-green-100 text-green-700">Win</span></td>
-                <td class="py-2">12/08/2025</td>
-              </tr>
-              <tr>
-                <td class="py-2 pr-4 font-medium">Maya</td>
-                <td class="py-2 pr-4">9–11</td>
-                <td class="py-2 pr-4"><span class="px-2 py-0.5 rounded-full text-xs bg-red-100 text-red-700">Defeat</span></td>
-                <td class="py-2">10/08/2025</td>
-              </tr>
-              <tr>
-                <td class="py-2 pr-4 font-medium">Luca</td>
-                <td class="py-2 pr-4">11–6</td>
-                <td class="py-2 pr-4"><span class="px-2 py-0.5 rounded-full text-xs bg-green-100 text-green-700">Win</span></td>
-                <td class="py-2">08/08/2025</td>
-              </tr>
+            <tbody class="history" "divide-y divide-gray-100">
+              <tr class="text-gray-400"><td class="py-3" colspan="4">No match history</td></tr>
             </tbody>
           </table>
         </div>
       </section>
-
+      <p id="stats-msg" class="hidden text-sm text-red-600"></p>
     </div>
   `;
+
+  const msg = container.querySelector<HTMLParagraphElement>('#stats-msg')!;
+  const tbody = container.querySelector<HTMLTableSectionElement>('#history')!;
+
+  async () => {
+      try {
+        const userId = saved.userId;
+        const [stats, history] = await Promise.all([
+          getPlayerStats(userId) as Promise<PlayerStats>,
+          getMatchHistory(userId) as Promise<Match[]>
+        ]);
+
+        const wins = stats.wins ?? 0;
+        const defeats = stats.defeats ?? 0;
+        const total = wins + defeats;
+        const winrate = total ? (wins / total) * 100 : 0;
+
+        const elWins = container.querySelector<HTMLElement>('#wins');
+        if (elWins)
+            elWins.textContent = String(wins);
+        const elDefeats = container.querySelector<HTMLElement>('#defeats');
+        if (elDefeats)
+            elDefeats.textContent = String(defeats);
+        const elTotal = container.querySelector<HTMLElement>('#total');
+        if (elTotal)
+            elTotal.textContent = String(total);
+        const elWinrate = container.querySelector<HTMLElement>('#winrate');
+        if (elWinrate)
+            elWinrate.textContent = `${winrate}%`;
+
+        if (tbody) {
+          tbody.innerHTML= "";
+          const rows = Array.isArray(history) ? history.slice(0, 10) : [];
+          if (!rows.length) {
+            tbody.innerHTML = `<tr class="text-gray-400"><td class="py-3" colspan="4">No recent matches.</td></tr>`;
+          } else {
+            for (const m of rows) {
+              const tr = document.createElement('tr');
+              const date = m.playedAt;
+              const result = m.result;
+              tr.innerHTML = `
+            <td class="py-2 pr-4 whitespace-nowrap">${date}</td>
+            <td class="py-2 pr-4">${m.opponentUsername}</td>
+            <td class="py-2 pr-4 font-medium">${m.myScore}–${m.hisScore}</td>
+            <td class="py-2">
+              <span class="inline-flex items-center gap-1 text-xs ${result ? "text-green-700 bg-green-100" : "text-gray-700 bg-gray-100"} px-2 py-0.5 rounded-full">
+                <span class="h-2 w-2 rounded-full ${result ? "bg-green-500" : "bg-gray-400"}"></span>
+                ${result ? "Win" : "Defeat"}
+              </span>
+            </td>
+          `;
+
+          tbody.appendChild(tr);
+            }
+          }
+        }
+      } catch (error: any) {
+        setStatusMessage(msg, error?.message || "Can't load player stats", 'error');
+        tbody.innerHTML = `<li class="text-sm text-gray-500">-</li>`;
+      }
+  }
 };
 
-export default statistiques;
+export default statistics;
