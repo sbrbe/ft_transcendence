@@ -6,6 +6,7 @@ services:
       - "3001:3001"
     volumes:
       - user-db:/app/database
+      - ./frontend/public/static/avatars:/app/static/avatars
       - ./nginx/pki/issued/users-service.crt:/run/certs/users-service.crt:ro
       - ./nginx/pki/private/users-service.key:/run/certs/users-service.key:ro
       - ./nginx/pki/ca/ca.crt:/run/certs/ca.crt:ro

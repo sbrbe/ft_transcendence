@@ -1,85 +1,76 @@
-import type { FastifyInstance ,FastifyPluginAsync } from 'fastify';
+import type { FastifyInstance, FastifyPluginAsync } from 'fastify';
 import path from 'node:path';
 import fs from 'node:fs';
 import mime from 'mime-types';
 import sharp from 'sharp';
-import { v4 as uuidv4} from 'uuid';
+import { v4 as uuidv4 } from 'uuid';
 import type { MultipartFile } from '@fastify/multipart';
 import { db } from '../init_db.js';
 
-export const avatarUploadRoute: FastifyPluginAsync = async (app: FastifyInstance) =>{
+export const avatarUploadRoute: FastifyPluginAsync = async (app: FastifyInstance) => {
+  app.post<{
+    Params: { userId: string };
+    Reply: { avatarUrl: string; etag: string } | { error: string };
+  }>('/uploadAvatar/:userId', { preHandler: app.authenticate }, async (req, reply) => {
+    const { userId } = req.params;
 
-	app.post<{
-		Reply: 
-			| { avatarUrl: string; etag: string }
-			| { error: string }}>
-			('/users/uploadAvatar/:userId', async (req, reply) => {
-		const userId = req.params;
+    // Autorisation: le user authentifié doit correspondre au paramètre
+    const auth = await req.accessJwtVerify<{ sub: string }>();
+    if (!auth || auth.sub !== userId) {
+      return reply.status(403).send({ error: 'Forbidden' });
+    }
 
-		const parts = req.parts();
-		let filePart: MultipartFile | null = null;
+    // Récupère la première part "file"
+    const parts = req.parts();
+    let filePart: MultipartFile | null = null;
+    for await (const part of parts) {
+      if (part.type === 'file') { filePart = part; break; }
+    }
+    if (!filePart) return reply.status(400).send({ error: 'No file uploaded' });
 
-		for await (const part of parts) {
-			if (part.type === 'file'){
-				filePart = part;
-				break;
-			}
-		}
+    // MIME autorisés
+    const contentType = filePart.mimetype || '';
+    const allowed = ['image/png', 'image/jpeg', 'image/jpg', 'image/webp'];
+    if (!allowed.includes(contentType)) {
+      return reply.status(415).send({ error: 'Unsupported media type' });
+    }
 
-		if (!filePart) {
-			return reply.status(400).send({ error: 'No file uploaded' });
-		}
+    // Dossier par utilisateur
+    const userDir = path.join(app.avatarsDir, userId);
+    fs.mkdirSync(userDir, { recursive: true });
 
-		const contentType = filePart.mimetype || '';
-		const allowed = ['image/png', 'image/jpeg', 'image/jpg', 'image/webp'];
-		if (!allowed.includes(contentType)) {
-			return reply.status(415).send({ error: 'Unsupported media type' });
-		}
+    const id = uuidv4();
+    const tmpPath = path.join(userDir, `${id}.tmp`);
+    const ws = fs.createWriteStream(tmpPath);
+    for await (const chunk of (filePart as any).file) ws.write(chunk);
+    ws.end();
+    await new Promise<void>((res, rej) => { ws.on('finish', res); ws.on('error', rej); });
 
-		const ext = mime.extension(contentType) || 'png';
-		const id = uuidv4();
-		const filename= `${id}.${ext}`;
-		const tmpPath = path.join(app.avatarsDir, `${id}.tmp`);
-		const finalPath = path.join(app.avatarsDir, filename);
+    try {
+      // Fichier final .webp (nom horodaté + uuid)
+      const processedName = `${Date.now()}-${id}.webp`;
+      const processedPath = path.join(userDir, processedName);
 
-		const ws = fs.createWriteStream(tmpPath);
-		for await (const chunk of (filePart as any).file) {
-			ws.write(chunk);
-		}
-		ws.end();
+      await sharp(tmpPath)
+        .rotate()
+        .resize(512, 512, { fit: 'cover' })
+        .toFormat('webp', { quality: 85 })
+        .withMetadata({ orientation: undefined })
+        .toFile(processedPath);
 
-		await new Promise<void>((res, rej) => {
-			ws.on('finish', () => res());
-			ws.on('error', rej);
-		});
+      fs.rmSync(tmpPath, { force: true });
 
-		try {
-			const processedName = `${id}.webp`;
-			const processedPath = path.join(app.avatarsDir, processedName);
-			await sharp(tmpPath)
-			.rotate()
-			.resize(512, 512, { fit: 'cover' })
-			.toFormat('webp', { quality: 85 })
-			.withMetadata({ orientation: undefined })
-			.toFile(processedPath);
+      const etag = `"${uuidv4()}"`;
+      const avatarUrl = `/static/avatars/${userId}/${processedName}`;
 
-			fs.rmSync(tmpPath, { force: true });
-			if (fs.existsSync(finalPath))
-				fs.rmSync(finalPath, { force: true });
+      db.prepare(`UPDATE users SET avatarPath = ?, avatarEtag = ? WHERE userId = ?`)
+        .run(avatarUrl, etag, userId);
 
-			const etag = `"${uuidv4()}"`;
-			const avatarPath = `/static/avatars/${processedName}`;
-			db.prepare(`UPDATE users SET avatarPath = ?, avatarEtag = ? WHERE userId = ?`)
-			.run(avatarPath, etag, userId);
-
-			return reply.status(201).send({
-				avatarUrl: avatarPath,
-				etag
-			});
-		} catch (error: any) {
-			fs.rmSync(tmpPath, { force: true });
-			console.log('Error updated avatar: ', error.message);
-			return reply.status(500).send({ error: 'Image processing failed' });
-		}
-	});
-}
+      return reply.status(201).send({ avatarUrl, etag });
+    } catch (error: any) {
+      fs.rmSync(tmpPath, { force: true });
+      req.log.error({ err: error }, 'Error processing avatar');
+      return reply.status(500).send({ error: 'Image processing failed' });
+    }
+  });
+};

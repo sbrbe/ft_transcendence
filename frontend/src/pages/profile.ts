@@ -3,24 +3,19 @@ import { getSavedUser, setLoggedInUser } from '../utils/ui';
 import { AppUser } from '../utils/interface';
 import { updateEmail, updatePassword } from '../api/auth';
 import { updateUser } from '../api/users';
-import { initChangeAvatar } from '../features/changeAvatar';
-import { setStatusMessage, clearStatusMessage, lockButton, normaliseAvatar, escapeAttr, escapeHtml } from '../utils/ui';
+import { setStatusMessage, lockButton, escapeAttr, escapeHtml } from '../utils/ui';
 
-const AVATARS = [
-  '/avatar/default.png',
-  '/avatar/avatar1.png',
-  '/avatar/avatar2.png',
-  '/avatar/avatar3.png',
-  '/avatar/avatar4.png',
-  '/avatar/avatar5.png',
-];
+import { initChangeAvatar } from '../features/changeAvatar';
+import { initUploadAvatar } from '../features/uploadAvatar';
+
+import { listUserAvatars, isUploadedAvatar } from '../api/avatar';
 
 interface ProfileForm {
   firstName: string;
   lastName: string;
   email: string;
   username: string;
-};
+}
 
 const ProfilePage: (container: HTMLElement) => void = (container) => {
   const saved = getSavedUser<AppUser>();
@@ -29,15 +24,13 @@ const ProfilePage: (container: HTMLElement) => void = (container) => {
     return;
   }
 
-  const currentAvatar = normaliseAvatar(saved.avatarPath) || AVATARS[0];
-
   container.innerHTML = `
-    <div class="container-page my-10 grid gap-6 lg:grid-cols-3">
-      <!-- Identité (aperçu) -->
+      <div class="container-page my-10 grid gap-6 lg:grid-cols-3">
+      <!-- Identité -->
       <section class="rounded-2xl border bg-white shadow-sm p-6 h-max">
         <h2 class="text-sm uppercase tracking-wider text-gray-500 mb-4">Identity</h2>
         <div class="flex items-center gap-4">
-          <img id="pp-avatar" src="${escapeAttr(currentAvatar)}" alt="Avatar"
+          <img id="pp-avatar" src="${escapeAttr(saved.avatarPath || '/avatar/default.png')}" alt="Avatar"
                class="h-16 w-16 rounded-xl ring-1 ring-black/10 object-cover">
           <div class="min-w-0">
             <div id="pp-username" class="font-semibold text-xl truncate">${escapeHtml(saved.username)}</div>
@@ -56,9 +49,9 @@ const ProfilePage: (container: HTMLElement) => void = (container) => {
         </div>
       </section>
 
-      <!-- Colonne droite : formulaires -->
+      <!-- Colonne droite -->
       <div class="lg:col-span-2 space-y-6">
-        <!-- Informations de base -->
+        <!-- Profil -->
         <section class="rounded-2xl border bg-white shadow-sm p-6">
           <h2 class="text-sm uppercase tracking-wider text-gray-500 mb-4">Profil</h2>
           <form id="profile-form" class="space-y-5" novalidate>
@@ -70,7 +63,7 @@ const ProfilePage: (container: HTMLElement) => void = (container) => {
                   value="${escapeAttr(saved.firstName || '')}">
               </label>
               <label class="block">
-                <span class="text-sm text-gray-700">LastName</span>
+                <span class="text-sm text-gray-700">Last Name</span>
                 <input id="pf-lastName" type="text"
                   class="mt-1 w-full border px-3 py-2 rounded-lg focus:ring-2 focus:ring-blue-500"
                   value="${escapeAttr(saved.lastName || '')}">
@@ -106,43 +99,24 @@ const ProfilePage: (container: HTMLElement) => void = (container) => {
         <!-- Avatar -->
         <section class="rounded-2xl border bg-white shadow-sm p-6">
           <h2 class="text-sm uppercase tracking-wider text-gray-500 mb-2">Avatar</h2>
-          <p class="text-xs text-gray-500 mb-3">Avatars are updated automatically.</p>
-
-          <div class="grid grid-cols-3 sm:grid-cols-6 gap-3" id="avatar-grid">
-            ${AVATARS.map(src => `
-              <button type="button"
-                      class="group relative rounded-xl overflow-hidden ring-1 ring-black/10 hover:ring-blue-300 focus:outline-none"
-                      data-avatar="${src}" aria-pressed="${src === currentAvatar ? 'true' : 'false'}">
-                <img src="${src}" alt="" class="h-16 w-16 object-cover" data-avatar="${src}">
-                <span class="pointer-events-none absolute inset-0 rounded-xl ${src === currentAvatar ? 'ring-2 ring-blue-600' : ''}"></span>
-              </button>
-            `).join('')}
-          </div>
-
-          <div class="mt-3 flex items-center gap-3">
-            <input id="pf-avatarPath" type="url" placeholder="Ou URL personnalisée (https://...)"
-              class="flex-1 border px-3 py-2 rounded-lg focus:ring-2 focus:ring-blue-500"
-              value="${escapeAttr(currentAvatar)}">
-            <button id="btn-apply-url" type="button"
-              class="px-3 py-2 rounded-lg border hover:bg-gray-50">Submit</button>
-          </div>
-
-          <!-- Upload direct -->
-          <div class="mt-4 space-y-3">
-            <div class="flex items-center gap-3">
-              <button id="btn-upload" type="button"
-                  class="px-3 py-2 rounded-lg border hover:bg-gray-50">
-                  Upload an avatar
-              </button>
-              <input id="file-input" type="file" accept="image/*" class="hidden">
-              <img id="avatar-preview" alt="Prévisualisation avatar"
-                  class="h-10 w-10 rounded-full ring-1 ring-black/10 object-cover hidden">
-           </div>
-
+          <p class="text-xs text-gray-500 mb-3">Choisissez un avatar prédéfini</p>
+          <div class="grid grid-cols-3 sm:grid-cols-6 gap-3" id="avatar-grid"></div>
           <p id="av-msg" class="text-sm min-h-5 mt-2" aria-live="polite"></p>
         </section>
 
-        <!-- Sécurité -->
+        <!-- Upload avatar -->
+        <section class="rounded-2xl border bg-white shadow-sm p-6">
+          <h2 class="text-sm uppercase tracking-wider text-gray-500 mb-2">Importer votre avatar</h2>
+          <p class="text-xs text-gray-500 mb-3">Choisissez un fichier PNG ou JPEG.</p>
+          <div class="flex items-center gap-3">
+            <button id="btn-upload-avatar" type="button"
+              class="px-4 py-2 rounded-lg bg-blue-600 text-white hover:bg-blue-700">Upload</button>
+            <input id="file-input-avatar" type="file" accept="image/png,image/jpeg" class="hidden">
+            <p id="upload-msg" class="text-sm min-h-5 ml-3" aria-live="polite"></p>
+          </div>
+        </section>
+
+        <!-- Security -->
         <section class="rounded-2xl border bg-white shadow-sm p-6">
           <h2 class="text-sm uppercase tracking-wider text-gray-500 mb-4">Security</h2>
           <form id="pwd-form" class="space-y-4" novalidate>
@@ -161,7 +135,6 @@ const ProfilePage: (container: HTMLElement) => void = (container) => {
               <input id="pf-newpwd2" type="password"
                 class="mt-1 w-full border px-3 py-2 rounded-lg focus:ring-2 focus:ring-blue-500">
             </label>
-
             <div class="flex items-center justify-between gap-4">
               <p id="pwd-msg" class="text-sm min-h-5" aria-live="polite"></p>
               <button id="pwd-save" type="submit"
@@ -172,8 +145,11 @@ const ProfilePage: (container: HTMLElement) => void = (container) => {
       </div>
     </div>
   `;
+
   const pwdForm = container.querySelector<HTMLFormElement>('#pwd-form')!;
   const profileForm = container.querySelector<HTMLFormElement>('#profile-form')!;
+
+  const avatarGrid = container.querySelector<HTMLDivElement>("#avatar-grid")!;
 
   const profile = {
     firstName: container.querySelector<HTMLInputElement>('#pf-firstName')!,
@@ -192,13 +168,6 @@ const ProfilePage: (container: HTMLElement) => void = (container) => {
     },
   };
 
-  const avatar = {
-    grid: container.querySelector<HTMLDivElement>('#avatar-grid')!,
-    urlInput: container.querySelector<HTMLInputElement>('#pf-avatarPath')!,
-    applyUrlBtn: container.querySelector<HTMLButtonElement>('#btn-apply-url')!,
-    msg: container.querySelector<HTMLParagraphElement>('#av-msg')!,
-  };
-
   const pwd = {
     old: container.querySelector<HTMLInputElement>('#pf-oldpwd')!,
     n1: container.querySelector<HTMLInputElement>('#pf-newpwd')!,
@@ -208,20 +177,51 @@ const ProfilePage: (container: HTMLElement) => void = (container) => {
   };
 
   // fallback preview identité si l’image casse
-  profile.card.avatar.addEventListener('error', () => { profile.card.avatar.src = '/avatar/default.png'; }, { once: true });
+  profile.card.avatar.addEventListener('error', () => {
+    profile.card.avatar.src = '/avatar/default.png';
+  }, { once: true });
 
-  /* ---------- avatar: branche la feature dédiée ---------- */
-  initChangeAvatar({
-    grid: avatar.grid,
-    previewImg: profile.card.avatar,
-    urlInput: avatar.urlInput,
-    applyUrlBtn: avatar.applyUrlBtn,
-    messageEl: avatar.msg,
-    initialValue: currentAvatar,
-    avatars: AVATARS,
-    debounceMs: 250,
-    fallback: '/avatar/default.png',
-  });
+
+  (async () => {
+    const defaults = [
+      '/avatar/default.png',
+      '/avatar/avatar1.png',
+      '/avatar/avatar2.png',
+      '/avatar/avatar3.png',
+      '/avatar/avatar4.png',
+      '/avatar/avatar5.png',
+    ];
+
+    let uploaded: string[] = [];
+    try {
+      uploaded = await listUserAvatars(saved.userId); // via API, gère 401→refresh
+    } catch (e) {
+      console.warn('[avatars] listUserAvatars failed:', e);
+    }
+
+    // Fallback: si l'avatar courant est un upload, on l'inclut même si la liste est vide
+    const fallback = isUploadedAvatar(saved.avatarPath) ? [saved.avatarPath as string] : [];
+
+    const merged = Array.from(new Set<string>([...fallback, ...uploaded, ...defaults]));
+    console.log('[avatars] merged list:', merged);
+
+    initChangeAvatar({
+      grid: avatarGrid,
+      previewImg: profile.card.avatar,
+      messageEl: container.querySelector<HTMLElement>('#av-msg')!,
+      avatars: merged,
+    });
+
+    initUploadAvatar({
+      button: container.querySelector<HTMLButtonElement>('#btn-upload-avatar')!,
+      fileInput: container.querySelector<HTMLInputElement>('#file-input-avatar')!,
+      messageEl: container.querySelector<HTMLElement>('#upload-msg')!,
+      previewImg: profile.card.avatar,
+      grid: avatarGrid,
+    });
+  })();
+
+
 
   /* ---------- Annuler (réinitialise seulement les champs texte) ---------- */
   profile.cancelBtn.addEventListener('click', () => {
@@ -256,16 +256,16 @@ const ProfilePage: (container: HTMLElement) => void = (container) => {
       });
       const updatedEmail = await updateEmail(saved.userId, data.email);
 
-      // conserver l’avatar courant depuis le storage (mis à jour par la feature)
+      // récupère ce qui a pu changer via les features (avatar, etc.)
       const latest = getSavedUser<AppUser>() || saved;
 
       const merged: AppUser = {
+        ...latest, // conserve les champs existants (dont avatarPath déjà synchronisé)
         userId: saved.userId,
         firstName: updatedUser.firstName,
         lastName: updatedUser.lastName,
         username: updatedUser.username,
         email: updatedEmail.email,
-        avatarPath: latest.avatarPath, // <= ne pas écraser l’avatar auto-sauvé
       };
 
       setLoggedInUser(merged);
