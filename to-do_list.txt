@@ -5,7 +5,7 @@ Function :
 	- Friends : 
 		- mettre design à jour
 	- Stats:
-		- récupérer : wins / loss / hsitorique de matchs
+		- récupérer : wins / loss / historique de matchs
 
 ajouter un update ui dans la fonction logout pour les fails de refresh
 		
