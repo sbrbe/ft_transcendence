@@ -27,7 +27,7 @@ await app.register(postTournamentSummaryRoute);
 
 app.get('/blockchain/ma-route', async (request: FastifyRequest, reply: FastifyReply) => {
 	try {
-		const rows = getValues();
+		const rows = getValues("rot13");
 		return reply.send({ rows });
 	} catch (err: any) {
 		return reply.status(500).send({ error: err.message });

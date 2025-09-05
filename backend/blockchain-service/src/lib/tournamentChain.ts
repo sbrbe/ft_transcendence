@@ -6,7 +6,12 @@ const RPC = process.env.FUJI_RPC!;
 const CONTRACT_ADDR = process.env.CONTRACT_ADDR!;
 const KEEPER_PK = process.env.KEEPER_PK!;
 
+if (!process.env.FUJI_RPC || !process.env.CONTRACT_ADDR || !process.env.KEEPER_PK) {
+	throw new Error('FUJI_RPC, CONTRACT_ADDR or KEEPER_PK not set');
+}
+
 let _contract: ethers.Contract | null = null;
+
 
 function getContract(): ethers.Contract
 {
@@ -21,20 +26,33 @@ function getContract(): ethers.Contract
 }
 
 export type TSPlayer = { name: string; score: number };
-export type TSMatch  = { round: number; player1: TSPlayer; player2: TSPlayer; };
-export type TSSummary = { tournamentId: number; winnerName: string; matches: TSMatch[]; };
+export type TSMatch  = { player1: TSPlayer; player2: TSPlayer };
+export type TSSummary = { tournamentId: string; userId: string; winnerName: string; matches: TSMatch[] };
+
+export function addPlayers(matches: TSMatch[]): string[]
+{
+  const playerNumber = matches.length + 1;
+  const roundSize = playerNumber / 2;
+  const playerArr: string[] = [];
+  
+  for (let i = 0; i < roundSize; i++)
+  {
+    const match = matches[i];
+    playerArr.push(match.player1.name, match.player2.name);
+  }
+  return playerArr.slice(0, playerNumber);
+}
 
 export async function sendTournamentSummary( s: TSSummary): Promise<{ txHash: string; blockNumber: number; snowtraceTx: string }>
 {
   const c = getContract();
 
   const matchesForAbi = s.matches.map((m) => ({
-    round: m.round,
     player1: { name: m.player1.name, score: BigInt(m.player1.score) },
     player2: { name: m.player2.name, score: BigInt(m.player2.score) },
   }));
 
-  const tx = await c.recordTournamentSummary(BigInt(s.tournamentId),matchesForAbi,s.winnerName);
+  const tx = await c.recordTournamentSummary( s.tournamentId, matchesForAbi, s.winnerName );
   const rc = await tx.wait();
 
   return{

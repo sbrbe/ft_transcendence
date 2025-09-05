@@ -48,6 +48,9 @@ services:
     environment:
       - JWT_ACCESS_SECRET=${JWT_ACCESS_SECRET}
       - COOKIE_SECRET=${COOKIE_SECRET}
+      - FUJI_RPC={FUJI_RPC}
+      - CONTRACT_ADDR={CONTRACT_ADDR}
+      - KEEPER_PK={KEEPER_PK}
     networks:
       - transcendence
 

@@ -8,28 +8,28 @@ export default async function postTournamentSummaryRoute(app: FastifyInstance)
       description: "1 tournoi, 1 transaction",
       body: {
         type: "object",
-        required: ["tournamentId", "winnerName", "matches"],
+        required: [ "tournamentId", "userId", "winnerName", "matches" ],
         properties: {
-          tournamentId: { type: "number" },
+          tournamentId: { type: "string" },
+          userId: { type: "string" },
           winnerName: { type: "string" },
           matches: {
             type: "array",
             minItems: 1,
             items: {
               type: "object",
-              required: ["round", "player1", "player2"],
+              required: [ "player1", "player2" ],
               properties: {
-                round: { type: "number", minimum: 0, maximum: 3 },
                 player1: {
                   type: "object",
-                  required: ["name", "score"],
+                  required: [ "name", "score" ],
                   properties: {
                     name: { type: "string" }, score: { type: "number" }
                   }
                 },
                 player2: {
                   type: "object",
-                  required: ["name", "score"],
+                  required: [ "name", "score" ],
                   properties: {
                     name: { type: "string" }, score: { type: "number" }
                   }
@@ -44,7 +44,8 @@ export default async function postTournamentSummaryRoute(app: FastifyInstance)
           type: "object",
           properties: {
             ok: { type: "boolean" },
-            tournamentId: { type: "number" },
+            tournamentId: { type: "string" },
+            userId: {type: "string"},
             txHash: { type: "string" },
             blockNumber: { type: "number" },
             snowtraceTx: { type: "string" }

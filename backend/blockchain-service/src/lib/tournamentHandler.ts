@@ -1,5 +1,5 @@
 import { FastifyReply, FastifyRequest } from "fastify";
-import { sendTournamentSummary, TSSummary } from "./tournamentChain.js";
+import { addPlayers, sendTournamentSummary, TSSummary } from "./tournamentChain.js";
 import { saveValues } from "../init_db.js";
 
 export async function postTournamentSummary( req: FastifyRequest<{ Body: TSSummary }>, reply: FastifyReply)
@@ -8,12 +8,14 @@ export async function postTournamentSummary( req: FastifyRequest<{ Body: TSSumma
   {
     const summary = req.body;
     const r = await sendTournamentSummary(summary);
+    const players = addPlayers(summary.matches);
 
-    saveValues({ tournoiId: Number(summary.tournamentId),snowtrace_link: r.snowtraceTx });
+    saveValues({ tournamentId: summary.tournamentId, userId: summary.userId, snowtrace_link: r.snowtraceTx, players: players });
 
     return (reply.status(200).send({
       ok: true,
       tournamentId: summary.tournamentId,
+      userId: summary.userId,
       txHash: r.txHash,
       blockNumber: r.blockNumber,
       snowtraceTx: r.snowtraceTx
