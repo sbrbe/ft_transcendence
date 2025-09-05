@@ -1,9 +1,6 @@
 Function :
 
 	- Friends:
-		- Voir le status des amis: online/offline
-		- Faire une requete qui recupère la liste d'amis et leur status
-		- Faire une requete qui recupère les demandes d'amis en attente
 		- gérer les avatars
 		- ajouter les tokens/refresh dans les fonctions
 

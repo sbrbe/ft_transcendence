@@ -175,6 +175,20 @@ const ProfilePage: (container: HTMLElement) => void = (container) => {
   const pwdForm = container.querySelector<HTMLFormElement>('#pwd-form')!;
   const profileForm = container.querySelector<HTMLFormElement>('#profile-form')!;
 
+  profileForm.addEventListener('keydown', (e: KeyboardEvent) => {
+    const t = e.target as HTMLElement | null;
+    if (e.key === 'Enter' && t && t.tagName !== 'BUTTON') {
+      e.preventDefault();
+    }
+  });
+
+  pwdForm.addEventListener('keydown', (e: KeyboardEvent) => {
+  const t = e.target as HTMLElement | null;
+  if (e.key === 'Enter' && t && t.tagName !== 'BUTTON') {
+    e.preventDefault();
+  }
+  });
+
   const profile = {
     firstName: container.querySelector<HTMLInputElement>('#pf-firstName')!,
     lastName: container.querySelector<HTMLInputElement>('#pf-lastName')!,
