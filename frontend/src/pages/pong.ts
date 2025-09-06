@@ -7,9 +7,20 @@ import game_canvas from "../utils/pong/pong_game_canva";
 
 const pong: (container: HTMLElement) => void = (container) => {
   container.innerHTML = `
-    <div id="pong-options" class="flex flex-col items-center justify-center mt-8 space-y-4">
-      <button id="pong-local"  class="bg-green-500 hover:bg-green-600 text-white px-6 py-3 rounded-lg text-lg w-48">Local</button>
-      <button id="pong-online" class="bg-purple-500 hover:bg-purple-600 text-white px-6 py-3 rounded-lg text-lg w-48">En ligne</button>
+    <div class="text-center mt-8">
+      <h1 class="text-3xl font-bold text-gray-800 mb-2">Jouer au Pong</h1>
+      <p class="text-lg text-gray-600 mb-6">
+        Sélectionne ton mode de jeu préféré et commence à surprendre tes adversaires
+      </p>
+    </div>
+
+    <div id="pong-options" class="flex flex-row items-center justify-center space-x-10">
+      <img id="pong-local" src="/site/local_bouton.png" alt="Local mode"
+           class="cursor-pointer rounded-lg shadow-md hover:opacity-90"
+           style="width: 200px; height: 280px;">
+      <img id="pong-online" src="/site/online_bouton.png" alt="Online mode"
+           class="cursor-pointer rounded-lg shadow-md hover:opacity-90"
+           style="width: 200px; height: 280px;">
     </div>
   `;
 
