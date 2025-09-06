@@ -25,11 +25,11 @@ export async function sendTournamentData(body: DataBlockchain) {
 		body: JSON.stringify({ body	}),
 	});
 
-	let data: any = null;
-	data = await res.json();
+	// let data: any = null;
+	// data = await res.json();
 
 	if (!res.ok) {
-		throw new Error(`sendTournamentData: ${data.error || res.statusText}`);
+		throw new Error(`sendTournamentData: ${res.statusText}`);
 	}
 	console.log('Tournament data send to blockchain-service');
 }

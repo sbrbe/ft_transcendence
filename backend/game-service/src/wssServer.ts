@@ -25,10 +25,8 @@ import { sendTournamentData } from './clientInternal.js';
    };
    
   export type Payload = {
-     matches: {
        player1: { name: string; score: number };
        player2: { name: string; score: number };
-     };
    };
    
    
@@ -299,12 +297,15 @@ export function attachWs(app: FastifyInstance) {
                  {
                   const body = {
                     tournamentId: sess.tournamentId,
-                    userId: sess.userId!,
+                    userId: "550e8400-e29b-41d4-a716-446655440000",
                     winnerName: sess.winnerName!,
-                    matches: sess.historTournmnt   // 👈 doit être un array d’objets { player1: {...}, player2: {...} }
+                    matches: sess.historTournmnt
                   };
                 
                   try {
+                    console.log(sess.tournamentId, sess.winnerName, sess.historTournmnt);
+                    console.log('hey');
+                    console.log(body);
                     await sendTournamentData(body);
                   } catch (err) {
                     console.error("❌ Erreur POST /tournaments/summary :", err);
@@ -415,11 +416,8 @@ export function attachWs(app: FastifyInstance) {
        const scoreB = snap.scores.B
    
        const payload: Payload = {
-         matches:
-           {
              player1: { name: nameA, score: scoreA },
              player2: { name: nameB, score: scoreB },
-           },
        };
    
        sess.historTournmnt.push(payload);

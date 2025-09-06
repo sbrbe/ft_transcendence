@@ -5,8 +5,8 @@ import { saveValues } from "../init_db.js";
 
 
 export const postTournamentSummaryRoute: InternalRoute = {
-  method: 'PUT',
-  url: 'tournaments/summary',
+  method: 'POST',
+  url: '/blockchain/tournaments/summary',
   opts: {
     schema: {
       body: {
