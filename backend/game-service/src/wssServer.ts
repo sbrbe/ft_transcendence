@@ -5,7 +5,8 @@ import { FastifyInstance } from 'fastify';
 import { gameConfig, GameState } from '../shared/engine_play/src/types.js';
 import { GameLogic } from '../shared/engine_play/src/game_logic.js';
 import { Tournament, buildTournament } from '../shared/engine_play/src/tournament_logic.js';
-import { randomUUID } from 'crypto';
+import { v4 as uuidv4} from 'uuid';
+import { sendTournamentData } from './clientInternal.js';
 
 /* =========
    Types
@@ -23,7 +24,7 @@ import { randomUUID } from 'crypto';
      lastTick: number;
    };
    
-   type Payload = {
+  export type Payload = {
      matches: {
        player1: { name: string; score: number };
        player2: { name: string; score: number };
@@ -235,7 +236,7 @@ export function attachWs(app: FastifyInstance) {
    
      // ---------- 2) Tournoi local ----------
      if (pathname === '/game/tournament') {
-       const sess: LocalSession = { ws, t: null, tournamentId: randomUUID(), historTournmnt: []};
+       const sess: LocalSession = { ws, t: null, tournamentId: uuidv4(), historTournmnt: []};
       safeSend(ws, { type: 'info', code: 'waiting_conf' });
 
       sess.userId = 'sdd';
@@ -298,17 +299,13 @@ export function attachWs(app: FastifyInstance) {
                  {
                   const body = {
                     tournamentId: sess.tournamentId,
-                    userId: sess.userId,
-                    winnerName: sess.winnerName,
+                    userId: sess.userId!,
+                    winnerName: sess.winnerName!,
                     matches: sess.historTournmnt   // 👈 doit être un array d’objets { player1: {...}, player2: {...} }
                   };
                 
                   try {
-                    await fetch("http://localhost:3003/tournaments/summary", {
-                      method: "POST",
-                      headers: { "Content-Type": "application/json" },
-                      body: JSON.stringify(body)
-                    });
+                    await sendTournamentData(body);
                   } catch (err) {
                     console.error("❌ Erreur POST /tournaments/summary :", err);
                   }

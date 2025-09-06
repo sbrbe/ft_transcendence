@@ -15,8 +15,6 @@ const app : FastifyInstance = fastify( {
 	}
 });
 
-
-
 if (!process.env.JWT_ACCESS_SECRET || !process.env.COOKIE_SECRET) {
 	throw new Error('JWT_ACCESS_SECRET or COOKIE_SECRET not set');
 }
@@ -28,7 +26,6 @@ initDB();
 app.get('/game/ma-route', async (request: FastifyRequest, reply: FastifyReply) => {
 	try {
 		const matches = await db.prepare('SELECT * FROM matches').all();
-
 		return reply.send({ matches });
 	} catch (err: any) {
 		return reply.status(500).send({ error: err.message });
@@ -47,6 +44,16 @@ app.get('/game/match', async () => {
   const rows = getAllMatches();
   return rows;
 });
+
+/*
+registerInternal(app, {
+	prefix: '/internal',
+	allowedCallers: ['auth-service'],
+	routes: [
+		setOnlineStatusRoute,
+	]
+});
+*/
 
 attachWs(app);
 await app.ready();

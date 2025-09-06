@@ -47,6 +47,16 @@ app.get('/auth/health', async (_req, reply) => {
   return reply.status(200).send({ status: 'ok' });
 });
 
+/*
+registerInternal(app, {
+	prefix: '/internal',
+	allowedCallers: ['auth-service'],
+	routes: [
+		setOnlineStatusRoute,
+	]
+});
+*/
+
 await app.ready();
 
 app.listen({ port: 3002, host: '0.0.0.0'}, (err, address) => {
