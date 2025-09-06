@@ -1,5 +1,6 @@
 import type { GameState } from '../../../../shared/engine_play/src/types';
 import { GameLogic } from '../../../../shared/engine_play/src/game_logic';
+import { summary } from '../../../../shared/engine_play/src/tournament_logic';
 
 export class GameRenderer {
 	private ctx: CanvasRenderingContext2D;
@@ -108,13 +109,83 @@ export class GameRenderer {
 		  this.ctx.fillText(paddle.name.substring(0, 10), x, paddle.y - 15);
 		});
 	  }
-  
-	  
 	  // score
 	  this.ctx.font = "30px Arial";
 	  this.ctx.textAlign = "center";
 	  this.ctx.fillText(`${state.scores.A}    ${state.scores.B}`, this.canvas.width / 2, 40);
 	}
+
+
+	tourPrint(summs: summary[], size: number) 
+	{
+    	const ctx = this.ctx;
+    	ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);
+
+    	const rounds = Math.log2(size);
+ 	   	const matchHeight = 40;          // taille constante pour chaque match
+    	const verticalSpacing = 20;      // espace constant entre matchs
+    	const matchBoxHeight = matchHeight + verticalSpacing;
+    	const horizontalSpacing = 150;   // espace constant entre les rounds
+
+    	let currentMatchIndex = 0;
+
+    	for (let round = 0; round < rounds; round++) 
+		{
+    	    const matchesInRound = size / Math.pow(2, round + 1);
+
+    	    // Décalage vertical pour centrer la pyramide
+    	    const totalHeight = matchesInRound * matchBoxHeight;
+    	    const verticalOffset = (this.canvas.height - totalHeight) / 2;
+
+        	for (let match = 0; match < matchesInRound; match++) {
+        	    const recap = summs[currentMatchIndex];
+        	    if (!recap) continue;
+
+            	const x = round * horizontalSpacing + 50;
+            	const y = verticalOffset + match * matchBoxHeight;
+
+            	this.drawMatch(x, y, recap);
+
+            	currentMatchIndex++;
+        	}
+    	}
+	}
+
+	private drawMatch(x: number, y: number, sum: summary) 
+	{
+    	const ctx = this.ctx;
+    	const boxWidth = 120;
+    	const boxHeight = 20;
+    	const spacing = 2; 
+    	let p1Color = "#ddd";
+    	let p2Color = "#ddd";
+
+    	if (sum.gagnant === -1) {
+        	p1Color = "#fff";  // gagnant en blanc
+        	p2Color = "#aaa";  // perdant en gris
+    	} else if (sum.gagnant === 1) {
+        	p1Color = "#aaa";
+        	p2Color = "#fff"; 
+    	}
+
+	    ctx.fillStyle = p1Color;
+    	ctx.fillRect(x, y, boxWidth, boxHeight);
+    	ctx.strokeStyle = "#000";
+    	ctx.strokeRect(x, y, boxWidth, boxHeight);
+    	ctx.fillStyle = "#000";
+    	ctx.textAlign = "center";
+    	ctx.textBaseline = "middle";
+    	ctx.fillText(sum.P1, x + boxWidth / 2, y + boxHeight / 2);
+
+    	// Dessin P2
+    	ctx.fillStyle = p2Color;
+    	ctx.fillRect(x, y + boxHeight + spacing, boxWidth, boxHeight);
+    	ctx.strokeStyle = "#000";
+    	ctx.strokeRect(x, y + boxHeight + spacing, boxWidth, boxHeight);
+    	ctx.fillStyle = "#000";
+    	ctx.fillText(sum.P2, x + boxWidth / 2, y + boxHeight + spacing + boxHeight / 2);
+	}
+	
 	isStarting(BallH: number, BallW: number, BallX: number, BallY: number, echanges: number, score: {A: number, B: number})
 	{
 	  let scores_echanges = score.A + score.B + echanges;

@@ -4,7 +4,7 @@ import { parse as parseUrl } from 'url';
 import { FastifyInstance } from 'fastify';
 import { gameConfig, GameState } from '../shared/engine_play/src/types.js';
 import { GameLogic } from '../shared/engine_play/src/game_logic.js';
-import { Tournament, buildTournament } from '../shared/engine_play/src/tournament_logic.js';
+import { Tournament, buildTournament} from '../shared/engine_play/src/tournament_logic.js';
 import { v4 as uuidv4} from 'uuid';
 import { sendTournamentData } from './clientInternal.js';
 
@@ -21,6 +21,8 @@ import { sendTournamentData } from './clientInternal.js';
      id: string;
      engine: GameLogic;
      clients: ClientInfo[];  // [left, right]
+
+     
      lastTick: number;
    };
    
@@ -95,8 +97,8 @@ export function attachWs(app: FastifyInstance) {
 			const config: gameConfig = {
 				mode: '1v1',
 				playerSetup: [
-					{ type: 'human', playerId: 1, name: ''},
-					{ type: 'human', playerId: 2, name: ''},
+					{ type: 'human', playerId: "1", name: 'Default'},
+					{ type: 'human', playerId: "2", name: 'Default'},
 				]
 			};
 			
@@ -235,8 +237,9 @@ export function attachWs(app: FastifyInstance) {
      }
    
      // ---------- 2) Tournoi local ----------
-     if (pathname === '/game/tournament') {
-       const sess: LocalSession = { ws, t: null, tournamentId: uuidv4(), historTournmnt: []};
+    if (pathname === '/game/tournament') 
+    {
+      const sess: LocalSession = { ws, t: null, tournamentId: uuidv4(), historTournmnt: []};
       safeSend(ws, { type: 'info', code: 'waiting_conf' });
 
       sess.userId = 'sdd';
@@ -244,8 +247,10 @@ export function attachWs(app: FastifyInstance) {
       let msg: any;
       try { msg = JSON.parse(raw.toString()); } catch { return; }
    
-      switch (msg.type) {
-        case 'conf': {
+      switch (msg.type) 
+      {
+        case 'conf': 
+        {
           const conf = msg.config as buildTournament;
 
           if (!conf || !Array.isArray(conf.players)) {
@@ -255,6 +260,7 @@ export function attachWs(app: FastifyInstance) {
    
           try {
             sess.t = new Tournament(CANVAS_W, CANVAS_H, conf);
+            console.log("tournament builded")
             safeSend(ws, { type: 'start', w: CANVAS_W, h: CANVAS_H });
             startLocalTicker(sess);
           } catch (e) {
@@ -262,69 +268,72 @@ export function attachWs(app: FastifyInstance) {
             safeSend(ws, { type: 'info', code: 'conf_error' });
           }
           break;
-          }
+        }
    
-          case 'key': {
-            if (!sess.t) return;
-            const code = msg.code as string | undefined;
-            const key  = msg.key  as string | undefined;
-            const isPressed = !!msg.isPressed;
+        case 'key': 
+        {
+          if (!sess.t) return;
+          const code = msg.code as string | undefined;
+          const key  = msg.key  as string | undefined;
+          const isPressed = !!msg.isPressed;
+  
+          const norm = normalizeEngineKey(code, key);
+          if (!norm) return;
    
-            const norm = normalizeEngineKey(code, key);
-            if (!norm) return;
-   
-            try { (sess.t as any).redirectTournament?.(norm, isPressed); } catch {}
-            break;
-          }
-          case 'continue': {
-            if (!sess.t || !sess.awaitingContinue) break;
+          try { (sess.t as any).redirectTournament?.(norm, isPressed); } catch {}
+          break;
+        }
+        case 'continue': 
+        {
+          if (!sess.t || !sess.awaitingContinue) break;
              // Dé-gèle
-             sess.awaitingContinue = false;
-             sess.t.launch = true;
-             // 👇 Kick immédiat : recalcule un frame et renvoie un state tout de suite
-             try {
-               const snap = (sess.t as any).playLocal?.();
-               if (snap) safeSend(sess.ws, { type: 'state', state: snap });
-             } catch {}
-
-             break;
-           }
-           case 'info_players': {
-             try {
-               if (sess.t) {
-                 const res = sess.t.getNextMatch(); 
-                 const player1 = res[0];
-                 const player2 = res[1];
-                 if (!player1)
-                 {
+          sess.awaitingContinue = false;
+          sess.t.launch = true;
+          // 👇 Kick immédiat : recalcule un frame et renvoie un state tout de suite
+          try {
+            const snap = (sess.t as any).playLocal?.();
+            if (snap) safeSend(sess.ws, { type: 'state', state: snap });
+          } catch {}
+            break;
+        }
+        case 'info_players': 
+        {
+          try {
+            if (sess.t) 
+            {
+                const res = sess.t.getNextMatch(); 
+                const player1 = res[0];
+                const player2 = res[1];
+                if (!player1)
+                {
                   const body = {
                     tournamentId: sess.tournamentId,
                     userId: sess.userId!,
                     winnerName: sess.winnerName!,
                     matches: sess.historTournmnt   // 👈 doit être un array d’objets { player1: {...}, player2: {...} }
-                  };
-                
+                   };
+                  const summarys = sess.t.getSummary(); 
                   try {
                     await sendTournamentData(body);
                   } catch (err) {
                     console.error("❌ Erreur POST /tournaments/summary :", err);
                   }
-                   safeSend(sess.ws, { type: 'tournament_end' });
-                   clearInterval(sess.ticker!);
-                   sess.ticker = undefined;
-                   break;
-                 }     
-                 const player = `${player1} VS ${player2}`;
-           
-                 safeSend(sess.ws, { type: 'info_players', player });
-               }
-             } catch (err) {
-               console.error('info_players error', err);
-             }
-             break;
-           }        
-           default: break;
-         }
+                  safeSend(sess.ws, { type: 'tournament_end' , info: summarys, len: sess.t.tLength});
+                  clearInterval(sess.ticker!);
+                  sess.ticker = undefined;
+                  break;
+                }     
+                const player = `${player1} VS ${player2}`;
+
+                safeSend(sess.ws, { type: 'info_players', player });
+              }
+              } catch (err) {
+                  console.error('info_players error', err);
+              }
+            break;
+          }        
+          default: break;
+            }
        });
    
        ws.on('close', () => {

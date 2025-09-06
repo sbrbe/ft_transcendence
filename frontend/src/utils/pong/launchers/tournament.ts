@@ -123,7 +123,7 @@ export class GameTournament implements Disposable{
         (msg) => {
           if (msg.type === 'tournament_end') {
             this.betweenStage = 'end';
-            this.renderer.clearRender();
+            this.renderer.tourPrint(msg.info, msg.len);
             this.renderer.drawMessage('Tournoi terminé !\n\n\n\nAppuez sur [ESPACE] pour QUITTER !');
           }
         },
