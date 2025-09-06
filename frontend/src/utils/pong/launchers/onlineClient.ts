@@ -114,6 +114,11 @@ export class OnlineClient {
     this.ws.send(JSON.stringify({ type: 'conf', config }));
   }
 
+  sendConf1vs1(playerInfo: any) {
+    if (!this.ws || this.ws.readyState !== WebSocket.OPEN) return;
+    this.ws.send(JSON.stringify({ type: '1vs1', playerInfo}));
+  }
+
   getSnapshot() { return this.lastSnapshot; }
   getRole() { return this.role; }
   dispose() {

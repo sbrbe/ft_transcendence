@@ -45,16 +45,6 @@ app.get('/game/match', async () => {
   return rows;
 });
 
-/*
-registerInternal(app, {
-	prefix: '/internal',
-	allowedCallers: ['auth-service'],
-	routes: [
-		setOnlineStatusRoute,
-	]
-});
-*/
-
 attachWs(app);
 await app.ready();
 

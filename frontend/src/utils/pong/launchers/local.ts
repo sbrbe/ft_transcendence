@@ -12,10 +12,10 @@ export class GameLocal implements Disposable{
   
   private betweenStage: 'idle' | 'winner' | 'endLcl' = 'idle';
 
-  constructor(conf: { mode: "1v1" | "2v2"; players: ("human" | "cpu")[] }) {
+  constructor(conf: { mode: "1v1" | "2v2"; players: ("human" | "cpu")[] }, username: string) {
     this.canvas = document.getElementById('gameCanvas') as HTMLCanvasElement;
     this.renderer = new GameRenderer(this.canvas);
-    this.startLocalFromConf(conf);
+    this.startLocalFromConf(conf, username);
   }
 
   private keyDownHandler = (e: KeyboardEvent) => {
@@ -90,17 +90,19 @@ private buildPlayersFromConf(conf: { mode: "1v1" | "2v2"; players: ("human" | "c
     type: kind,
     playerId: idx + 1,
     name: `P${idx + 1}`,
+
   }));
 }
 
-private startLocalFromConf(conf: { mode: "1v1" | "2v2"; players: ("human" | "cpu")[] }) {
+private startLocalFromConf(conf: { mode: "1v1" | "2v2"; players: ("human" | "cpu")[] }, username: string) {
   const players = this.buildPlayersFromConf(conf);
 
   const cfg: gameConfig = {
     mode: conf.mode,
     playerSetup: players,
   };
-
+  // if (cfg.mode[0])
+  // cfg.playerSetup[0].name = username
   this.launchLocalGame(cfg);
 }
 

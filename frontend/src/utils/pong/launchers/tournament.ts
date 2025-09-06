@@ -14,7 +14,6 @@ export class GameTournament implements Disposable{
 	private _prevRunning: boolean | null = null;
 	private conf: TournamentPlayer[];
 	private configTournaments: buildTournament;
-  
   constructor(conf: TournamentPlayer[]) {
 	this.canvas = document.getElementById('gameCanvas') as HTMLCanvasElement;
 	this.renderer = new GameRenderer(this.canvas);

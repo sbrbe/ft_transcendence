@@ -43,16 +43,6 @@ app.get('/users/health', async (req, reply) => {
 	return reply.status(200).send({ status: 'ok' });
 });
 
-
-// registerInternal(app, {
-// 	prefix: '/internal',
-// 	allowedCallers: ['game-service'],
-// 	routes: [
-// 		postTournamentSummaryRoute,
-// 	]
-// });
-
-
 await app.ready();
  
 app.listen({ port: 3003, host: '0.0.0.0'}, (err, address) => {

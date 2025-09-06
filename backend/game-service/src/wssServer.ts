@@ -2,7 +2,7 @@ import { saveMatch, initDB, db } from './init_db.js';
 import { WebSocketServer, WebSocket, RawData } from 'ws';
 import { parse as parseUrl } from 'url';
 import { FastifyInstance } from 'fastify';
-import { gameConfig, GameState } from '../shared/engine_play/src/types.js';
+import { gameConfig, GameState, contender} from '../shared/engine_play/src/types.js';
 import { GameLogic } from '../shared/engine_play/src/game_logic.js';
 import { Tournament, buildTournament } from '../shared/engine_play/src/tournament_logic.js';
 import { v4 as uuidv4} from 'uuid';
@@ -15,7 +15,7 @@ import { sendTournamentData } from './clientInternal.js';
    type Role = 'left'|'right';
    type IntervalHandle = ReturnType<typeof setInterval>;
    
-   type ClientInfo = { ws: WebSocket; role: Role; lastDir: Dir };
+   type ClientInfo = { ws: WebSocket; role: Role; lastDir: Dir; playerInfo?: contender};
    
    type Room = {
      id: string;
@@ -40,7 +40,7 @@ import { sendTournamentData } from './clientInternal.js';
      continueCount?: number;
      winnerName?: string;
      historTournmnt: Payload[];
-     userId?: string;
+     userId?: string | null;
    };
    
    
@@ -93,8 +93,8 @@ export function attachWs(app: FastifyInstance) {
 			const config: gameConfig = {
 				mode: '1v1',
 				playerSetup: [
-					{ type: 'human', playerId: 1, name: ''},
-					{ type: 'human', playerId: 2, name: ''},
+					{ type: 'human', playerId: a.playerInfo?.id ?? '1', name: a.playerInfo?.name ?? 'nada'},
+					{ type: 'human', playerId: b.playerInfo?.id ?? '2', name: b.playerInfo?.name ?? 'nada'},
 				]
 			};
 			
@@ -188,16 +188,8 @@ export function attachWs(app: FastifyInstance) {
      // ---------- 1) 1v1 en ligne ----------
      if (pathname === '/game') {
        const client: ClientInfo = { ws, role: 'left', lastDir: 'stop' };
+       ws.send(JSON.stringify({ type: 'waiting', role: 'left' }));
        
-       if (!pending) {
-         client.role = 'left';
-         pending = client;
-         ws.send(JSON.stringify({ type: 'waiting', role: 'left' }));
-       } else {
-         client.role = 'right';
-         const a = pending; pending = null;
-         createRoom(a!, client);
-       }
        
        ws.on('message', (raw: RawData) => {
          try {
@@ -206,8 +198,21 @@ export function attachWs(app: FastifyInstance) {
              for (const room of rooms) {
                const ci = room.clients.find(c => c.ws === ws);
                if (ci) { ci.lastDir = msg.dir as Dir; break; }
-             }
-           }
+              }
+            }
+            if (msg.type === '1vs1' && msg.playerInfo) {
+              client.playerInfo = msg.playerInfo;
+              if (!pending) {
+                client.role = 'left';
+                pending = client;
+              } else {
+                client.role = 'right';
+                const a = pending; pending = null;
+                createRoom(a!, client);
+              }
+            //tryMatch();
+            return;
+          }
          } catch {}
        });
    
@@ -236,16 +241,14 @@ export function attachWs(app: FastifyInstance) {
      if (pathname === '/game/tournament') {
        const sess: LocalSession = { ws, t: null, tournamentId: uuidv4(), historTournmnt: []};
       safeSend(ws, { type: 'info', code: 'waiting_conf' });
-
-      sess.userId = 'sdd';
       ws.on('message', async (raw: RawData) => {
       let msg: any;
       try { msg = JSON.parse(raw.toString()); } catch { return; }
    
       switch (msg.type) {
         case 'conf': {
-          const conf = msg.config as buildTournament;
-
+          const conf: buildTournament = msg.config as buildTournament;
+          sess.userId = conf.players[0].id;
           if (!conf || !Array.isArray(conf.players)) {
             safeSend(ws, { type: 'info', code: 'conf_invalid' });
             return;
@@ -276,10 +279,8 @@ export function attachWs(app: FastifyInstance) {
           }
           case 'continue': {
             if (!sess.t || !sess.awaitingContinue) break;
-             // Dé-gèle
              sess.awaitingContinue = false;
              sess.t.launch = true;
-             // 👇 Kick immédiat : recalcule un frame et renvoie un state tout de suite
              try {
                const snap = (sess.t as any).playLocal?.();
                if (snap) safeSend(sess.ws, { type: 'state', state: snap });
@@ -296,31 +297,11 @@ export function attachWs(app: FastifyInstance) {
                  if (!player1)
                  {
                   const body = {
-                    tournamentId: String(sess.tournamentId),
-                    userId: String("550e8400-e29b-41d4-a716-446655440000"), // remplace par le vrai
-                    winnerName: String(player2 ?? 'WINNER').trim().slice(0,20),
-                    matches: (sess.historTournmnt ?? []).map(m => ({
-                      player1: {
-                        name: String(m.player1?.name ?? '').slice(0,20),
-                        score: Number(m.player1?.score ?? NaN),
-                      },
-                      player2: {
-                        name: String(m.player2?.name ?? '').slice(0,20),
-                        score: Number(m.player2?.score ?? NaN),
-                      },
-                    })),
-                  };
-                  
-                  // garde un garde-fou local
-                  if (!body.winnerName) throw new Error('winnerName manquant');
-                  if (!Array.isArray(body.matches) || body.matches.length === 0) throw new Error('matches vide');
-                  for (const mat of body.matches) {
-                    if (!Number.isFinite(mat.player1.score) || !Number.isFinite(mat.player2.score)) {
-                      throw new Error('score non numérique dans matches');
-                    }
-                  }
-                  
-                
+                    tournamentId: sess.tournamentId,
+                    userId: sess.userId ?? '',
+                    winnerName: player2,
+                    matches: sess.historTournmnt
+                    };
                   try {
                     safeSend(sess.ws, { type: 'tournament_end' });
                     clearInterval(sess.ticker!);
@@ -382,8 +363,10 @@ export function attachWs(app: FastifyInstance) {
            initDB(); // il faut initialiser la DB au démarrage
          const data_match = room.engine.getGameState();
          saveMatch({
-           player1: data_match.paddles[0]?.name ?? 'Player 1',
-           player2: data_match.paddles[1]?.name ?? 'Player 2',
+           player1: room.clients[0].playerInfo?.name ?? 'Player 1',
+           playerId1: room.clients[0].playerInfo?.id ?? '1',
+           player2: room.clients[1].playerInfo?.name ?? 'Player 2',
+           playerId2: room.clients[1].playerInfo?.id ?? '2',
            score: `${data_match.scores.A} - ${data_match.scores.B}`,
            totalExchanges: data_match.tracker.totalExchanges,
            maxExchanges: data_match.tracker.maxRally,
