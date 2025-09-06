@@ -6,6 +6,7 @@ import { avatarUploadRoute } from "./uploadAvatar.js";
 import { searchUserRoute } from "./searchUser.js";
 import friendsRequestRoute from "./friendsRequest.js";
 import { listAvatarsRoute } from './listAvatars.js';
+import { setOnlineStatusRoute } from "./setOnlineStatus.js";
 
 export default async function registerAllRoutes(app: FastifyInstance) {
 	await app.register(registerRoute);
@@ -15,4 +16,5 @@ export default async function registerAllRoutes(app: FastifyInstance) {
 	await app.register(searchUserRoute);
 	await app.register(friendsRequestRoute);
 	await app.register(listAvatarsRoute);
+	await app.register(setOnlineStatusRoute);
 }

@@ -5,8 +5,8 @@ import registerAllRoutes from './routes/index.js';
 import jwtSetup from './plugins/authPlugin.js';
 import multipartsPlugin from './plugins/multiparts.js';
 import staticAvatarsPlugin from './plugins/static-avatars.js';
-import { registerInternal } from './internal.js';
-import { setOnlineStatusRoute } from './routes/setOnlineStatus.js';
+//import { registerInternal } from './internal.js';
+//import { setOnlineStatusRoute } from './routes/setOnlineStatus.js';
 
 const app : FastifyInstance = fastify( {
 	logger: true,
@@ -14,7 +14,7 @@ const app : FastifyInstance = fastify( {
 		key: fs.readFileSync('/run/certs/users-service.key'),
 		cert: fs.readFileSync('/run/certs/users-service.crt'),
 		ca: fs.readFileSync('/run/certs/ca.crt'),
-		requestCert: true,
+//		requestCert: true,
 		rejectUnauthorized: false,
 	}
 });
@@ -53,13 +53,13 @@ app.get('/users/health', async (req, reply) => {
 	return reply.status(200).send({ status: 'ok' });
 });
 
-registerInternal(app, {
-	prefix: '/internal',
-	allowedCallers: ['auth-service'],
-	routes: [
-		setOnlineStatusRoute,
-	]
-});
+// registerInternal(app, {
+// 	prefix: '/internal',
+// 	allowedCallers: ['auth-service'],
+// 	routes: [
+// 		setOnlineStatusRoute,
+// 	]
+// });
 
 await app.ready();
 

@@ -14,15 +14,20 @@ const agent = new https.Agent({
 	ca: fs.readFileSync('/run/certs/ca.crt'),
 	cert: fs.readFileSync('/run/certs/game-service.crt'),
 	key: fs.readFileSync('/run/certs/game-service.key'),
-	rejectUnauthorized: true
 });
 
-export async function sendTournamentData(body: DataBlockchain) {
-	const res = await fetch(`https://nginx:4443/internal/blockchain/tournaments/summary`, {
+export async function sendTournamentData(payload: DataBlockchain) {
+	console.log('PAYLOAD TOURNAMENT: ',payload);
+	const res = await fetch(`https://blockchain-service:3003/tournaments/summary`, {
 		method: 'POST',
 		agent,
 		headers: { 'Content-Type': 'application/json' },
-		body: JSON.stringify({ body	}),
+		body: JSON.stringify({
+			tournamentId: payload.tournamentId,
+			userId: payload.userId,
+			winnerName: payload.winnerName,
+			matches: payload.matches
+			}),
 	});
 
 	let data: any = null;
@@ -31,5 +36,5 @@ export async function sendTournamentData(body: DataBlockchain) {
 	if (!res.ok) {
 		throw new Error(`sendTournamentData: ${data.error || res.statusText}`);
 	}
-	console.log('Tournament data send to blockchain-service');
+	console.log('Tournament data sent to blockchain-service');
 }

@@ -11,7 +11,7 @@ const app : FastifyInstance = fastify( {
 		key: fs.readFileSync('/run/certs/auth-service.key'),
 		cert: fs.readFileSync('/run/certs/auth-service.crt'),
 		ca: fs.readFileSync('/run/certs/ca.crt'),
-		requestCert: true,
+	//	requestCert: true,
 		rejectUnauthorized: false,
 	}
 });

@@ -3,10 +3,10 @@ PORJETC_NAME=transcendence
 all : build up
 
 build:
-	docker compose -p $(PORJETC_NAME) build
+	docker compose -p $(PORJETC_NAME) build 
 
 up:
-	docker compose -p $(PORJETC_NAME) up 
+	docker compose -p $(PORJETC_NAME)  up
 
 down:
 	docker compose -p $(PORJETC_NAME) down

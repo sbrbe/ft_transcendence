@@ -8,7 +8,7 @@ export function initDB()
 {
 	try
 	{
-		db = new Database('./database/database.db');
+		db = new Database('./database/database.db', { verbose: console.log});
 		db.exec(createTournamentTable);
 		console.log('✅ SQLite AUTH_DB connected');
 	}

@@ -9,6 +9,7 @@ export default fp(async function jwtSetup(app: FastifyInstance) {
 	await app.register(fastifyCors, {
 		origin: true,
 		credentials: true,
+		methods: ['GET', 'POST', 'PUT', 'DELETE']
 	})
 	
 	await app.register(fastifyCookie, {

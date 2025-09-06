@@ -6,11 +6,10 @@ const agent = new https.Agent({
 	ca: fs.readFileSync('/run/certs/ca.crt'),
 	cert: fs.readFileSync('/run/certs/auth-service.crt'),
 	key: fs.readFileSync('/run/certs/auth-service.key'),
-	rejectUnauthorized: true
 });
 
 export async function setOnlineStatus(userId: string, online: boolean) {
-	const res = await fetch(`https://nginx:4443/internal/users/status`, {
+	const res = await fetch(`https://users-service:3001/users/internal/status`, {
 		method: 'PUT',
 		agent,
 		headers: { 'Content-Type': 'application/json' },

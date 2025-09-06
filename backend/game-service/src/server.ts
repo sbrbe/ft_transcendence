@@ -11,7 +11,7 @@ const app : FastifyInstance = fastify( {
 		key: fs.readFileSync('/run/certs/game-service.key'),
 		cert: fs.readFileSync('/run/certs/game-service.crt'),
 		ca: fs.readFileSync('/run/certs/ca.crt'),
-		requestCert: true,
+//		requestCert: true,
 		rejectUnauthorized: false,
 	}
 });
@@ -42,6 +42,7 @@ app.get('/game/ping', async () => {
 app.get('/game/health', async (req, reply) => {
 	return reply.status(200).send({ status: 'ok' });
 });
+
 /*
 app.get('/game/match', async () => {
   const rows = getAllMatches();
@@ -61,9 +62,12 @@ registerInternal(app, {
 attachWs(app);
 await app.ready();
 
-const PORT = Number(process.env.PORT) || 3004;
- app.listen({ port: PORT, host: '0.0.0.0' }).then(() => {
-   console.log('🚀 HTTP on', PORT, '| WS via httpUpgrade for /game and /game/local');
+app.listen({ port: 3004, host: '0.0.0.0'}, (err, address) => {
+	if (err) {
+		console.error(err);
+		process.exit(1);
+	}
+	console.log(`✅ Game-services running on ${address}`)
 });
 
 export default app;

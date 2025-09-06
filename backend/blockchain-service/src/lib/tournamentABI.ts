@@ -5,19 +5,19 @@ const abi = [
 			{
 				"indexed": false,
 				"internalType": "string",
-				"name": "line",
+				"name": "lineTournament",
 				"type": "string"
 			},
 			{
 				"indexed": false,
 				"internalType": "string",
-				"name": "line2",
+				"name": "lineRound",
 				"type": "string"
 			},
 			{
 				"indexed": false,
 				"internalType": "string",
-				"name": "line3",
+				"name": "lineScores",
 				"type": "string"
 			}
 		],
@@ -30,13 +30,13 @@ const abi = [
 			{
 				"indexed": false,
 				"internalType": "string",
-				"name": "line4",
+				"name": "lineTournament",
 				"type": "string"
 			},
 			{
 				"indexed": false,
 				"internalType": "string",
-				"name": "line5",
+				"name": "lineWinner",
 				"type": "string"
 			}
 		],
@@ -46,17 +46,12 @@ const abi = [
 	{
 		"inputs": [
 			{
-				"internalType": "uint256",
+				"internalType": "string",
 				"name": "tournamentId",
-				"type": "uint256"
+				"type": "string"
 			},
 			{
 				"components": [
-					{
-						"internalType": "enum TournamentSummary.Round",
-						"name": "round",
-						"type": "uint8"
-					},
 					{
 						"components": [
 							{

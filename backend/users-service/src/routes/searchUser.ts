@@ -8,7 +8,7 @@ export async function searchUserRoute(app: FastifyInstance) {
 			| { userId: string, avatarPath: string }
 			| { error: string };}>
 			('/friends/searchUser/:username', {
-		//preHandler: app.authenticate,
+		preHandler: app.authenticate,
 		schema: {
 			params: {
 				type: 'object',

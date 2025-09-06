@@ -10,6 +10,10 @@ if (!process.env.FUJI_RPC || !process.env.CONTRACT_ADDR || !process.env.KEEPER_P
 	throw new Error('FUJI_RPC, CONTRACT_ADDR or KEEPER_PK not set');
 }
 
+type Payload = {
+  player1: { name: string; score: number };
+  player2: { name: string; score: number };
+};
 let _contract: ethers.Contract | null = null;
 
 
@@ -25,11 +29,9 @@ function getContract(): ethers.Contract
   return (_contract);
 }
 
-export type TSPlayer = { name: string; score: number };
-export type TSMatch  = { player1: TSPlayer; player2: TSPlayer };
-export type TSSummary = { tournamentId: string; userId: string; winnerName: string; matches: TSMatch[] };
+export type TSSummary = { tournamentId: string; userId: string; winnerName: string; matches: Payload[] };
 
-export function addPlayers(matches: TSMatch[]): string[]
+export function addPlayers(matches: Payload[]): string[]
 {
   const playerNumber = matches.length + 1;
   const roundSize = playerNumber / 2;
@@ -51,7 +53,6 @@ export async function sendTournamentSummary( s: TSSummary): Promise<{ txHash: st
     player1: { name: m.player1.name, score: BigInt(m.player1.score) },
     player2: { name: m.player2.name, score: BigInt(m.player2.score) },
   }));
-
   const tx = await c.recordTournamentSummary( s.tournamentId, matchesForAbi, s.winnerName );
   const rc = await tx.wait();
 

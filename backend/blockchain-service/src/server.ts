@@ -1,5 +1,5 @@
 import fastify, {FastifyInstance, FastifyReply, FastifyRequest} from "fastify";
-import { postTournamentSummaryRoute } from "./routes/tournamentRoute.js";
+import postTournamentSummaryRoute from "./routes/tournamentRoute.js";
 import { initDB, getValues, db } from "./init_db.js";
 import { registerInternal } from "./internal.js";
 import fs from 'node:fs';
@@ -11,7 +11,7 @@ const app : FastifyInstance = fastify( {
 		key: fs.readFileSync('/run/certs/blockchain-service.key'),
 		cert: fs.readFileSync('/run/certs/blockchain-service.crt'),
 		ca: fs.readFileSync('/run/certs/ca.crt'),
-		requestCert: true,
+	//	requestCert: true,
 		rejectUnauthorized: false,
 	}
 });
@@ -24,11 +24,11 @@ await app.register(jwtSetup);
 
 initDB();
 
-//await app.register(postTournamentSummaryRoute);
+await app.register(postTournamentSummaryRoute);
 
 app.get('/blockchain/ma-route', async (request: FastifyRequest, reply: FastifyReply) => {
 	try {
-		const rows = getValues("rot13");
+		const rows = await db.prepare('SELECT * FROM tournaments').all();
 		return reply.send({ rows });
 	} catch (err: any) {
 		return reply.status(500).send({ error: err.message });
@@ -43,14 +43,24 @@ app.get('/users/health', async (req, reply) => {
 	return reply.status(200).send({ status: 'ok' });
 });
 
+// app.get('/blockchain/ma-route', async (request: FastifyRequest, reply: FastifyReply) => {
+// 	try {
+// 		const rows = getValues("rot13");
+// 		return reply.send({ rows });
+// 	} catch (err: any) {
+// 		return reply.status(500).send({ error: err.message });
+// 	}
+// });
 
-registerInternal(app, {
-	prefix: '/internal',
-	allowedCallers: ['game-service'],
-	routes: [
-		postTournamentSummaryRoute,
-	]
-});
+
+
+// registerInternal(app, {
+// 	prefix: '/internal',
+// 	allowedCallers: ['game-service'],
+// 	routes: [
+// 		postTournamentSummaryRoute,
+// 	]
+// });
 
 
 await app.ready();

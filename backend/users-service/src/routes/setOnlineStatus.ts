@@ -1,11 +1,11 @@
 import type { InternalRoute } from '../internal.js';
 import { getUserById } from '../lib/utils.js';
 import { db } from '../init_db.js';
+import { FastifyInstance, FastifyRequest, FastifyReply } from "fastify";
 
-export const setOnlineStatusRoute: InternalRoute = {
-	method: 'PUT',
-	url: '/status',
-	opts: {
+
+export async function setOnlineStatusRoute(app: FastifyInstance) {
+	app.put('/internal/status', {
 		schema: {
 			body: {
 				type: 'object',
@@ -31,10 +31,10 @@ export const setOnlineStatusRoute: InternalRoute = {
 						error: { type: 'string' }
 					}
 				}
-			}	
+			}
 		}
 	},
-	handler: (req, reply) => {
+	async (req: FastifyRequest, reply: FastifyReply) => {
 		const { userId, online } = req.body as { userId: string, online: boolean };
 
 		const user = getUserById(userId);
@@ -50,5 +50,5 @@ export const setOnlineStatusRoute: InternalRoute = {
 		} catch (error: any) {
 			return reply.status(400).send({ success: false, error: error.message });
 		}
-	},
+	});
 }

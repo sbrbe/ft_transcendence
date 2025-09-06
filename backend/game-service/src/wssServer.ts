@@ -25,11 +25,9 @@ import { sendTournamentData } from './clientInternal.js';
    };
    
   export type Payload = {
-     matches: {
        player1: { name: string; score: number };
        player2: { name: string; score: number };
-     };
-   };
+};
    
    
    type LocalSession = {
@@ -294,24 +292,42 @@ export function attachWs(app: FastifyInstance) {
                if (sess.t) {
                  const res = sess.t.getNextMatch(); 
                  const player1 = res[0];
-                 const player2 = res[1];
+                 const player2 = res[1] ?? 'WINNER';
                  if (!player1)
                  {
                   const body = {
-                    tournamentId: sess.tournamentId,
-                    userId: sess.userId!,
-                    winnerName: sess.winnerName!,
-                    matches: sess.historTournmnt   // 👈 doit être un array d’objets { player1: {...}, player2: {...} }
+                    tournamentId: String(sess.tournamentId),
+                    userId: String("550e8400-e29b-41d4-a716-446655440000"), // remplace par le vrai
+                    winnerName: String(player2 ?? 'WINNER').trim().slice(0,20),
+                    matches: (sess.historTournmnt ?? []).map(m => ({
+                      player1: {
+                        name: String(m.player1?.name ?? '').slice(0,20),
+                        score: Number(m.player1?.score ?? NaN),
+                      },
+                      player2: {
+                        name: String(m.player2?.name ?? '').slice(0,20),
+                        score: Number(m.player2?.score ?? NaN),
+                      },
+                    })),
                   };
-                
+
+                  // garde un garde-fou local
+                  if (!body.winnerName) throw new Error('winnerName manquant');
+                  if (!Array.isArray(body.matches) || body.matches.length === 0) throw new Error('matches vide');
+                  for (const mat of body.matches) {
+                    if (!Number.isFinite(mat.player1.score) || !Number.isFinite(mat.player2.score)) {
+                      throw new Error('score non numérique dans matches');
+                    }
+                  }
+
                   try {
+                    safeSend(sess.ws, { type: 'tournament_end' });
+                    clearInterval(sess.ticker!);
+                    sess.ticker = undefined;
                     await sendTournamentData(body);
                   } catch (err) {
                     console.error("❌ Erreur POST /tournaments/summary :", err);
                   }
-                   safeSend(sess.ws, { type: 'tournament_end' });
-                   clearInterval(sess.ticker!);
-                   sess.ticker = undefined;
                    break;
                  }     
                  const player = `${player1} VS ${player2}`;
@@ -428,11 +444,8 @@ export function attachWs(app: FastifyInstance) {
        const scoreB = snap.scores.B
    
        const payload: Payload = {
-         matches:
-           {
              player1: { name: nameA, score: scoreA },
              player2: { name: nameB, score: scoreB },
-           },
        };
    
        sess.historTournmnt.push(payload);
