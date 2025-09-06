@@ -3,13 +3,14 @@ import type { Database as Database_type} from 'better-sqlite3'
 import { v4 as uuidv4} from 'uuid';
 
 
-type SaveMatchInput = {
-	player1: string;
-	player2: string;
-	score: string;
+export type SaveMatchInput = {
+	id?: string;
+	winner: string;
+	loser: string;
+	winnerScore: number;
+	loserScore: number;
 	totalExchanges: number;
 	maxExchanges: number;
-	id?: string;
 	date: string;
 };
 
@@ -30,46 +31,30 @@ export function initDB()
 const createMatchsTable =
 	`CREATE TABLE IF NOT EXISTS matches (
 		id TEXT PRIMARY KEY,
-		player1 TEXT NOT NULL,
-		player2 TEXT NOT NULL,
-		score TEXT NOT NULL,
-		total_exchanges INTEGER NOT NULL,
-		max_exchanges INTEGER NOT NULL,
+		winner TEXT NOT NULL,
+		loser TEXT NOT NULL,
+		winnerScore INTEGER NOT NULL,
+		loserScore INTEGER NOT NULL,
+		totalExchanges INTEGER NOT NULL,
+		maxExchanges INTEGER NOT NULL,
 		date TEXT NOT NULL		
 		)`;
 
 export function saveMatch(input: SaveMatchInput): string {
 	const id = input.id ?? uuidv4();
 	const stmt = db.prepare(`
-		INSERT INTO matches (id, player1, player2, score, total_exchanges, max_exchanges)
-		VALUES (?, ?, ?, ?, ?, ?)
+		INSERT INTO matches (id, winner, loser, winnerScore, loserScore, totalExchanges, maxExchanges, date)
+		VALUES (?, ?, ?, ?, ?, ?, ?, ?)
 		`);
 		stmt.run(
 			id,
-			input.player1,
-			input.player2,
-			input.score,
+			input.winner,
+			input.loser,
+			input.winnerScore,
+			input.loserScore,
 			input.totalExchanges,
 			input.maxExchanges,
 			input.date
 			);
 		return id;
-}
-
-export function getAllMatches() {
-	const stmt = db.prepare(`
-		SELECT id, player1, player2, score, total_exchanges, max_exchanges, date
-		FROM matches
-		ORDER BY rowid DESC
-		`);
-	return stmt.all();
-} 
-
-export function getMatchHistory(userId: string) {
-	const stmt = db.prepare(`
-		SELECT * FROM matches
-		WHERE player1 = ? OR player2 = ?
-		ORDER by createdAt DESC
-		`);
-	const macthes = stmt.all(userId, userId);
 }

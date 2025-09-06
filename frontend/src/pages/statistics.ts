@@ -1,7 +1,7 @@
 import { navigateTo } from "../router/router";
 import { getSavedUser } from "../utils/ui";
 import { AppUser } from "../utils/interface";
-import { getPlayerStats, getMatchHistory, PlayerStats, Match } from "../api/statistics";
+import { getMatchHistory} from "../api/statistics";
 import { setStatusMessage } from "../utils/ui";
 
 const statistics: (container: HTMLElement) => void = (container) => {
@@ -67,20 +67,19 @@ const statistics: (container: HTMLElement) => void = (container) => {
       <p id="stats-msg" class="hidden text-sm text-red-600"></p>
     </div>
   `;
+  
+  loadStats(saved);
 
   const msg = container.querySelector<HTMLParagraphElement>('#stats-msg')!;
   const tbody = container.querySelector<HTMLTableSectionElement>('#history')!;
 
-  async () => {
+  async function loadStats(saved: AppUser) {
       try {
         const userId = saved.userId;
-        const [stats, history] = await Promise.all([
-          getPlayerStats(userId) as Promise<PlayerStats>,
-          getMatchHistory(userId) as Promise<Match[]>
-        ]);
+        const history = await getMatchHistory(userId);
 
-        const wins = stats.wins ?? 0;
-        const defeats = stats.defeats ?? 0;
+        const wins = history.wins ?? 0;
+        const defeats = history.losses ?? 0;
         const total = wins + defeats;
         const winrate = total ? (wins / total) * 100 : 0;
 
@@ -99,18 +98,27 @@ const statistics: (container: HTMLElement) => void = (container) => {
 
         if (tbody) {
           tbody.innerHTML= "";
-          const rows = Array.isArray(history) ? history.slice(0, 10) : [];
+          const rows = Array.isArray(history.history) ? history.history.slice(0, 10) : [];
           if (!rows.length) {
             tbody.innerHTML = `<tr class="text-gray-400"><td class="py-3" colspan="4">No recent matches.</td></tr>`;
           } else {
             for (const m of rows) {
               const tr = document.createElement('tr');
-              const date = m.playedAt;
+              const date = m.date;
               const result = m.result;
+              let myScore = null;
+              let hisScore = null;
+              if (result === 'win') {
+                myScore = m.winnerScore;
+                hisScore = m.loserScore;
+              } else {
+                myScore = m.loserScore;
+                hisScore = m.winnerScore;
+              }
               tr.innerHTML = `
             <td class="py-2 pr-4 whitespace-nowrap">${date}</td>
-            <td class="py-2 pr-4">${m.opponentUsername}</td>
-            <td class="py-2 pr-4 font-medium">${m.myScore}–${m.hisScore}</td>
+            <td class="py-2 pr-4">${m.opponent}</td>
+            <td class="py-2 pr-4 font-medium">${myScore}–${hisScore}</td>
             <td class="py-2">
               <span class="inline-flex items-center gap-1 text-xs ${result ? "text-green-700 bg-green-100" : "text-gray-700 bg-gray-100"} px-2 py-0.5 rounded-full">
                 <span class="h-2 w-2 rounded-full ${result ? "bg-green-500" : "bg-gray-400"}"></span>

@@ -1,8 +1,9 @@
 import fastify, {FastifyInstance, FastifyReply, FastifyRequest} from 'fastify';
 import fs from 'node:fs';
 import jwtSetup from './plugins/authPlugin.js';
-import { initDB, getAllMatches, db } from './init_db.js';
+import { initDB, db } from './init_db.js';
 import { attachWs } from './wssServer.js';
+import getMatchHistoryRoute from './routes/matchHistory.js';
 
 const app : FastifyInstance = fastify( {
 	logger: true,
@@ -23,6 +24,8 @@ await app.register(jwtSetup);
 
 initDB();
 
+app.register(getMatchHistoryRoute, { prefix: '/game'})
+
 app.get('/game/ma-route', async (request: FastifyRequest, reply: FastifyReply) => {
 	try {
 		const matches = await db.prepare('SELECT * FROM matches').all();
@@ -39,12 +42,12 @@ app.get('/game/ping', async () => {
 app.get('/game/health', async (req, reply) => {
 	return reply.status(200).send({ status: 'ok' });
 });
-
+/*
 app.get('/game/match', async () => {
   const rows = getAllMatches();
   return rows;
 });
-
+*/
 /*
 registerInternal(app, {
 	prefix: '/internal',

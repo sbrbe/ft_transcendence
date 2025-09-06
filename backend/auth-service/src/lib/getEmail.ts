@@ -13,7 +13,7 @@ export async function getEmail(
 				return reply.status(404).send({ error: 'User not found' });
 			}
 			return reply.status(200).send({ userId: userId, email: user.email });
-		} catch (error) {
+		} catch (error: any) {
 			return reply.status(500).send({ error: 'Server error' });
 		}
 }

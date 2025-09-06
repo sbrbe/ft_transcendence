@@ -364,10 +364,23 @@ export function attachWs(app: FastifyInstance) {
          if (!db)
            initDB(); // il faut initialiser la DB au démarrage
          const data_match = room.engine.getGameState();
+         console.log('NAME PLAYER 1: ', data_match.paddles[0]?.name)         
+         console.log('NAME PLAYER 2: ', data_match.paddles[1]?.name)
+         const playerA = data_match.paddles[0]?.name || 'Player 1';
+         const playerB = data_match.paddles[1]?.name || 'Player 2';
+         const scoreA = Number(data_match.scores.A);
+         const scoreB = Number(data_match.scores.B);
+         
+         const didAWin = scoreA > scoreB;
+         const winner = didAWin ? playerA : playerB;
+         const loser = didAWin ? playerB : playerA;
+         const winnerScore = didAWin ? scoreA : scoreB;
+         const loserScore = didAWin ? scoreB : scoreA;
          saveMatch({
-           player1: data_match.paddles[0]?.name ?? 'Player 1',
-           player2: data_match.paddles[1]?.name ?? 'Player 2',
-           score: `${data_match.scores.A} - ${data_match.scores.B}`,
+           winner,
+           loser,
+           winnerScore,
+           loserScore,
            totalExchanges: data_match.tracker.totalExchanges,
            maxExchanges: data_match.tracker.maxRally,
            date: new Date().toISOString().split("T")[0]

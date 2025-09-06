@@ -1,47 +1,26 @@
 import { refreshOnce } from "./A2F";
 import { logout } from "./auth";
 
-export type PlayerStats = {
+type HistoryItem = {
+	id: string;
+	winner: string;
+	loser: string;
+	winnerScore: string;
+	loserScore: string;
+	totalExchanges: number;
+	maxExchanges: number;
+	date: string;
+	result: 'win' | 'lose';
+	opponent: string;
+};
+
+type MatchHistory = {
+	history: HistoryItem[];
 	wins: number;
-	defeats: number;
+	losses: number;
 };
-
-export type Match = {
-	opponentUsername: string;
-	myScore: number;
-	hisScore: number;
-	result: 'WIN' | 'DEFEAT';
-	playedAt: string;
-};
-
-export async function getPlayerStats(userId: string, retried = false) {
-	const res = await fetch(`/service/stats/${encodeURIComponent(userId)}`, {
-		method: 'GET',
-		credentials: 'include',
-		headers: { Accept: 'application/json '},
-	});
-
-	if (res.status === 401 && !retried) {
-		const ok = await refreshOnce();
-		if (ok) {
-			return getPlayerStats(userId, true);
-		} else {
-			await logout();
-		}
-	}
-
-	const data = await res.json();
-	if (!res.ok) {
-		throw new Error(data.error || res.statusText);
-	}
-	return {
-		wins: data.wins,
-		defeats: data.defeats
-	};
-}
-
-export async function getMatchHistory(userId: string, retried = false) {
-	const res = await fetch(`/service/match-history/${encodeURIComponent(userId)}`, {
+export async function getMatchHistory(userId: string, retried = false): Promise<MatchHistory> {
+	const res = await fetch(`/game/match-history/${encodeURIComponent(userId)}`, {
 		method: 'GET',
 		credentials: 'include',
 		headers: { Accept: 'application/json' },
@@ -60,7 +39,11 @@ export async function getMatchHistory(userId: string, retried = false) {
 	if (!res.ok) {
 		throw new Error(data.error || res.statusText);
 	}
-	return data;
+	return {
+		history: data.history,
+		wins: data.wins,
+		losses: data.losses
+	};
 }
 
 /**
