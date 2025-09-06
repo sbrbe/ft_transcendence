@@ -3,6 +3,7 @@ import postTournamentSummaryRoute from "./routes/tournamentRoute.js";
 import { initDB, getValues, db } from "./init_db.js";
 import fs from 'node:fs';
 import jwtSetup from './plugins/authPlugin.js';
+import { tournoiValues } from "./types/fastify.js";
 
 const app : FastifyInstance = fastify( {
 	logger: true,
@@ -25,10 +26,21 @@ initDB();
 
 await app.register(postTournamentSummaryRoute);
 
-app.get('/blockchain/ma-route', async (request: FastifyRequest, reply: FastifyReply) => {
+app.get('/blockchain/ma-route', async (request: FastifyRequest<{Body: tournoiValues }>, reply: FastifyReply) => {
 	try {
-		const rows = getValues("rot13");
+		const {userId} = request.body;
+		const rows = getValues(userId);
 		return reply.send({ rows });
+	} catch (err: any) {
+		return reply.status(500).send({ error: err.message });
+	}
+});
+
+app.get('/blockchain/db', async (request: FastifyRequest<{Body: tournoiValues }>, reply: FastifyReply) => {
+	try {
+		const {userId} = request.body;
+		const rows = getValues(userId);
+		return reply.status(200).send({ rows });
 	} catch (err: any) {
 		return reply.status(500).send({ error: err.message });
 	}
