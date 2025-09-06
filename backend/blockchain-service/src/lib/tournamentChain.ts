@@ -53,7 +53,6 @@ export async function sendTournamentSummary( s: TSSummary): Promise<{ txHash: st
     player1: { name: m.player1.name, score: BigInt(m.player1.score) },
     player2: { name: m.player2.name, score: BigInt(m.player2.score) },
   }));
-
   const tx = await c.recordTournamentSummary( s.tournamentId, matchesForAbi, s.winnerName );
   const rc = await tx.wait();
 

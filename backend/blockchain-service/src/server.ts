@@ -1,5 +1,5 @@
 import fastify, {FastifyInstance, FastifyReply, FastifyRequest} from "fastify";
-import { postTournamentSummaryRoute } from "./routes/tournamentRoute.js";
+import postTournamentSummaryRoute from "./routes/tournamentRoute.js";
 import { initDB, getValues, db } from "./init_db.js";
 import { registerInternal } from "./internal.js";
 import fs from 'node:fs';
@@ -7,13 +7,13 @@ import jwtSetup from './plugins/authPlugin.js';
 
 const app : FastifyInstance = fastify( {
 	logger: true,
-	https: {
-		key: fs.readFileSync('/run/certs/blockchain-service.key'),
-		cert: fs.readFileSync('/run/certs/blockchain-service.crt'),
-		ca: fs.readFileSync('/run/certs/ca.crt'),
-		requestCert: true,
-		rejectUnauthorized: false,
-	}
+	// https: {
+	// 	key: fs.readFileSync('/run/certs/blockchain-service.key'),
+	// 	cert: fs.readFileSync('/run/certs/blockchain-service.crt'),
+	// 	ca: fs.readFileSync('/run/certs/ca.crt'),
+	// 	requestCert: true,
+	// 	rejectUnauthorized: false,
+	// }
 });
 
 if (!process.env.JWT_ACCESS_SECRET || !process.env.COOKIE_SECRET) {
@@ -24,7 +24,7 @@ await app.register(jwtSetup);
 
 initDB();
 
-//await app.register(postTournamentSummaryRoute);
+await app.register(postTournamentSummaryRoute);
 
 app.get('/blockchain/ma-route', async (request: FastifyRequest, reply: FastifyReply) => {
 	try {
@@ -44,13 +44,13 @@ app.get('/users/health', async (req, reply) => {
 });
 
 
-registerInternal(app, {
-	prefix: '/internal',
-	allowedCallers: ['game-service'],
-	routes: [
-		postTournamentSummaryRoute,
-	]
-});
+// registerInternal(app, {
+// 	prefix: '/internal',
+// 	allowedCallers: ['game-service'],
+// 	routes: [
+// 		postTournamentSummaryRoute,
+// 	]
+// });
 
 
 await app.ready();

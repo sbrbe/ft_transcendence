@@ -1,13 +1,10 @@
-import { postTournamentSummary } from "../lib/tournamentHandler.js";
-import type { InternalRoute } from '../internal.js';
+import { FastifyInstance } from "fastify";
 import { addPlayers, sendTournamentSummary, TSSummary } from "../lib/tournamentChain.js";
 import { saveValues } from "../init_db.js";
 
 
-export const postTournamentSummaryRoute: InternalRoute = {
-  method: 'POST',
-  url: '/blockchain/tournaments/summary',
-  opts: {
+export default async function postTournamentSummaryRoute(app: FastifyInstance) {
+  app.post('/blockchain/tournaments/summary',  {
     schema: {
       body: {
         type: "object",
@@ -53,10 +50,16 @@ export const postTournamentSummaryRoute: InternalRoute = {
             blockNumber: { type: "number" },
             snowtraceTx: { type: "string" }
           }
+        },
+        500: {
+          type: "object",
+          properties: {
+            error: { type: "string" }
+          }
         }
       }
     }
-  }, handler: async (req, reply) => {
+  }, async (req, reply) => {
     try
       {
         const summary = req.body as TSSummary;
@@ -79,8 +82,5 @@ export const postTournamentSummaryRoute: InternalRoute = {
         req.log.error({ err: e }, "recordTournamentSummary failed");
         return (reply.status(500).send({error: "Blockchain write failed",details: e?.message ?? "unknown"}));
       }
-  },
+  }, )
 }
-
-
-
