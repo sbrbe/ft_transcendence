@@ -1,8 +1,8 @@
 import fastify, {FastifyInstance, FastifyReply, FastifyRequest} from 'fastify';
 import fs from 'node:fs';
-import { db, initDB } from './init_db.js';
 import jwtSetup from './plugins/authPlugin.js';
-import { getAllMatches } from './init_db.js';
+import { initDB, getAllMatches, db } from './init_db.js';
+import { attachWs } from './wssServer.js';
 
 const app : FastifyInstance = fastify( {
 	logger: true,
@@ -26,7 +26,6 @@ initDB();
 app.get('/game/ma-route', async (request: FastifyRequest, reply: FastifyReply) => {
 	try {
 		const matches = await db.prepare('SELECT * FROM matches').all();
-
 		return reply.send({ matches });
 	} catch (err: any) {
 		return reply.status(500).send({ error: err.message });
@@ -41,19 +40,27 @@ app.get('/game/health', async (req, reply) => {
 	return reply.status(200).send({ status: 'ok' });
 });
 
-app.get('/game/match', async (req, reply) => {
+app.get('/game/match', async () => {
   const rows = getAllMatches();
   return rows;
 });
 
+/*
+registerInternal(app, {
+	prefix: '/internal',
+	allowedCallers: ['auth-service'],
+	routes: [
+		setOnlineStatusRoute,
+	]
+});
+*/
+
+attachWs(app);
 await app.ready();
 
-app.listen({ port: 3004, host: '0.0.0.0'}, (err, address) => {
-	if (err) {
-		console.error(err);
-		process.exit(1);
-	}
-	console.log(`✅ Game-service running on ${address}`)
+const PORT = Number(process.env.PORT) || 3004;
+ app.listen({ port: PORT, host: '0.0.0.0' }).then(() => {
+   console.log('🚀 HTTP on', PORT, '| WS via httpUpgrade for /game and /game/local');
 });
 
 export default app;

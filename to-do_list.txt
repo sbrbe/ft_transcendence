@@ -1,7 +1,3 @@
-Function :
-
-	- Profil:
-		- gérer les avatars
 	- Friends : 
 		- mettre design à jour
 	- Stats:
@@ -12,8 +8,6 @@ ajouter un update ui dans la fonction logout pour les fails de refresh
 pages stats à faire
 
 Dans le make, gérer la suppression des bind mount
-
-Upload avatar par url
 
 Supprimer de la DB le password en clair
 

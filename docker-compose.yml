@@ -13,7 +13,6 @@ services:
     environment:
       - JWT_ACCESS_SECRET=${JWT_ACCESS_SECRET}
       - COOKIE_SECRET=${COOKIE_SECRET}
-
     networks:
       - transcendence
 
@@ -26,7 +25,6 @@ services:
     - ./nginx/pki/issued/auth-service.crt:/run/certs/auth-service.crt:ro
     - ./nginx/pki/private/auth-service.key:/run/certs/auth-service.key:ro
     - ./nginx/pki/ca/ca.crt:/run/certs/ca.crt:ro
-
     environment:
       - TWO_FA_SECRET=${TWO_FA_SECRET}
       - TRANSCENDENCE_KEY=${TRANSCENDENCE_KEY}
@@ -48,14 +46,16 @@ services:
     environment:
       - JWT_ACCESS_SECRET=${JWT_ACCESS_SECRET}
       - COOKIE_SECRET=${COOKIE_SECRET}
-      - FUJI_RPC={FUJI_RPC}
-      - CONTRACT_ADDR={CONTRACT_ADDR}
-      - KEEPER_PK={KEEPER_PK}
+      - FUJI_RPC=${FUJI_RPC}
+      - CONTRACT_ADDR=${CONTRACT_ADDR}
+      - KEEPER_PK=${KEEPER_PK}
     networks:
       - transcendence
 
   game-service:
-    build: ./backend/game-service
+    build: 
+      context: .
+      dockerfile: backend/game-service/Dockerfile
     ports:
       - "3004:3004"
     volumes:

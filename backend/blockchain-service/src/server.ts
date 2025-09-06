@@ -1,6 +1,7 @@
 import fastify, {FastifyInstance, FastifyReply, FastifyRequest} from "fastify";
-import postTournamentSummaryRoute from "./routes/tournamentRoute.js";
+import { postTournamentSummaryRoute } from "./routes/tournamentRoute.js";
 import { initDB, getValues, db } from "./init_db.js";
+import { registerInternal } from "./internal.js";
 import fs from 'node:fs';
 import jwtSetup from './plugins/authPlugin.js';
 
@@ -23,7 +24,7 @@ await app.register(jwtSetup);
 
 initDB();
 
-await app.register(postTournamentSummaryRoute);
+//await app.register(postTournamentSummaryRoute);
 
 app.get('/blockchain/ma-route', async (request: FastifyRequest, reply: FastifyReply) => {
 	try {
@@ -41,6 +42,16 @@ app.get('/blockchain/ping', async () => {
 app.get('/users/health', async (req, reply) => {
 	return reply.status(200).send({ status: 'ok' });
 });
+
+
+registerInternal(app, {
+	prefix: '/internal',
+	allowedCallers: ['game-service'],
+	routes: [
+		postTournamentSummaryRoute,
+	]
+});
+
 
 await app.ready();
  
