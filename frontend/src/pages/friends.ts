@@ -28,7 +28,7 @@ type Friend = {
 const friends: (container: HTMLElement) => void = (container) => {
     const saved = getSavedUser<AppUser>();
     if (!saved) {
-      navigateTo('/connexion');
+      navigateTo('/connection');
       return;
     }
   container.innerHTML = `

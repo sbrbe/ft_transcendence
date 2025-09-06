@@ -7,15 +7,23 @@ import { GameLocal } from "../utils/pong/launchers/local"
 import { GameApp } from "../utils/pong/launchers/online"
 import { GameTournament } from "../utils/pong/launchers/tournament"
 import { GAME_RUNTIME } from "../utils/pong/launchers/runtime";
+import { AppUser } from "../utils/interface";
+import { getSavedUser } from "../utils/ui";
+import { navigateTo } from "../router/router";
 
 const PONG_ABORT = Symbol("pongAbort");
 
 const pong: (container: HTMLElement) => void = (container) => {
+  const saved = getSavedUser<AppUser>();
+      if (!saved) {
+        navigateTo('/connection');
+        return;
+      }
   container.innerHTML = `
     <div class="text-center mt-8">
-      <h1 class="text-3xl font-bold text-gray-800 mb-2">Jouer au Pong</h1>
+      <h1 class="text-3xl font-bold text-gray-800 mb-2">Play to Pong</h1>
       <p class="text-lg text-gray-600 mb-6">
-        Sélectionne ton mode de jeu préféré et commence à surprendre tes adversaires
+        Choose your favorite game mode and start to play
       </p>
     </div>
 

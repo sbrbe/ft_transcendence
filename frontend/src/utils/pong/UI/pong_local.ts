@@ -3,7 +3,7 @@ const pong_local: (container: HTMLElement) => void = (container) => {
     <div class="text-center mt-8">
       <h1 class="text-3xl font-bold text-gray-800 mb-2">Mode Local</h1>
       <p class="text-lg text-gray-600 mb-6">
-        Choisis ton type de partie et défie tes amis directement
+        Choose your game mode and play with your friends
       </p>
     </div>
 
