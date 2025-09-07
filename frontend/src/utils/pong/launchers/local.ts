@@ -62,16 +62,28 @@ export class GameLocal implements Disposable{
   }
   
   private launchLocalGame(config: gameConfig) {
+    if (this.rafId) cancelAnimationFrame(this.rafId);
+  
     this.game = new GameLogic(this.canvas.width, this.canvas.height, config);
-
     this.attachInputListeners();
-
-    const loop = () => {
+  
+    const STEP = 1000 / 60;
+    let last = performance.now();
+    let acc = 0;
+  
+    const loop = (now: number) => {
       if (!this.game || !this.renderer) return;
-      this.game.update();
+      let dt = now - last;
+      last = now;
+      if (dt > 100) dt = 100;
+      acc += dt;
+      while (acc >= STEP) {
+        this.game.update();
+        acc -= STEP;
+      }
       const state = this.game.getGameState();
       this.renderer.draw(state);
-
+  
       if (state.running) {
         this.rafId = requestAnimationFrame(loop);
       } else {
@@ -79,8 +91,11 @@ export class GameLocal implements Disposable{
         this.renderer.endScreen(state as unknown as GameState);
       }
     };
+  
     this.rafId = requestAnimationFrame(loop);
   }
+  
+  
 
 private buildPlayersFromConf(conf: { mode: "1v1" | "2v2"; players: ("human" | "cpu")[] }): PlayerInfo[] {
   const targetLen = conf.mode === "2v2" ? 4 : 2;

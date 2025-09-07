@@ -43,7 +43,7 @@ export class GameLogic {
 
     private initPlayers() {
     const paddleWidth = this.canvasW / 80;
-    const paddleHeight = this.canvasH / 20;
+    const paddleHeight = this.canvasH / 10;
     const margin = 5;
     const spacing = 30;
     const mid = (this.canvasH) / 2;
