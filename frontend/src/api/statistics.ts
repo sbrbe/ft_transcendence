@@ -23,9 +23,10 @@ type MatchHistory = {
 };
 
 type TournamentItem = {
-	tournmanentId: string;
-	snowtraceLink: number;
+	tournamentId: string;
+	snowtraceLink: string;
 	players: string[];
+	date: string;
 };
 
 type TournamentHistory = {
@@ -80,5 +81,5 @@ export async function getTournaments(userId: string, retried = false): Promise<T
 		throw new Error(data.error || res.statusText);
 	}
 	console.log('HISTORY RECEIVED: ', data);
-	return { history: data };
+	return { history: data.history };
 }

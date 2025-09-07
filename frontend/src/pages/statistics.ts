@@ -64,15 +64,37 @@ const statistics: (container: HTMLElement) => void = (container) => {
           </table>
         </div>
       </section>
+
+<!-- TOURNAMENT HISTORY -->
+      <section class="rounded-2xl border bg-white shadow-sm p-5">
+        <h2 class="text-sm uppercase tracking-wider text-gray-500">Recent tournaments</h2>
+        <div class="mt-4 overflow-x-auto">
+          <table class="min-w-full text-sm">
+            <thead>
+              <tr class="text-left text-gray-500">
+                <th class="py-2 pr-4">Players</th>
+                <th class="py-2 pr-4">Link to blockchain</th>
+                <th class="py-2">Date</th>
+              </tr>
+            </thead>
+            <tbody class="tournament divide-y divide-gray-100">
+              <tr class="text-gray-400"><td class="py-3" colspan="4">No tournament history</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </section>
       <p id="stats-msg" class="hidden text-sm text-red-600"></p>
     </div>
   `;
   
   loadStats(saved);
-  //getTournaments(saved.userId);
+  loadTournament(saved);
 
   const msg = container.querySelector<HTMLParagraphElement>('#stats-msg')!;
-  const tbody = container.querySelector<HTMLTableSectionElement>('tbody.history')!;
+  const tbodyMatches = container.querySelector<HTMLTableSectionElement>('tbody.history')!;
+  const tbodyTournament = container.querySelector<HTMLTableSectionElement>('tbody.tournament')!;
+
+
 
   async function loadStats(saved: AppUser) {
       try {
@@ -97,12 +119,12 @@ const statistics: (container: HTMLElement) => void = (container) => {
         if (elWinrate)
             elWinrate.textContent = `${winrate}%`;
 
-        if (tbody) {
-          tbody.innerHTML = "";
+        if (tbodyMatches) {
+          tbodyMatches.innerHTML = "";
           const rows = Array.isArray(history.history) ? history.history.slice(0, 10) : [];
 
           if (!rows.length) {
-           tbody.innerHTML = `<tr class="text-gray-400"><td class="py-3" colspan="4">No recent matches.</td></tr>`;
+           tbodyMatches.innerHTML = `<tr class="text-gray-400"><td class="py-3" colspan="4">No recent matches.</td></tr>`;
           } else {
           for (const m of rows) {
             const tr = document.createElement('tr');
@@ -123,13 +145,48 @@ const statistics: (container: HTMLElement) => void = (container) => {
               </td>
               <td class="py-2 pr-4 whitespace-nowrap">${date}</td>
             `;
-            tbody.appendChild(tr);
+            tbodyMatches.appendChild(tr);
             }
           }
         }
         } catch (error: any) {
           setStatusMessage(msg, error?.message || "Can't load player stats", 'error');
-          tbody.innerHTML = `<li class="text-sm text-gray-500">-</li>`;
+          tbodyMatches.innerHTML = `<li class="text-sm text-gray-500">-</li>`;
+        }
+  }
+
+  async function loadTournament(saved: AppUser) {
+    const userId = saved.userId;
+      try {
+        const userId = saved.userId;
+        const history = await getTournaments(userId);
+
+        if (tbodyTournament) {
+          tbodyTournament.innerHTML = "";
+          const rows = Array.isArray(history.history) ? history.history.slice(0, 10) : [];
+
+          if (!rows.length) {
+           tbodyTournament.innerHTML = `<tr class="text-gray-400"><td class="py-3" colspan="4">No recent tournament.</td></tr>`;
+          } else {
+          for (const m of rows) {
+            const tr = document.createElement('tr');
+            const players = Array.isArray(m.players) ? m.players.filter(Boolean).join(', ') : String(m.players ?? '');
+          const href = typeof m.snowtraceLink === 'string' ? m.snowtraceLink : '';
+            tr.innerHTML = `
+              <td class="py-2 pr-4">${players}</td>
+              <td class="py-2 pr-4">
+                <a href="${encodeURI(href)}" target="_blank" rel="noopener noreferrer"
+                class="text-blue-600 hover:underline">View on Snowtrace</a>
+              </td>
+              <td class="py-2 pr-4 whitespace-nowrap">${m.date}</td>
+            `;
+            tbodyTournament.appendChild(tr);
+            }
+          }
+        }
+        } catch (error: any) {
+          setStatusMessage(msg, error?.message || "Can't load player stats", 'error');
+          tbodyTournament.innerHTML = `<li class="text-sm text-gray-500">-</li>`;
         }
   }
 };

@@ -24,7 +24,8 @@ const createTournamentTable =
     tournamentId TEXT PRIMARY KEY,
 		userId TEXT NOT NULL,
     snowtraceLink TEXT NOT NULL,
-		players TEXT NOT NULL DEFAULT '[]'
+		players TEXT NOT NULL DEFAULT '[]',
+    date TEXT NOT NULL
 		)`;
 
 export function saveValues(input: tournoiValues)
@@ -34,8 +35,8 @@ export function saveValues(input: tournoiValues)
 
   if (!exists)
   {
-    const stmt = db.prepare("INSERT INTO tournaments (tournamentId, userId, snowtraceLink, players) VALUES (?, ?, ?, ?)");
-    stmt.run(input.tournamentId, input.userId, input.snowtraceLink, JSON.stringify(input.players ?? []));
+    const stmt = db.prepare("INSERT INTO tournaments (tournamentId, userId, snowtraceLink, players, date) VALUES (?, ?, ?, ?, ?)");
+    stmt.run(input.tournamentId, input.userId, input.snowtraceLink, JSON.stringify(input.players ?? []), new Date().toISOString().slice(0, 10));
 	console.log(`✅ tournamentId ${input.tournamentId} créé`);
   }
   else 
@@ -43,23 +44,7 @@ export function saveValues(input: tournoiValues)
     console.log(`⚠️ tournamentId ${input.tournamentId} existe déjà`);
   }
 }
-
-// export function getValues(userId: string): Array<tournoiValues> {
-//   const rows = db.prepare(`
-//     SELECT tournamentId, userId, snowtraceLink, players
-//     FROM tournaments
-//     WHERE userId = ?
-//     ORDER BY rowid DESC
-//   `).all(userId) as Array<{ tournamentId: string; userId: string; snowtraceLink: string; players: string }>;
-
-//   return rows.map(r => ({
-//     tournamentId: r.tournamentId,
-//     userId: r.userId,
-//     snowtraceLink: r.snowtraceLink,
-//     players: safeParsePlayers(r.players),
-//   }));
-//}
-
+// VERIFIER SI ON S'EN SERT
 type TournamentItem = {
 	tournmanentId: string;
 	snowtraceLink: number;
@@ -80,18 +65,4 @@ export function getValues(userId: string): TournamentHistory[] {
   `).all(userId) as TournamentHistory[];
 
   return rows;
-}
-
-
-
-function safeParsePlayers(json: string): string[] {
-  try
-  {
-    const v = JSON.parse(json);
-    return Array.isArray(v) ? v : [];
-  }
-  catch
-  {
-    return [];
-  }
 }

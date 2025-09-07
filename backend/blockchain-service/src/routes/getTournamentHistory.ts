@@ -6,12 +6,14 @@ type Row = {
 	snowtraceLink: string;
 	players: string;
 	userId: string;
+	date: string;
 };
 
 type TournamentItem = {
 	tournamentId: string;
 	snowtraceLink: string;
 	players: string[];
+	date: string;
 };
 
 type TournamentHistory = {
@@ -39,21 +41,16 @@ export default async function getTournament(app: FastifyInstance) {
 							type : 'array',
 							items: {
 								type: 'object',
-								required: ['tournamentId', 'snowtraceLink', 'players'],
+								required: ['tournamentId', 'snowtraceLink', 'players', 'date'],
 								properties: {
 									tournamentId: { type: 'string', format: 'uuid' },
 									snowtraceLink: { type: 'string' },
 									players: {
 										type: 'array',
 										minItems: 1,
-										items: {
-											type: 'object',
-											required: ['player'],
-											properties: {
-												player: { type: 'string', minLength: 1, maxLength: 20}
-											}
-										}
-									}
+										items: { type: 'string', minLength: 1, maxLength: 20 }
+									},
+									date: { type: 'string' }
 								}
 							}
 						}
@@ -85,7 +82,7 @@ export default async function getTournament(app: FastifyInstance) {
 			}
 			console.log('HISTORY: ', history);
 			console.log('PLAYERS: ', history)
-			return reply.status(200).send({ history })
+			return reply.status(200).send(history)
 		} catch (error: any) {
 			return reply.status(500).send({ error: error.message });
 		}
@@ -94,32 +91,19 @@ export default async function getTournament(app: FastifyInstance) {
 
 function getTournamentHistory(userId: string): TournamentHistory {
 	const rows = db.prepare(`
-		SELECT tournamentId, userId, snowtraceLink, players
+		SELECT tournamentId, userId, snowtraceLink, players, date
 		FROM tournaments
 		WHERE userId = ?
 		ORDER BY rowid DESC
 		`).all(userId) as Row[];
 	console.log('ROWS: ', rows);
-	const history: TournamentItem[] = rows.map(r => ({
+	const history: TournamentItem[] = rows.map((r) => ({
 		tournamentId: r.tournamentId,
 		snowtraceLink: r.snowtraceLink,
-		players: safeParsePlayers(r.players)
+		players: safeParsePlayers(r.players),
+		date: r.date
 	}));
-
 	return { history };
-}
-
-
-
-export function getValues(userId: string): TournamentHistory[] {
-  const rows = db.prepare(`
-	SELECT *
-	FROM tournaments
-	WHERE userId = ?
-	ORDER BY rowid DESC
-  `).all(userId) as TournamentHistory[];
-	console.log('ROWS: ', rows);
-  return rows;
 }
 
 function safeParsePlayers(json: string): string[] {
