@@ -58,7 +58,7 @@ const statistics: (container: HTMLElement) => void = (container) => {
                 <th class="py-2">Date</th>
               </tr>
             </thead>
-            <tbody class="history" "divide-y divide-gray-100">
+            <tbody class="history divide-y divide-gray-100">
               <tr class="text-gray-400"><td class="py-3" colspan="4">No match history</td></tr>
             </tbody>
           </table>
@@ -69,10 +69,10 @@ const statistics: (container: HTMLElement) => void = (container) => {
   `;
   
   loadStats(saved);
-  getTournaments(saved.userId);
+  //getTournaments(saved.userId);
 
   const msg = container.querySelector<HTMLParagraphElement>('#stats-msg')!;
-  const tbody = container.querySelector<HTMLTableSectionElement>('#history')!;
+  const tbody = container.querySelector<HTMLTableSectionElement>('tbody.history')!;
 
   async function loadStats(saved: AppUser) {
       try {
@@ -98,44 +98,39 @@ const statistics: (container: HTMLElement) => void = (container) => {
             elWinrate.textContent = `${winrate}%`;
 
         if (tbody) {
-          tbody.innerHTML= "";
+          tbody.innerHTML = "";
           const rows = Array.isArray(history.history) ? history.history.slice(0, 10) : [];
-          if (!rows.length) {
-            tbody.innerHTML = `<tr class="text-gray-400"><td class="py-3" colspan="4">No recent matches.</td></tr>`;
-          } else {
-            for (const m of rows) {
-              const tr = document.createElement('tr');
-              const date = m.date;
-              const result = m.result;
-              let myScore = null;
-              let hisScore = null;
-              if (result === 'win') {
-                myScore = m.winnerScore;
-                hisScore = m.loserScore;
-              } else {
-                myScore = m.loserScore;
-                hisScore = m.winnerScore;
-              }
-              tr.innerHTML = `
-            <td class="py-2 pr-4 whitespace-nowrap">${date}</td>
-            <td class="py-2 pr-4">${m.opponent}</td>
-            <td class="py-2 pr-4 font-medium">${myScore}–${hisScore}</td>
-            <td class="py-2">
-              <span class="inline-flex items-center gap-1 text-xs ${result ? "text-green-700 bg-green-100" : "text-gray-700 bg-gray-100"} px-2 py-0.5 rounded-full">
-                <span class="h-2 w-2 rounded-full ${result ? "bg-green-500" : "bg-gray-400"}"></span>
-                ${result ? "Win" : "Defeat"}
-              </span>
-            </td>
-          `;
 
-          tbody.appendChild(tr);
+          if (!rows.length) {
+           tbody.innerHTML = `<tr class="text-gray-400"><td class="py-3" colspan="4">No recent matches.</td></tr>`;
+          } else {
+          for (const m of rows) {
+            const tr = document.createElement('tr');
+            const date = m.date;
+            const isWin = m.result === 'win';
+
+            const myScore = isWin ? m.winnerScore : m.loserScore;
+            const hisScore = isWin ? m.loserScore : m.winnerScore;
+
+            tr.innerHTML = `
+              <td class="py-2 pr-4">${m.opponent}</td>
+              <td class="py-2 pr-4 font-medium">${hisScore} – ${myScore}</td>
+              <td class="py-2">
+                <span class="inline-flex items-center gap-1 text-xs ${isWin ? "text-green-700 bg-green-100" : "text-red-700 bg-red-100"} px-2 py-0.5 rounded-full">
+                <span class="h-2 w-2 rounded-full ${isWin ? "bg-green-500" : "bg-red-400"}"></span>
+                  ${isWin ? "Win" : "Defeat"}
+                </span>
+              </td>
+              <td class="py-2 pr-4 whitespace-nowrap">${date}</td>
+            `;
+            tbody.appendChild(tr);
             }
           }
         }
-      } catch (error: any) {
-        setStatusMessage(msg, error?.message || "Can't load player stats", 'error');
-        tbody.innerHTML = `<li class="text-sm text-gray-500">-</li>`;
-      }
+        } catch (error: any) {
+          setStatusMessage(msg, error?.message || "Can't load player stats", 'error');
+          tbody.innerHTML = `<li class="text-sm text-gray-500">-</li>`;
+        }
   }
 };
 

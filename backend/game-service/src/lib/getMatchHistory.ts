@@ -14,7 +14,7 @@ export async function getMatchHistory(
 			const history = matches.map(m => ({
 				...m,
 				result: m.winner === userId ? 'win' : 'lose',
-				opponent: m.winner === userId ? m.loser : m.winner,
+				opponent: m.winner === userId ? m.loserName : m.winnerName,
 			}));
 			console.log('HISTORY: ', history);
 			const { wins, losses } = getWinLossCounts(userId);

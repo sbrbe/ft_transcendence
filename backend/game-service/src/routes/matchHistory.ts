@@ -5,6 +5,8 @@ type HistoryItem = {
 	id: string;
 	winner: string;
 	loser: string;
+	winnerName: string;
+	loserName: string;
 	winnerScore: string;
 	loserScore: string;
 	totalExchanges: number;
@@ -46,13 +48,15 @@ export default async function getMatchHistoryRoute(app: FastifyInstance) {
 							type: 'array',
 							items: {
 								type: 'object',
-								required: ['id', 'winner', 'loser', 'winnerScore',
+								required: ['id', 'winner', 'loser', 'winnerName', 'loserName', 'winnerScore',
 									'loserScore', 'totalExchanges', 'maxExchanges',
 									'date', 'result', 'opponent'],
 								properties: {
 									id: { type: 'string' },
 									winner: {type: 'string', format: 'uuid' },
 									loser: { type: 'string', format: 'uuid' },
+									winnerName: { type: 'string' },
+									loserName: { type: 'string' },
 									winnerScore: { type: 'integer' },
 									loserScore: { type: 'integer' },
 									totalExchanges: { type: 'integer' },

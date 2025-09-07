@@ -5,6 +5,8 @@ type HistoryItem = {
 	id: string;
 	winner: string;
 	loser: string;
+	winnerName: string;
+	loserName: string;
 	winnerScore: string;
 	loserScore: string;
 	totalExchanges: number;
