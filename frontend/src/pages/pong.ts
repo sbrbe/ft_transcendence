@@ -63,7 +63,7 @@ const pong: (container: HTMLElement) => void = (container) => {
     if (target.closest("#startTournamentBtn")) {
       const conf: TournamentPlayer[] = readTournamentConfig(container, saved);
     //  hideMobileControls(container);
-      game_canvas(container);
+      game_canvas(container, 0);
       const mount = container.querySelector("#game_canvas") as HTMLElement;
       const game = new GameTournament(conf);
       GAME_RUNTIME.start(game, mount);
@@ -71,7 +71,7 @@ const pong: (container: HTMLElement) => void = (container) => {
     }
     if (target.closest("#pong-online")) {
     //  showMobileControls(container);
-      game_canvas(container);
+      game_canvas(container, 1);
       const mount = container.querySelector("#game_canvas") as HTMLElement;
       const game = new GameOnline(saved.username, saved.userId);
       GAME_RUNTIME.start(game, mount);
@@ -80,7 +80,10 @@ const pong: (container: HTMLElement) => void = (container) => {
     if (target.closest("#startBtn_lcl_play")) {
       const conf: LocalPlayConfig = readLocalPlayConfig(container);
     //  hideMobileControls(container)
-      game_canvas(container);
+    if (conf.mode == '1v1')
+        game_canvas(container, 0);
+      else
+      game_canvas(container, 2);
       const mount = container.querySelector("#game_canvas") as HTMLElement;
       const game = new GameLocal(conf);
       GAME_RUNTIME.start(game, mount);
