@@ -14,7 +14,6 @@ export class GameTournament implements Disposable{
 	private _prevRunning: boolean | null = null;
 	private conf: TournamentPlayer[];
 	private configTournaments: buildTournament;
-  
   constructor(conf: TournamentPlayer[]) {
 	this.canvas = document.getElementById('gameCanvas') as HTMLCanvasElement;
 	this.renderer = new GameRenderer(this.canvas);
@@ -90,7 +89,6 @@ export class GameTournament implements Disposable{
     
     
     private startTournament() {
-      //this.showView('view-game');
     
 	const players = this.conf;
 	this.configTournaments = { players };
@@ -100,15 +98,12 @@ export class GameTournament implements Disposable{
       window.addEventListener('keydown', this.keyDownHandler, { passive: false });
       window.addEventListener('keyup', this.keyUpHandler, { passive: false });
     
-      // Focus canvas pour capter le clavier
       (document.activeElement as HTMLElement)?.blur?.();
       this.canvas.tabIndex = 0;
       this.canvas.focus();
-    
-      // Installe le handler “authoritative” (mouvements seulement)
+
       this.attachLocalAuthoritativeInputs();
     
-      // WS
       this.online?.dispose();
       this.online = new OnlineClient(
         (snap) => {

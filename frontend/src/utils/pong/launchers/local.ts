@@ -7,7 +7,6 @@ export class GameLocal implements Disposable{
 
   private canvas: HTMLCanvasElement;
   private renderer: GameRenderer; 
-  // Jeu / rendu / boucle
   private game: GameLogic | null = null;
   private rafId: number | null = null;
   
@@ -42,7 +41,6 @@ export class GameLocal implements Disposable{
   private keyUpHandler = (e: KeyboardEvent) => {
     const code = e.code;
     
-    // Espace “between stages” (tournoi)
     if (code === 'Space' && (this.betweenStage === 'winner')) {
       e.preventDefault();
       return;
@@ -64,13 +62,10 @@ export class GameLocal implements Disposable{
   }
   
   private launchLocalGame(config: gameConfig) {
-    // Crée moteur + renderer
     this.game = new GameLogic(this.canvas.width, this.canvas.height, config);
 
-    // Listeners input
     this.attachInputListeners();
 
-    // Boucle
     const loop = () => {
       if (!this.game || !this.renderer) return;
       this.game.update();
@@ -95,6 +90,7 @@ private buildPlayersFromConf(conf: { mode: "1v1" | "2v2"; players: ("human" | "c
     type: kind,
     playerId: idx + 1,
     name: `P${idx + 1}`,
+
   }));
 }
 
@@ -105,12 +101,10 @@ private startLocalFromConf(conf: { mode: "1v1" | "2v2"; players: ("human" | "cpu
     mode: conf.mode,
     playerSetup: players,
   };
-
   this.launchLocalGame(cfg);
 }
 
-  dispose()
-  {
+  dispose() {
     if (this.rafId !== null) {
       cancelAnimationFrame(this.rafId);
       this.rafId = null;

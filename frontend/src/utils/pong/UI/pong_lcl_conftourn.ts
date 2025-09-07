@@ -1,3 +1,5 @@
+import { AppUser } from "src/utils/interface";
+
 // src/pages/pong_lcl_conftourn.ts
 const pong_lcl_conftourn: (container: HTMLElement) => void = (container) => {
 	container.innerHTML = `  
@@ -101,11 +103,11 @@ const pong_lcl_conftourn: (container: HTMLElement) => void = (container) => {
   export default pong_lcl_conftourn;
   
   export interface TournamentPlayer {
-	id: number;
+	id: string;
 	name: string;
   }
   
-  export function readTournamentConfig(container: HTMLElement): TournamentPlayer[] {
+  export function readTournamentConfig(container: HTMLElement, saved: AppUser): TournamentPlayer[] {
 	const checked = document.querySelector<HTMLInputElement>('input[name="tournamentSize"]:checked');
 	const size = checked ? parseInt(checked.value, 10) : 4;
   
@@ -116,8 +118,11 @@ const pong_lcl_conftourn: (container: HTMLElement) => void = (container) => {
 	const players: TournamentPlayer[] = inputs.slice(0, size).map((inp, i) => {
 	  const raw = (inp.value ?? "").trim();
 	  const name = raw.length > 0 ? raw : `Joueur ${i + 1}`;
-	  return { id: i + 1, name };
+	  return { id: `${i + 1}`, name };
 	});
+
+  players[0].id = saved.userId;
+  players[0]. name = saved.username;
   
 	return (players);
   }

@@ -8,14 +8,12 @@ export class OnlineClient {
   private onInfo?: (msg: any) => void;
   private openPromise: Promise<void> | null = null;
   private endpoint: string;
-
-  // garde l'état des touches pour décider 'stop'/'up'/'down'
   private pressed = { up: false, down: false };
 
   constructor(
     onState: (snap: any) => void,
     onInfo?: (msg: any) => void,
-    endpoint = '/game' // 👈 par défaut 1v1, tu mettras '/game/local' pour tournoi local
+    endpoint = '/game'
   ) {
     this.onState = onState;
     this.onInfo = onInfo;
@@ -28,9 +26,7 @@ export class OnlineClient {
 
   connect() {
     if (this.ws && this.ws.readyState === WebSocket.OPEN) return Promise.resolve();
-    const proto = location.protocol === 'https:' ? 'wss' : 'ws';
-console.log(proto, location.host,this.endpoint);
-    this.ws = new WebSocket(`${proto}://${location.host}${this.endpoint}`);
+    this.ws = new WebSocket(`wss://${location.host}${this.endpoint}`);
     this.openPromise = new Promise<void>((resolve) => {
       this.ws!.addEventListener('open', () => resolve(), { once: true });
     });
@@ -78,10 +74,8 @@ console.log(proto, location.host,this.endpoint);
       return;
     }
 
-    // tournoi local : on laisse passer le protocole 'key'
     this.ws.send(JSON.stringify({ type: 'key', code, isPressed }));
   }
-  // =======================
 
   sendDir(dir: 'up'|'down'|'stop') {
     if (!this.ws || this.ws.readyState !== WebSocket.OPEN) return;
@@ -118,6 +112,11 @@ console.log(proto, location.host,this.endpoint);
   sendConfTournament(config: buildTournament) {
     if (!this.ws || this.ws.readyState !== WebSocket.OPEN) return;
     this.ws.send(JSON.stringify({ type: 'conf', config }));
+  }
+
+  sendConf1vs1(playerInfo: any) {
+    if (!this.ws || this.ws.readyState !== WebSocket.OPEN) return;
+    this.ws.send(JSON.stringify({ type: '1vs1', playerInfo}));
   }
 
   getSnapshot() { return this.lastSnapshot; }

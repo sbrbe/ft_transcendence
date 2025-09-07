@@ -1,23 +1,28 @@
 import { OnlineClient } from './onlineClient';
 import { GameRenderer } from './renderer'
+import { contender } from "../../../../shared/engine_play/src/types";
 import type { Disposable } from "./runtime";
 
-export class GameApp implements Disposable{
+export class GameOnline implements Disposable{
 	private btnUp: HTMLButtonElement | null;
 	private btnDown: HTMLButtonElement | null;
 	private betweenStage: 'idle' | 'winner' |'next' | 'end' | 'endOln'  = 'idle';
 	private canvas: HTMLCanvasElement;
-	private renderer: GameRenderer; 
+	private renderer: GameRenderer;
 	// en haut de la classe
   private online: OnlineClient | null = null;
-  
-  
   private mobileTouchAttached = false;
 
-  constructor() {
+
+
+  constructor(userName: string, playerId: string) {
 	this.canvas = document.getElementById('gameCanvas') as HTMLCanvasElement;
 	this.renderer = new GameRenderer(this.canvas);
-	this.startOnline();
+	const playerInfo: contender = {
+		id: playerId,
+		name: userName
+	  };
+	this.startOnline(playerInfo);
 	// Boutons mobile (assure-toi que ces IDs existent dans ton HTML)
 	this.btnUp = document.getElementById('btn-up') as HTMLButtonElement | null;
 	this.btnDown = document.getElementById('btn-down') as HTMLButtonElement | null;
@@ -140,7 +145,7 @@ export class GameApp implements Disposable{
 	
   
   
-	private startOnline() {
+	private startOnline(playerInfo: contender) {
 	  // client WS
 	  this.online?.dispose();
 	  this.online = new OnlineClient(
@@ -163,8 +168,9 @@ export class GameApp implements Disposable{
 		},
 	'/game'
 	  );
-	
-	  this.online.connect();
+	  this.online.connect().then(() => {
+				this.online!.sendConf1vs1(playerInfo);
+		  });
 	  this.attachInputListeners();
 	}
 

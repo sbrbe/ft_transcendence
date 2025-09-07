@@ -4,7 +4,12 @@ type gameMode = "1v1" | "2v2" | "CPU" | "tournament";
 
 export interface PlayerInfo {
   type : "human" | "cpu" | null;
-  playerId: number | null;
+  playerId: string | null;
+  name: string;
+}
+
+export interface contender {
+  id: string | null;
   name: string;
 }
 

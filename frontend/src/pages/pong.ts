@@ -4,7 +4,7 @@ import pong_lcl_confplay, { readLocalPlayConfig, LocalPlayConfig } from "../util
 import { showMobileControls, hideMobileControls } from "../utils/pong/UI/pong_mobile_control";
 import game_canvas from "../utils/pong/UI/pong_game_canva";
 import { GameLocal } from "../utils/pong/launchers/local"
-import { GameApp } from "../utils/pong/launchers/online"
+import { GameOnline } from "../utils/pong/launchers/online"
 import { GameTournament } from "../utils/pong/launchers/tournament"
 import { GAME_RUNTIME } from "../utils/pong/launchers/runtime";
 import { AppUser } from "../utils/interface";
@@ -61,7 +61,7 @@ const pong: (container: HTMLElement) => void = (container) => {
       return;
     }
     if (target.closest("#startTournamentBtn")) {
-      const conf: TournamentPlayer[] = readTournamentConfig(container);
+      const conf: TournamentPlayer[] = readTournamentConfig(container, saved);
     //  hideMobileControls(container);
       game_canvas(container);
       const mount = container.querySelector("#game_canvas") as HTMLElement;
@@ -73,13 +73,13 @@ const pong: (container: HTMLElement) => void = (container) => {
     //  showMobileControls(container);
       game_canvas(container);
       const mount = container.querySelector("#game_canvas") as HTMLElement;
-      const game = new GameApp();
+      const game = new GameOnline(saved.username, saved.userId);
       GAME_RUNTIME.start(game, mount);
       return;
     }
     if (target.closest("#startBtn_lcl_play")) {
       const conf: LocalPlayConfig = readLocalPlayConfig(container);
-    //  hideMobileControls(container);
+    //  hideMobileControls(container)
       game_canvas(container);
       const mount = container.querySelector("#game_canvas") as HTMLElement;
       const game = new GameLocal(conf);

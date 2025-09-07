@@ -7,6 +7,8 @@ export type SaveMatchInput = {
 	id?: string;
 	winner: string;
 	loser: string;
+	winnerName: string;
+	loserName: string;
 	winnerScore: number;
 	loserScore: number;
 	totalExchanges: number;
@@ -33,6 +35,8 @@ const createMatchsTable =
 		id TEXT PRIMARY KEY,
 		winner TEXT NOT NULL,
 		loser TEXT NOT NULL,
+		winnerName TEXT NOT NULL,
+		loserName TEXT NOT NULL,
 		winnerScore INTEGER NOT NULL,
 		loserScore INTEGER NOT NULL,
 		totalExchanges INTEGER NOT NULL,
@@ -43,13 +47,15 @@ const createMatchsTable =
 export function saveMatch(input: SaveMatchInput): string {
 	const id = input.id ?? uuidv4();
 	const stmt = db.prepare(`
-		INSERT INTO matches (id, winner, loser, winnerScore, loserScore, totalExchanges, maxExchanges, date)
-		VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+		INSERT INTO matches (id, winner, loser, winnerName, loserName, winnerScore, loserScore, totalExchanges, maxExchanges, date)
+		VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
 		`);
 		stmt.run(
 			id,
 			input.winner,
 			input.loser,
+			input.winnerName,
+			input.loserName,
 			input.winnerScore,
 			input.loserScore,
 			input.totalExchanges,

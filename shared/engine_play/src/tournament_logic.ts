@@ -5,7 +5,7 @@ import { Player } from './player.js';
 import { CPU } from './CPU.js';
 
 export interface contender{
-    id: number | null;
+    id: string | null;
     name: string;
 }
 
