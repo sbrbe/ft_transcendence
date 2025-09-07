@@ -106,8 +106,7 @@ const pong_lcl_conftourn: (container: HTMLElement) => void = (container) => {
   }
   
   export function readTournamentConfig(container: HTMLElement): TournamentPlayer[] {
-	const fs = container.querySelector<HTMLFieldSetElement>("#tournamentSize");
-	const checked = fs?.querySelector<HTMLInputElement>('input[name="tournamentSize"]:checked');
+	const checked = document.querySelector<HTMLInputElement>('input[name="tournamentSize"]:checked');
 	const size = checked ? parseInt(checked.value, 10) : 4;
   
 	const inputs = Array.from(
