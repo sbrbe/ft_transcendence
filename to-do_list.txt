@@ -1,9 +1,6 @@
 	- Friends : 
-		- mettre design à jour
 		- faire une page de stats amis
-	- Stats:
-		- récupérer : wins / loss / historique de matchs
-
+Faire l'arbre de tournoi
 
 pages stats à faire
 
@@ -12,4 +9,17 @@ Dans le make, gérer la suppression des bind mount
 Supprimer de la DB le password en clair
 
 Quand projet terminé, penser à passer les ports des conteneurs en expose dans le docker compose pour éviter 
-qu'on puisse y accéder depuis l'extérieur de docker
+qu'on puisse y accéder depuis l'extérieur de docke
+
+
+Major backend
+Minor frontend
+Minor backend
+Major blockchain
+Major standard user management
+Major remote players
+Major multiple players
+Major AI
+Major 2FA et JWT
+Major Micro services
+Minor navigateurs
