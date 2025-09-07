@@ -21,7 +21,6 @@ const strongPasswordRegex = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[^A-Za-z0-9]).{
 
 async function createUser(email: string, password: string) {
 	const existingUser = getUserByEmail(email);
-	console.log('registerUser : ', existingUser);
 	if (existingUser)
 		throw new Error ('Email already used');
 	if (!strongPasswordRegex.test(password))
@@ -29,8 +28,8 @@ async function createUser(email: string, password: string) {
 
 	const userId = uuidv4();
 	const hashedPassword = await bcrypt.hash(password, 10);
-	const stmt = db.prepare('INSERT INTO auth (userId, email, password, hashedPassword) VALUES (?, ?, ?, ?)');
-	const info = stmt.run(userId, email, password, hashedPassword);
+	const stmt = db.prepare('INSERT INTO auth (userId, email, hashedPassword) VALUES (?, ?, ?)');
+	const info = stmt.run(userId, email, hashedPassword);
 	console.log(`CREATE_AUTH log : ${info.lastInsertRowid}`);
 	return (userId);
 }

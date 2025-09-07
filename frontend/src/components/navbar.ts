@@ -1,11 +1,12 @@
 import { getSavedUser } from '../utils/ui';
+import { escapeHtml } from '../utils/ui';
 
 export function createNavbar(onNavigate: (path: string) => void) {
-  const nav = document.createElement('nav');
-  nav.className = 'container-page my-4';
-  nav.setAttribute('role', 'navigation');
+	const nav = document.createElement('nav');
+	nav.className = 'container-page my-4';
+	nav.setAttribute('role', 'navigation');
 
-  nav.innerHTML = `
+	nav.innerHTML = `
     <div class="flex items-center justify-between rounded-2xl border shadow-sm
                 bg-white/70 backdrop-blur supports-[backdrop-filter]:bg-white/50 px-4 py-3">
 
@@ -43,31 +44,30 @@ export function createNavbar(onNavigate: (path: string) => void) {
     </div>
   `;
 
-  // Router via data-route
-  nav.addEventListener('click', (e) => {
-    const a = (e.target as HTMLElement).closest('a[data-route]') as HTMLAnchorElement | null;
-    if (!a) return;
-    e.preventDefault();
-    onNavigate(a.dataset.route || '/');
-  });
+	nav.addEventListener('click', (e) => {
+		const a = (e.target as HTMLElement).closest('a[data-route]') as HTMLAnchorElement | null;
+		if (!a) return;
+		e.preventDefault();
+		onNavigate(a.dataset.route || '/');
+	});
 
   // Surbrillance du lien actif
-  const setActive = () => {
-    const current = location.hash.replace(/^#/, '') || '/';
-    nav.querySelectorAll<HTMLAnchorElement>('a[data-route]').forEach(a => {
-      const isActive = a.dataset.route === current || (current === '/' && a.dataset.route === '/accueil');
-      a.classList.toggle('bg-gray-100', isActive);
-    });
-  };
-  window.addEventListener('hashchange', setActive);
+	const setActive = () => {
+		const current = location.hash.replace(/^#/, '') || '/';
+		nav.querySelectorAll<HTMLAnchorElement>('a[data-route]').forEach(a => {
+		const isActive = a.dataset.route === current || (current === '/' && a.dataset.route === '/accueil');
+		a.classList.toggle('bg-gray-100', isActive);
+		});
+	};
+	window.addEventListener('hashchange', setActive);
 
-  // Rendu dynamique (public ↔ connecté)
-  const renderRight = async () => {
-    const right = nav.querySelector<HTMLDivElement>('#nav-right')!;
-    const user = getSavedUser<{ username: string; avatarPath?: string }>();
+	// Rendu dynamique (public ↔ connecté)
+	const renderRight = async () => {
+	const right = nav.querySelector<HTMLDivElement>('#nav-right')!;
+	const user = getSavedUser<{ username: string; avatarPath?: string }>();
 
-    if (!user) {
-      right.innerHTML = `
+	if (!user) {
+		right.innerHTML = `
         <a href="#/connexion" data-route="/connection"
            class="text-sm font-medium text-gray-700 hover:text-gray-900
                   px-3 py-1.5 rounded-xl hover:bg-gray-100 active:bg-gray-200
@@ -81,56 +81,52 @@ export function createNavbar(onNavigate: (path: string) => void) {
           Sign up
         </a>
       `;
-      return;
-    }
+		return;
+	}
 
-    const avatarSrc = resolveAvatarSrc(user.avatarPath);
-    right.innerHTML = `
+	const avatarSrc = resolveAvatarSrc(user.avatarPath);
+	right.innerHTML = `
       <button type="button" id="btn-profile"
         class="flex items-center gap-2 rounded-xl px-3 py-1.5 hover:bg-gray-100 focus:outline-none
                focus-visible:ring-2 focus-visible:ring-blue-500/60 transition">
-        <img id="btn-profile-img" src="${avatarSrc}" alt="" class="h-8 w-8 rounded-lg ring-1 ring-black/5 object-cover">
+        <img id="btn-profile-img" src="${escapeHtml(avatarSrc)}" alt="" class="h-8 w-8 rounded-lg ring-1 ring-black/5 object-cover">
         <span class="text-sm font-medium">${escapeHtml(user.username)}</span>
         <svg viewBox="0 0 20 20" class="h-4 w-4" aria-hidden="true"><path d="M5 7l5 5 5-5" fill="currentColor"/></svg>
       </button>
     `;
 
-    // Fallback si l'image échoue
-    const img = right.querySelector<HTMLImageElement>('#btn-profile-img')!;
-    img.addEventListener('error', () => { img.src = '/avatar/default.png'; }, { once: true });
+	// Fallback si l'image échoue
+	const img = right.querySelector<HTMLImageElement>('#btn-profile-img')!;
+	img.addEventListener('error', () => { img.src = '/avatar/default.png'; }, { once: true });
 
-    // Menu profil (lazy import)
-    const btn = right.querySelector<HTMLButtonElement>('#btn-profile')!;
-    const { attachProfileMenu } = await import('./profileMenu');
-    const { open } = attachProfileMenu(btn, getSavedUser()!, {
-      onLogoutSuccess: () => { renderRight(); setActive(); }
-    });
-    btn.addEventListener('click', (e) => { e.preventDefault(); open(); });
-  };
+	// Menu profil (lazy import)
+	const btn = right.querySelector<HTMLButtonElement>('#btn-profile')!;
+	const { attachProfileMenu } = await import('./profileMenu');
+	const { open } = attachProfileMenu(btn, getSavedUser()!, {
+		onLogoutSuccess: () => { renderRight(); setActive(); }
+	});
+	btn.addEventListener('click', (e) => { e.preventDefault(); open(); });
+	};
 
-  window.addEventListener('auth:changed', renderRight);
+	window.addEventListener('auth:changed', renderRight);
 
-  renderRight();
-  setActive();
+	renderRight();
+	setActive();
 
-  return nav;
+	return nav;
 }
 
 /* ---------------- Helpers ---------------- */
 
 function resolveAvatarSrc(input?: string | null): string {
-  if (!input) return '/avatar/default.png';
-  const s = input.trim();
-  // URL absolue / data / blob
-  if (/^(https?:|data:|blob:)/i.test(s)) return s;
-  // normalise (supprime / initiaux)
-  const p = s.replace(/^\/+/, '');
-  if (p === 'default.png') return '/avatar/default.png';
-  if (p.startsWith('avatar/')) return '/' + p;
-  if (!p.includes('/')) return '/avatar/' + p;
-  return '/' + p;
-}
-
-function escapeHtml(s: string) {
-  return s.replace(/[&<>"']/g, (m) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[m]!));
+	if (!input) return '/avatar/default.png';
+	const s = input.trim();
+	// URL absolue / data / blob
+	if (/^(https?:|data:|blob:)/i.test(s)) return s;
+	// normalise (supprime / initiaux)
+	const p = s.replace(/^\/+/, '');
+	if (p === 'default.png') return '/avatar/default.png';
+	if (p.startsWith('avatar/')) return '/' + p;
+	if (!p.includes('/')) return '/avatar/' + p;
+	return '/' + p;
 }

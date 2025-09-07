@@ -9,7 +9,6 @@ const progressWrap = document.getElementById('progress-wrap') as HTMLDivElement;
 const progressBar = document.getElementById('progress-bar') as HTMLDivElement;
 const progressLabel = document.getElementById('progress-label') as HTMLParagraphElement;
 
-// Si tu as déjà l'URL en base (ex: /static/avatars/abc.webp) tu peux l’injecter ici :
 const initialUrlFromServer: string | null = null;
 if (initialUrlFromServer) avatarImg.src = initialUrlFromServer;
 
@@ -19,38 +18,26 @@ fileInput.addEventListener('change', async () => {
 	const file = fileInput.files?.[0];
 	if (!file) return;
 
-	// Validation côté client
 	if (!file.type.startsWith('image/')) {
-		return showError('Veuillez sélectionner une image.');
+		return showError('Please choose an picture.');
 	}
 	if (file.size > 5 * 1024 * 1024) {
-		return showError('Fichier trop volumineux (max 5MB).');
+		return showError('File too heavy (max 5MB).');
 	}
 
-	// Aperçu instantané (Object URL)
 	const objectUrl = URL.createObjectURL(file);
 	avatarImg.src = objectUrl;
 
 	hideError();
 
 	try {
-	// Choix 1 : upload via fetch (sans progression)
 	const userId = getPendingUserId();
 	const { avatarUrl, etag } = await uploadWithFetch(file, userId!);
 
-	// Choix 2 : upload via XHR pour barre de progression
-	//const { avatarPath, etag } = await uploadWithProgress(file, (p) => {
-		//progressWrap.classList.remove('hidden');
-		//progressBar.style.width = `${p}%`;
-		//progressLabel.textContent = `${p}%`;
-	//});
-
-	// Replace l’aperçu par l’URL finale (WebP traitée côté serveur)
-	// + cache-busting avec l’ETag renvoyé
 		const cacheBusted = etag ? `${avatarUrl}?v=${encodeURIComponent(etag)}` : avatarUrl;
 		avatarImg.src = cacheBusted;
 	} catch (err: any) {
-			showError(err?.message || 'Échec de l’upload.');
+			showError(err?.message || 'Failed to upload.');
 	} finally {
 	URL.revokeObjectURL(objectUrl);
 	setTimeout(() => {
@@ -58,7 +45,6 @@ fileInput.addEventListener('change', async () => {
 			progressBar.style.width = '0%';
 		progressLabel.textContent = '0%';
 	}, 700);
-	// Réinitialise l’input pour permettre de re-choisir le même fichier
 	fileInput.value = '';
 	}
 });
@@ -76,6 +62,6 @@ async function uploadWithFetch(file: File, userId: string): Promise<{ avatarUrl:
 	const form = new FormData();
 	form.append('avatar', file);
 	const res = await fetch(`/users/uploadAvatar/${encodeURIComponent(userId)}`, { method: 'POST', body: form });
-	if (!res.ok) throw new Error('Upload refusé par le serveur.');
+	if (!res.ok) throw new Error('Upload refused.');
 	return res.json();
 }

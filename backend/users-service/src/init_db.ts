@@ -29,7 +29,7 @@ const createUsersTable =
 		lastLogin DATETIME,
 		createdAt DATETIME DEFAULT CURRENT_TIMESTAMP,
 		updatedAt DATETIME DEFAULT CURRENT_TIMESTAMP
-		)`;
+	)`;
 
 const createFriendshipsTable = 
 	`CREATE TABLE IF NOT EXISTS friendships (
@@ -40,4 +40,4 @@ const createFriendshipsTable =
 		createdAt DATETIME DEFAULT CURRENT_TIMESTAMP,
 		updatedAt DATETIME DEFAULT CURRENT_TIMESTAMP,
 		UNIQUE(userId, friendId)
-		)`;
+	)`;

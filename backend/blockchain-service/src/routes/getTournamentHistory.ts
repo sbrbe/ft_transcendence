@@ -107,13 +107,10 @@ function getTournamentHistory(userId: string): TournamentHistory {
 }
 
 function safeParsePlayers(json: string): string[] {
-  try
-  {
-    const v = JSON.parse(json);
-    return Array.isArray(v) ? v : [];
-  }
-  catch
-  {
-    return [];
-  }
+	try	{
+		const v = JSON.parse(json);
+		return Array.isArray(v) ? v : [];
+	} catch	{
+		return [];
+	}
 }

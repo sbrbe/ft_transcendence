@@ -42,7 +42,7 @@ const createMatchsTable =
 		totalExchanges INTEGER NOT NULL,
 		maxExchanges INTEGER NOT NULL,
 		date TEXT NOT NULL		
-		)`;
+	)`;
 
 export function saveMatch(input: SaveMatchInput): string {
 	const id = input.id ?? uuidv4();
@@ -61,6 +61,6 @@ export function saveMatch(input: SaveMatchInput): string {
 			input.totalExchanges,
 			input.maxExchanges,
 			input.date
-			);
+		);
 		return id;
 }

@@ -1,7 +1,3 @@
-// src/utils/dom.ts
-
-// A Modif
-
 /** [UTIL][DOM] q :
  * querySelector typé, lève une erreur si l’élément est introuvable.
  */

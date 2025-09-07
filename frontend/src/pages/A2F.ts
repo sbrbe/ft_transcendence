@@ -7,9 +7,9 @@ import { setStatusMessage, clearStatusMessage, lockButton } from '../utils/ui';
 
 
 const A2F: (container: HTMLElement) => void = (container) => {
-  const pendingUserId = getPendingUserId() || '';
+	const pendingUserId = getPendingUserId() || '';
 
-  container.innerHTML = `
+	container.innerHTML = `
     <div class="container-page my-10">
       <div class="mx-auto max-w-md rounded-2xl border shadow-sm bg-white px-6 py-8">
         <h2 class="text-2xl font-semibold text-center text-gray-800">Checking 2FA</h2>
@@ -33,59 +33,58 @@ const A2F: (container: HTMLElement) => void = (container) => {
     </div>
   `;
 
-  const form = container.querySelector<HTMLFormElement>('#a2f-form')!;
-  const codeEl = container.querySelector<HTMLInputElement>('#code_2fa')!;
-  const msgEl = container.querySelector<HTMLParagraphElement>('#formMsg')!;
-  const verifyBtn = container.querySelector<HTMLButtonElement>('#verifyBtn')!;
+	const form = container.querySelector<HTMLFormElement>('#a2f-form')!;
+	const codeEl = container.querySelector<HTMLInputElement>('#code_2fa')!;
+	const msgEl = container.querySelector<HTMLParagraphElement>('#formMsg')!;
+	const verifyBtn = container.querySelector<HTMLButtonElement>('#verifyBtn')!;
 
-  if (!pendingUserId) setStatusMessage(msgEl, 'Session expired. Please login again.', 'error');
-  setTimeout(() => codeEl.focus(), 0);
+	if (!pendingUserId) setStatusMessage(msgEl, 'Session expired. Please login again.', 'error');
+	setTimeout(() => codeEl.focus(), 0);
 
-  // Force 6 chiffres
-  codeEl.addEventListener('input', () => 
-  {
-    codeEl.value = codeEl.value.replace(/\D/g, '').slice(0, 6);
-  });
+	// Force 6 chiffres
+	codeEl.addEventListener('input', () => 
+	{
+		codeEl.value = codeEl.value.replace(/\D/g, '').slice(0, 6);
+	});
 
-  form.addEventListener('submit', async (e) => 
-  {
-    e.preventDefault();
-    clearStatusMessage(msgEl);
+	form.addEventListener('submit', async (e) => 
+	{
+		e.preventDefault();
+		clearStatusMessage(msgEl);
 
-    if (!pendingUserId) {
-      setStatusMessage(msgEl, 'Session expired. Please login again.', 'error');
-    }
+		if (!pendingUserId) {
+			setStatusMessage(msgEl, 'Session expired. Please login again.', 'error');
+		}
 
-    const code = codeEl.value.trim();
-    if (code.length !== 6) {
-      return setStatusMessage(msgEl, 'Enter a 6 digits code.', 'error');
-    } 
+		const code = codeEl.value.trim();
+		if (code.length !== 6) {
+			return setStatusMessage(msgEl, 'Enter a 6 digits code.', 'error');
+		} 
 
-    lockButton(verifyBtn, true, 'Checking…');
+		lockButton(verifyBtn, true, 'Checking…');
 
-    try 
-    {
-      await verify2FA(pendingUserId, code);
+		try 
+		{
+			await verify2FA(pendingUserId, code);
 
-      const user = await fetchUser(pendingUserId) as AppUser;
-      setLoggedInUser(user);
+			const user = await fetchUser(pendingUserId) as AppUser;
+			setLoggedInUser(user);
 
-      // Notifie la navbar (si elle écoute `auth:changed`)
-      window.dispatchEvent(new CustomEvent('auth:changed', { detail: user }));
+			// Notifie la navbar (si elle écoute `auth:changed`)
+			window.dispatchEvent(new CustomEvent('auth:changed', { detail: user }));
 
-      clearPendingUserId();
-      navigateTo('/home');
-    } 
-    catch (err: any) 
-    {
-      setStatusMessage(msgEl, err?.message || 'Checking 2FA failed', 'error');
-    } 
-    finally 
-    {
-      lockButton(verifyBtn, false);
-    }
-  });
-
+			clearPendingUserId();
+			navigateTo('/home');
+		} 
+		catch (err: any) 
+		{
+			setStatusMessage(msgEl, err?.message || 'Checking 2FA failed', 'error');
+		} 
+		finally 
+		{
+			lockButton(verifyBtn, false);
+		}
+	});
 };
 
 export default A2F;

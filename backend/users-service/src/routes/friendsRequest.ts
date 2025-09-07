@@ -242,5 +242,4 @@ export default async function friendsRequestRoute(app: FastifyInstance) {
 			},
 		},
 	}, getFriendsList);
-
 }	

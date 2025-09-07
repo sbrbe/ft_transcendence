@@ -2,38 +2,38 @@ import 'fastify'
 import { Database } from 'better-sqlite3'
 
 declare module 'fastify' {
-  interface FastifyInstance {
-    db: Database;
-    avatarsDir: string;
-  }
+	interface FastifyInstance {
+		db: Database;
+		avatarsDir: string;
+	}
 }
 
 export interface User {
-  userId: string;
-  lastName: string;
-  firstName: string;
-  username: string;
-  avatarPath: string;
-  isOnline: 0 | 1 | boolean;
-  lastLogin: string | number | null;
-  createdAt: string | number;
-  updatedAt: string | number;
+	userId: string;
+	lastName: string;
+	firstName: string;
+	username: string;
+	avatarPath: string;
+	isOnline: 0 | 1 | boolean;
+	lastLogin: string | number | null;
+	createdAt: string | number;
+	updatedAt: string | number;
 }
 
 export interface UserUpdate {
-  lastName?: string;
-  firstName?: string;
-  username?: string;
-  avatarPath?: string;
+	lastName?: string;
+	firstName?: string;
+	username?: string;
+	avatarPath?: string;
 }
 
 export interface Friend {
-  id: number;
-  userId: string;
-  friendId: string;
-  status: 'pending' | 'accepted' | 'blocked';
-  createdAt: string | number;
-  updatedAt: string | number;
+	id: number;
+	userId: string;
+	friendId: string;
+	status: 'pending' | 'accepted' | 'blocked';
+	createdAt: string | number;
+	updatedAt: string | number;
 }
 
 declare module 'fastify' {

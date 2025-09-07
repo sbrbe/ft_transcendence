@@ -1,12 +1,6 @@
-	- Friends : 
-		- faire une page de stats amis
+
 Faire l'arbre de tournoi
 
-pages stats à faire
-
-Dans le make, gérer la suppression des bind mount
-
-Supprimer de la DB le password en clair
 
 Quand projet terminé, penser à passer les ports des conteneurs en expose dans le docker compose pour éviter 
 qu'on puisse y accéder depuis l'extérieur de docke
@@ -14,7 +8,7 @@ qu'on puisse y accéder depuis l'extérieur de docke
 
 Major backend
 Minor frontend
-Minor backend
+Minor backend database
 Major blockchain
 Major standard user management
 Major remote players
@@ -23,3 +17,4 @@ Major AI
 Major 2FA et JWT
 Major Micro services
 Minor navigateurs
+

@@ -14,83 +14,83 @@ import { navigateTo } from "../router/router";
 const PONG_ABORT = Symbol("pongAbort");
 
 const pong: (container: HTMLElement) => void = (container) => {
-  const saved = getSavedUser<AppUser>();
-      if (!saved) {
-        navigateTo('/connection');
-        return;
-      }
-  container.innerHTML = `
-    <div class="text-center mt-8">
-      <h1 class="text-3xl font-bold text-gray-800 mb-2">Play to Pong</h1>
-      <p class="text-lg text-gray-600 mb-6">
-        Choose your favorite game mode and start to play
-      </p>
-    </div>
+	const saved = getSavedUser<AppUser>();
+			if (!saved) {
+				navigateTo('/connection');
+				return;
+			}
+	container.innerHTML = `
+		<div class="text-center mt-8">
+			<h1 class="text-3xl font-bold text-gray-800 mb-2">Play to Pong</h1>
+			<p class="text-lg text-gray-600 mb-6">
+				Choose your favorite game mode and start to play
+			</p>
+		</div>
 
-    <div id="pong-options" class="flex flex-row items-center justify-center space-x-10">
-      <img id="pong-local" src="/site/local_bouton.png" alt="Local mode"
-           class="cursor-pointer rounded-lg shadow-md hover:opacity-90"
-           style="width: 200px; height: 280px;">
-      <img id="pong-online" src="/site/online_bouton.png" alt="Online mode"
-           class="cursor-pointer rounded-lg shadow-md hover:opacity-90"
-           style="width: 200px; height: 280px;">
-    </div>
-  `;
+		<div id="pong-options" class="flex flex-row items-center justify-center space-x-10">
+			<img id="pong-local" src="/site/local_bouton.png" alt="Local mode"
+					 class="cursor-pointer rounded-lg shadow-md hover:opacity-90"
+					 style="width: 200px; height: 280px;">
+			<img id="pong-online" src="/site/online_bouton.png" alt="Online mode"
+					 class="cursor-pointer rounded-lg shadow-md hover:opacity-90"
+					 style="width: 200px; height: 280px;">
+		</div>
+	`;
 
-  (container as any)[PONG_ABORT]?.abort();
+	(container as any)[PONG_ABORT]?.abort();
 
-  const ac = new AbortController();
-  (container as any)[PONG_ABORT] = ac;
+	const ac = new AbortController();
+	(container as any)[PONG_ABORT] = ac;
 
-  const onClick = (e: MouseEvent) => {
-    const target = e.target as HTMLElement;
+	const onClick = (e: MouseEvent) => {
+		const target = e.target as HTMLElement;
 
-    if (target.closest("#pong-local")) {
-      GAME_RUNTIME.stop();
-      pong_local(container);
-      return;
-    }
-    if (target.closest("#nav-game-configplay")) {
-      GAME_RUNTIME.stop();
-      pong_lcl_confplay(container);
-      return;
-    }
-    if (target.closest("#nav-game-configtourn")) {
-      GAME_RUNTIME.stop();
-      pong_lcl_conftourn(container, saved.username);
-      return;
-    }
-    if (target.closest("#startTournamentBtn")) {
-      const conf: TournamentPlayer[] = readTournamentConfig(container, saved);
-    //  hideMobileControls(container);
-      game_canvas(container, 0);
-      const mount = container.querySelector("#game_canvas") as HTMLElement;
-      const game = new GameTournament(conf);
-      GAME_RUNTIME.start(game, mount);
-      return;
-    }
-    if (target.closest("#pong-online")) {
-    //  showMobileControls(container);
-      game_canvas(container, 1);
-      const mount = container.querySelector("#game_canvas") as HTMLElement;
-      const game = new GameOnline(saved.username, saved.userId);
-      GAME_RUNTIME.start(game, mount);
-      return;
-    }
-    if (target.closest("#startBtn_lcl_play")) {
-      const conf: LocalPlayConfig = readLocalPlayConfig(container);
-    //  hideMobileControls(container)
-    if (conf.mode == '1v1')
-        game_canvas(container, 0);
-      else
-      game_canvas(container, 2);
-      const mount = container.querySelector("#game_canvas") as HTMLElement;
-      const game = new GameLocal(conf);
-      GAME_RUNTIME.start(game, mount);
-      return;
-    }
-  };
+		if (target.closest("#pong-local")) {
+			GAME_RUNTIME.stop();
+			pong_local(container);
+			return;
+		}
+		if (target.closest("#nav-game-configplay")) {
+			GAME_RUNTIME.stop();
+			pong_lcl_confplay(container);
+			return;
+		}
+		if (target.closest("#nav-game-configtourn")) {
+			GAME_RUNTIME.stop();
+			pong_lcl_conftourn(container, saved.username);
+			return;
+		}
+		if (target.closest("#startTournamentBtn")) {
+			const conf: TournamentPlayer[] = readTournamentConfig(container, saved);
+		//	hideMobileControls(container);
+			game_canvas(container, 0);
+			const mount = container.querySelector("#game_canvas") as HTMLElement;
+			const game = new GameTournament(conf);
+			GAME_RUNTIME.start(game, mount);
+			return;
+		}
+		if (target.closest("#pong-online")) {
+		//	showMobileControls(container);
+			game_canvas(container, 1);
+			const mount = container.querySelector("#game_canvas") as HTMLElement;
+			const game = new GameOnline(saved.username, saved.userId);
+			GAME_RUNTIME.start(game, mount);
+			return;
+		}
+		if (target.closest("#startBtn_lcl_play")) {
+			const conf: LocalPlayConfig = readLocalPlayConfig(container);
+		//	hideMobileControls(container)
+		if (conf.mode == '1v1')
+				game_canvas(container, 0);
+			else
+			game_canvas(container, 2);
+			const mount = container.querySelector("#game_canvas") as HTMLElement;
+			const game = new GameLocal(conf);
+			GAME_RUNTIME.start(game, mount);
+			return;
+		}
+	};
 
-  container.addEventListener("click", onClick, { signal: ac.signal });
+	container.addEventListener("click", onClick, { signal: ac.signal });
 };
 export default pong;

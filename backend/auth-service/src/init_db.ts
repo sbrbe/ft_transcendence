@@ -25,9 +25,8 @@ const createAuthTable =
 	`CREATE TABLE IF NOT EXISTS auth (
 		userId TEXT PRIMARY KEY,
 		email TEXT,
-		password TEXT,
 		hashedPassword TEXT
-		)`;
+	)`;
 
 const create2FATable = 
 	`CREATE TABLE IF NOT EXISTS two_factor_codes (
@@ -41,7 +40,7 @@ const create2FATable =
 		attempts INTEGER NOT NULL DEFAULT 0,
 		createdAt DATETIME DEFAULT CURRENT_TIMESTAMP,
 		FOREIGN KEY (userId) REFERENCES auth (userId) ON DELETE CASCADE
-		)`;
+	)`;
 
 const createRefreshTable =
 	`CREATE TABLE IF NOT EXISTS refresh_tokens (
@@ -55,4 +54,4 @@ const createRefreshTable =
 		CREATE INDEX IF NOT EXISTS idx_rt_user ON refresh_tokens(userId);
 		CREATE INDEX IF NOT EXISTS idx_rt_revoked ON refresh_tokens(revoked);
 		CREATE INDEX IF NOT EXISTS idx_rt_expires ON refresh_tokens(expiresAt);
-		`;
+	`;

@@ -5,8 +5,6 @@ import registerAllRoutes from './routes/index.js';
 import jwtSetup from './plugins/authPlugin.js';
 import multipartsPlugin from './plugins/multiparts.js';
 import staticAvatarsPlugin from './plugins/static-avatars.js';
-//import { registerInternal } from './internal.js';
-//import { setOnlineStatusRoute } from './routes/setOnlineStatus.js';
 
 const app : FastifyInstance = fastify( {
 	logger: true,
@@ -29,15 +27,14 @@ await app.register(staticAvatarsPlugin);
 
 
 initDB();
-app.decorate('db', db);
 
 app.register(registerAllRoutes, { prefix: '/users'});
 
 // 🔎 GET /ma-route
 app.get('/users/ma-route', async (request: FastifyRequest, reply: FastifyReply) => {
 	try {
-		const users = await app.db.prepare('SELECT * FROM users').all();
-		const friendships = await app.db.prepare('SELECT * FROM friendships').all();
+		const users = await db.prepare('SELECT * FROM users').all();
+		const friendships = await db.prepare('SELECT * FROM friendships').all();
 
 		return reply.send({ users, friendships});
 	} catch (err: any) {

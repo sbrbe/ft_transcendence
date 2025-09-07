@@ -1,4 +1,3 @@
-import type { InternalRoute } from '../internal.js';
 import { getUserById } from '../lib/utils.js';
 import { db } from '../init_db.js';
 import { FastifyInstance, FastifyRequest, FastifyReply } from "fastify";

@@ -3,7 +3,6 @@ import fs from 'node:fs';
 import { db, initDB } from './init_db.js';
 import registerAllRoutes from './routes/index.js';
 import jwtSetup from './plugins/plugins.js';
-import { registerInternal } from './internal.js';
 
 const app : FastifyInstance = fastify( {
 	logger: true,
@@ -29,22 +28,22 @@ app.register(registerAllRoutes, { prefix: '/auth'});
 
 // 🔎 GET /ma-route
 app.get('/auth/ma-route', async (request: FastifyRequest, reply: FastifyReply) => {
-  try {
-    const users = await app.db.prepare('SELECT * FROM auth').all();
-    const twoFa = await app.db.prepare('SELECT * FROM two_factor_codes').all();
-	const refreshToken = await app.db.prepare('SELECT * FROM refresh_tokens').all();
-    return reply.send({ users, twoFa, refreshToken });
-  } catch (err: any) {
-    return reply.status(500).send({ error: err.message });
-  }
+	try {
+		const users = await app.db.prepare('SELECT * FROM auth').all();
+		const twoFa = await app.db.prepare('SELECT * FROM two_factor_codes').all();
+		const refreshToken = await app.db.prepare('SELECT * FROM refresh_tokens').all();
+		return reply.send({ users, twoFa, refreshToken });
+	} catch (err: any) {
+		return reply.status(500).send({ error: err.message });
+	}
 });
 
 app.get('/auth/ping', async () => {
-    return { message: 'auth-service pong' };
-  });
+	return { message: 'auth-service pong' };
+});
 
 app.get('/auth/health', async (_req, reply) => {
-  return reply.status(200).send({ status: 'ok' });
+	return reply.status(200).send({ status: 'ok' });
 });
 
 /*

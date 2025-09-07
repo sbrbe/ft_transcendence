@@ -1,5 +1,5 @@
 import { db } from '../init_db.js';
-import crypto, { createHmac, randomBytes, randomInt, timingSafeEqual } from 'node:crypto';
+import { createHmac, randomBytes, randomInt, timingSafeEqual } from 'node:crypto';
 
 export interface TwoFactorCode {
 	id: number;

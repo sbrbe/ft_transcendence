@@ -3,7 +3,7 @@ import { logout } from '../api/auth';
 import { AppUser } from '../utils/interface';
 
 interface AttachOptions {
-  onLogoutSuccess?: () => void;
+	onLogoutSuccess?: () => void;
 }
 
 /**
@@ -14,27 +14,27 @@ interface AttachOptions {
  * - Déconnexion via api/auth.logout()
  */
 export function attachProfileMenu(
-  trigger: HTMLElement,
-  user: AppUser,
-  opts: AttachOptions = {}
+	trigger: HTMLElement,
+	user: AppUser,
+	opts: AttachOptions = {}
 ) {
-  // --------- Overlay (clic extérieur) ---------
-  const overlay = document.createElement('div');
-  overlay.className = 'fixed inset-0 z-40 bg-black/20 backdrop-blur-[1px] hidden';
+	// --------- Overlay (clic extérieur) ---------
+	const overlay = document.createElement('div');
+	overlay.className = 'fixed inset-0 z-40 bg-black/20 backdrop-blur-[1px] hidden';
 
-  // --------- Conteneur du menu ---------
-  const menu = document.createElement('div');
-  menu.className = [
-    'fixed z-50 w-80 max-w-[92vw]',
-    'rounded-2xl border bg-white shadow-xl ring-1 ring-black/5',
-    'hidden',
-  ].join(' ');
+	// --------- Conteneur du menu ---------
+	const menu = document.createElement('div');
+	menu.className = [
+		'fixed z-50 w-80 max-w-[92vw]',
+		'rounded-2xl border bg-white shadow-xl ring-1 ring-black/5',
+		'hidden',
+	].join(' ');
 
-  const avatarSrc = resolveAvatarSrc(user.avatarPath);
-  menu.innerHTML = `
+	const avatarSrc = resolveAvatarSrc(user.avatarPath);
+	menu.innerHTML = `
     <div class="p-4 rounded-t-2xl bg-gradient-to-br from-white to-gray-50">
       <div class="flex items-center gap-3">
-        <img id="pm-avatar" src="${avatarSrc}" alt="" class="h-12 w-12 rounded-xl ring-1 ring-black/10 object-cover">
+        <img id="pm-avatar" src="${escapeHtml(avatarSrc)}" alt="" class="h-12 w-12 rounded-xl ring-1 ring-black/10 object-cover">
         <div class="min-w-0">
           <div class="font-semibold text-gray-900 truncate">${escapeHtml(user.username)}</div>
           <div class="text-sm text-gray-600 truncate">${escapeHtml(user.email ?? '')}</div>
@@ -66,107 +66,107 @@ export function attachProfileMenu(
     </div>
   `;
 
-  document.body.appendChild(overlay);
-  document.body.appendChild(menu);
+	document.body.appendChild(overlay);
+	document.body.appendChild(menu);
 
-  //avatar
-  const pmImg = menu.querySelector<HTMLImageElement>('#pm-avatar')!;
-  pmImg.addEventListener('error', () => { pmImg.src = '/avatar/default.png'; }, { once: true });
-
-
-  function open() 
-  {
-    positionMenu(trigger, menu);
-    overlay.classList.remove('hidden');
-    menu.classList.remove('hidden');
-  }
-  function close() 
-  {
-    overlay.classList.add('hidden');
-    menu.classList.add('hidden');
-  }
-
-  // Click extérieur
-  overlay.addEventListener('click', close);
-
-  // Repositionnement si scroll/resize
-  const onWinChange = () => {
-    if (!menu.classList.contains('hidden')) positionMenu(trigger, menu);
-  };
-  window.addEventListener('resize', onWinChange);
-  window.addEventListener('scroll', onWinChange, true);
-
-  // Navigation interne
-  menu.addEventListener('click', (e) => 
-  {
-    const a = (e.target as HTMLElement).closest('a[data-route]') as HTMLAnchorElement | null;
-    if (!a) return;
-    e.preventDefault();
-    const path = a.dataset.route || '/';
-    close();
-    navigateTo(path);
-  });
+	//avatar
+	const pmImg = menu.querySelector<HTMLImageElement>('#pm-avatar')!;
+	pmImg.addEventListener('error', () => { pmImg.src = '/avatar/default.png'; }, { once: true });
 
 
-  // Déconnexion
-  const logoutBtn = menu.querySelector<HTMLButtonElement>('#logoutBtn')!;
-  logoutBtn.addEventListener('click', async () => {
-    try 
-    {
-      logoutBtn.disabled = true;
-      logoutBtn.classList.add('opacity-70', 'cursor-wait');
-      await logout(); // -> nettoie le storage + dispatch "auth:changed"
-      close();
-      opts.onLogoutSuccess?.();
-      navigateTo('/home');
-    } 
-    catch (err: any) 
-    {
-      alert(`Error while disconnecting : ${err?.message || 'unknown'}`);
-    } 
-    finally 
-    {
-      logoutBtn.disabled = false;
-      logoutBtn.classList.remove('opacity-70', 'cursor-wait');
-    }
-  });
+	function open() 
+	{
+		positionMenu(trigger, menu);
+		overlay.classList.remove('hidden');
+		menu.classList.remove('hidden');
+	}
+	function close() 
+	{
+		overlay.classList.add('hidden');
+		menu.classList.add('hidden');
+	}
 
-  return {
-    open,
-    close,
-    destroy() {
-      overlay.remove();
-      menu.remove();
-      window.removeEventListener('resize', onWinChange);
-      window.removeEventListener('scroll', onWinChange, true);
-    }
-  };
+	// Click extérieur
+	overlay.addEventListener('click', close);
+
+	// Repositionnement si scroll/resize
+	const onWinChange = () => {
+	if (!menu.classList.contains('hidden')) positionMenu(trigger, menu);
+	};
+	window.addEventListener('resize', onWinChange);
+	window.addEventListener('scroll', onWinChange, true);
+
+	// Navigation interne
+	menu.addEventListener('click', (e) => 
+	{
+	const a = (e.target as HTMLElement).closest('a[data-route]') as HTMLAnchorElement | null;
+	if (!a) return;
+	e.preventDefault();
+	const path = a.dataset.route || '/';
+	close();
+	navigateTo(path);
+	});
+
+
+	// Déconnexion
+	const logoutBtn = menu.querySelector<HTMLButtonElement>('#logoutBtn')!;
+	logoutBtn.addEventListener('click', async () => {
+		try 
+		{
+			logoutBtn.disabled = true;
+			logoutBtn.classList.add('opacity-70', 'cursor-wait');
+			await logout(); // -> nettoie le storage + dispatch "auth:changed"
+			close();
+			opts.onLogoutSuccess?.();
+			navigateTo('/home');
+		} 
+		catch (err: any) 
+		{
+			alert(`Error while disconnecting : ${err?.message || 'unknown'}`);
+		} 
+		finally 
+		{
+			logoutBtn.disabled = false;
+			logoutBtn.classList.remove('opacity-70', 'cursor-wait');
+		}
+	});
+
+	return {
+		open,
+		close,
+		destroy() {
+			overlay.remove();
+			menu.remove();
+			window.removeEventListener('resize', onWinChange);
+			window.removeEventListener('scroll', onWinChange, true);
+		}
+	};
 }
 
 /* ---------------- Helpers ---------------- */
 
 function positionMenu(trigger: HTMLElement, menu: HTMLElement) {
-  const r = trigger.getBoundingClientRect();
-  const gap = 8;
-  const top = r.bottom + gap;
-  const right = Math.max(8, window.innerWidth - r.right);
-  menu.style.top = `${Math.min(top, window.innerHeight - 16)}px`;
-  menu.style.right = `${right}px`;
+	const r = trigger.getBoundingClientRect();
+	const gap = 8;
+	const top = r.bottom + gap;
+	const right = Math.max(8, window.innerWidth - r.right);
+	menu.style.top = `${Math.min(top, window.innerHeight - 16)}px`;
+	menu.style.right = `${right}px`;
 }
 
 function resolveAvatarSrc(input?: string | null): string {
-  if (!input) return '/avatar/default.png';
-  const s = input.trim();
-  if (/^(https?:|data:|blob:)/i.test(s)) return s;
-  const p = s.replace(/^\/+/, '');
-  if (p === 'default.png') return '/avatar/default.png';
-  if (p.startsWith('avatar/')) return '/' + p;
-  if (!p.includes('/')) return '/avatar/' + p;
-  return '/' + p;
+	if (!input) return '/avatar/default.png';
+	const s = input.trim();
+	if (/^(https?:|data:|blob:)/i.test(s)) return s;
+	const p = s.replace(/^\/+/, '');
+	if (p === 'default.png') return '/avatar/default.png';
+	if (p.startsWith('avatar/')) return '/' + p;
+	if (!p.includes('/')) return '/avatar/' + p;
+	return '/' + p;
 }
 
 function escapeHtml(s: string) {
-  return s.replace(/[&<>"']/g, (m) => (
-    { '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;' }[m]!
-  ));
+	return s.replace(/[&<>"']/g, (m) => (
+	{ '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;' }[m]!
+	));
 }

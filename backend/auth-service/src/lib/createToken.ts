@@ -1,5 +1,4 @@
-import { FastifyInstance, FastifyReply, FastifyRequest } from 'fastify';
-import { getUserByEmail, getUserById } from './utils.js';
+import { FastifyReply, FastifyRequest } from 'fastify';
 import { db } from '../init_db.js';
 import bcrypt from 'bcrypt';
 import { v4 as uuidv4} from 'uuid';

@@ -20,7 +20,6 @@ export async function loginVerify(
 			if (!user) {
 				return reply.status(404).send({ error: 'User not found' });
 			}
-//			console.log('BEFORE SETAUTHCOOKIE');
 			await setAuthCookies(reply, user.userId);
 			await setOnlineStatus(user.userId, true);
 			return reply.status(200).send({ message: '2FA valid' });
@@ -51,10 +50,8 @@ async function userLogin(email: string, password: string) {
 	const user = getUserByEmail(email) as authUser | undefined ;
 	if (!user)
 		return false;
-//	console.log('PASSWORD = ', password, 'HASH = ', user.hashed_password);
 	console.log('getUserbyEmail = ', user);
 	const passwordMatch = await bcrypt.compare(password, user.hashedPassword);
-//	console.log('BCRYPT = ', passwordMatch);
 	if (!passwordMatch)
 		throw new Error('Wrong password');
 	return { 

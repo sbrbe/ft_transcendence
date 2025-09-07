@@ -21,28 +21,28 @@ export function initDB()
 
 const createTournamentTable = 
 	`CREATE TABLE IF NOT EXISTS tournaments (
-    tournamentId TEXT PRIMARY KEY,
+		tournamentId TEXT PRIMARY KEY,
 		userId TEXT NOT NULL,
-    snowtraceLink TEXT NOT NULL,
+		snowtraceLink TEXT NOT NULL,
 		players TEXT NOT NULL DEFAULT '[]',
-    date TEXT NOT NULL
-		)`;
+		date TEXT NOT NULL
+	)`;
 
 export function saveValues(input: tournoiValues)
 {
-  const check = db.prepare("SELECT 1 FROM tournaments WHERE tournamentId = ?");
-  const exists = check.get(input.tournamentId);
+	const check = db.prepare("SELECT 1 FROM tournaments WHERE tournamentId = ?");
+	const exists = check.get(input.tournamentId);
 
-  if (!exists)
-  {
-    const stmt = db.prepare("INSERT INTO tournaments (tournamentId, userId, snowtraceLink, players, date) VALUES (?, ?, ?, ?, ?)");
-    stmt.run(input.tournamentId, input.userId, input.snowtraceLink, JSON.stringify(input.players ?? []), new Date().toISOString().slice(0, 10));
+	if (!exists)
+	{
+		const stmt = db.prepare("INSERT INTO tournaments (tournamentId, userId, snowtraceLink, players, date) VALUES (?, ?, ?, ?, ?)");
+		stmt.run(input.tournamentId, input.userId, input.snowtraceLink, JSON.stringify(input.players ?? []), new Date().toISOString().slice(0, 10));
 	console.log(`✅ tournamentId ${input.tournamentId} créé`);
-  }
-  else 
-  {
-    console.log(`⚠️ tournamentId ${input.tournamentId} existe déjà`);
-  }
+	}
+	else 
+	{
+		console.log(`⚠️ tournamentId ${input.tournamentId} existe déjà`);
+	}
 }
 // VERIFIER SI ON S'EN SERT
 type TournamentItem = {
@@ -57,12 +57,12 @@ type TournamentHistory = {
 
 
 export function getValues(userId: string): TournamentHistory[] {
-  const rows = db.prepare(`
-    SELECT *
-    FROM tournaments
-    WHERE userId = ?
-    ORDER BY rowid DESC
-  `).all(userId) as TournamentHistory[];
+	const rows = db.prepare(`
+		SELECT *
+		FROM tournaments
+		WHERE userId = ?
+		ORDER BY rowid DESC
+	`).all(userId) as TournamentHistory[];
 
-  return rows;
+	return rows;
 }
