@@ -51,6 +51,13 @@ export default async function postTournamentSummaryRoute(app: FastifyInstance) {
             snowtraceTx: { type: "string" }
           }
         },
+				400: {
+					type: 'object',
+					required: ['error'],
+					properties: {
+						error: { type: 'string' }
+					}
+        },
         500: {
           type: "object",
           properties: {
@@ -67,7 +74,7 @@ export default async function postTournamentSummaryRoute(app: FastifyInstance) {
         const r = await sendTournamentSummary(summary);
         const players = addPlayers(summary.matches);
     
-        saveValues({ tournamentId: summary.tournamentId, userId: summary.userId, snowtrace_link: r.snowtraceTx, players: players });
+        saveValues({ tournamentId: summary.tournamentId, userId: summary.userId, snowtraceLink: r.snowtraceTx, players: players });
     
         return (reply.status(200).send({
           ok: true,

@@ -1,6 +1,7 @@
 import fastify, {FastifyInstance, FastifyReply, FastifyRequest} from "fastify";
 import postTournamentSummaryRoute from "./routes/tournamentRoute.js";
 import { initDB, getValues, db } from "./init_db.js";
+import getTournament from "./routes/getTournament.js";
 import { registerInternal } from "./internal.js";
 import fs from 'node:fs';
 import jwtSetup from './plugins/authPlugin.js';
@@ -25,6 +26,7 @@ await app.register(jwtSetup);
 initDB();
 
 await app.register(postTournamentSummaryRoute);
+await app.register(getTournament);
 
 app.get('/blockchain/ma-route', async (request: FastifyRequest, reply: FastifyReply) => {
 	try {

@@ -1,3 +1,4 @@
+import { navigateTo } from "../router/router";
 import { AppUser } from "../utils/interface";
 import { clearUser, getSavedUser } from "../utils/ui";
 import { refreshOnce } from "./A2F";
@@ -138,7 +139,8 @@ export async function logout() {
 
   const data = await res.json();
   if (!res.ok) {
-    console.warn('Logout non OK:', res.statusText, data.error);
+    console.warn('Logout failed OK:', res.statusText, data.error);
   }
   clearUser();
+  navigateTo('/connection');
 }

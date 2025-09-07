@@ -11,7 +11,7 @@ declare module 'fastify'
 export type tournoiValues = {
 	tournamentId: string;
 	userId: string;
-	snowtrace_link: string;
+	snowtraceLink: string;
 	players: string[];
 };
 

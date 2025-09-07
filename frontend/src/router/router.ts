@@ -16,8 +16,7 @@ const routes: Record<string, () => Promise<{ default: RouteHandler }>> =
   '/friends': () => import('../pages/friends'),
   '/statistics': () => import('../pages/statistics'),
   '/pong': () => import('../pages/pong'),
-  // tu peux ajouter d'autres routes ici
-  // jsp moi, page truc truc => import ../truc/truc
+  '/friend-profile': () => import('../pages/friendProfile'),
 };
 
 let mountEl: HTMLElement;

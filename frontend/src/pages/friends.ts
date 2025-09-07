@@ -100,11 +100,6 @@ const friends: (container: HTMLElement) => void = (container) => {
   const addMsg = container.querySelector<HTMLParagraphElement>('#add-msg')!;
   const searchBtn = container.querySelector<HTMLButtonElement>('#searchBtn')!;
   const resultsEl = container.querySelector<HTMLDivElement>('#search-results')!;
-
-//  const acceptBtn = container.querySelector<HTMLButtonElement>('#acceptBtn')!;
-//  const rejectBtn = container.querySelector<HTMLButtonElement>('#rejectBtn')!;
-//  const pendingMsg = container.querySelector<HTMLParagraphElement>('#pending-msg')!;
-//  const removeBtn = container.querySelector<HTMLButtonElement>('#acceptBtn')!;
   
   form.addEventListener('submit', async (e) => {
     e.preventDefault();
@@ -164,58 +159,12 @@ const friends: (container: HTMLElement) => void = (container) => {
     }
   });
 
-  /*
-  acceptBtn.addEventListener('click', async (e) => {
-    clearStatusMessage(addMsg);
-
-    lockButton(acceptBtn, true);
-
-    try {
-      await acceptRequest(saved.userId, requestId);
-    } catch (error: any) {
-      setStatusMessage(addMsg, error.message || 'Failed to accept invitation', 'error');
-    }
-    finally {
-      lockButton(acceptBtn, false);
-    }
-  });
-  
-  rejectBtn.addEventListener('click', async (e) => {
-    clearStatusMessage(addMsg);
-
-    lockButton(rejectBtn, true);
-
-    try {
-      await sendFriendRequest(saved.userId, requestId);
-    } catch (error: any) {
-      setStatusMessage(addMsg, error.message || 'Failed to send invitation', 'error');
-    }
-    finally {
-      lockButton(rejectBtn, false);
-    }
-  });  
-
-  removeBtn.addEventListener('click', async (e) => {
-    clearStatusMessage(addMsg);
-
-    lockButton(removeBtn, true);
-
-    try {
-      await removeFriend(saved.userId, targetName);
-    } catch (error: any) {
-      setStatusMessage(addMsg, error.message || 'Failed to send invitation', 'error');
-    }
-    finally {
-      lockButton(removeBtn, false);
-    }
-  }); 
-*/
 
   async function renderPendingRequest(saved: AppUser) {
     const list = document.querySelector('#pending-list')!;
     const msg = document.querySelector<HTMLParagraphElement>('#pending-msg')!;
 
-    list.innerHTML = ''; // à voir si ça sert
+    list.innerHTML = '';
 
     try {
       const res = await loadPendingRequest(saved.userId) as any[];
@@ -331,6 +280,7 @@ const friends: (container: HTMLElement) => void = (container) => {
           </div>
           <!-- Boutons optionnels, mêmes styles que pending -->
           <div class="flex items-center gap-2">
+            <button class="profile px-3 py-1.5 rounded-lg border text-sm hover:bg-gray-50 text-white-600">Profile</button>
             <button class="remove px-3 py-1.5 rounded-lg border text-sm hover:bg-gray-50 text-red-600">Remove</button>
           </div>
         `;
@@ -343,11 +293,29 @@ const friends: (container: HTMLElement) => void = (container) => {
           await removeFriend(saved.userId, p.friendUsername);
           li.remove();
           if (!list.children.length) {
-            list.innerHTML = `<li class="text-sm text-gray-500">No pending request</li>`;
+            list.innerHTML = `<li class="text-sm text-gray-500">Friends list empty</li>`;
           }
           setStatusMessage(msg, `You have removed ${p.friendUsername} from your friends`, 'success');
         } catch (error: any) {
           setStatusMessage(msg, error?.message || 'Failed to remove friend', 'error');
+        } finally {
+          lockButton(btn, false);
+        }
+        });
+
+        li.querySelector<HTMLButtonElement>('button.profile')!.addEventListener('click', async (e) => {
+        const btn = e.currentTarget as HTMLButtonElement;
+        lockButton(btn, true);
+        clearStatusMessage(msg);
+        try {
+          navigateTo('/friend-profile');
+    //      li.remove();
+    //      if (!list.children.length) {
+    //      list.innerHTML = `<li class="text-sm text-gray-500">No pending request</li>`;
+    //      }
+    //      setStatusMessage(msg, `You have removed ${p.friendUsername} from your friends`, 'success');
+        } catch (error: any) {
+          setStatusMessage(msg, error?.message || "Can't load friend profile", 'error');
         } finally {
           lockButton(btn, false);
         }

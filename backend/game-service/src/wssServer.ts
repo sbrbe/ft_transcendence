@@ -297,7 +297,7 @@ export function attachWs(app: FastifyInstance) {
                  {
                   const body = {
                     tournamentId: String(sess.tournamentId),
-                    userId: String("550e8400-e29b-41d4-a716-446655440000"), // remplace par le vrai
+                    userId: String("b95300c9-9cb5-467a-a26c-f5609c19959c"), // remplace par le vrai
                     winnerName: String(player2 ?? 'WINNER').trim().slice(0,20),
                     matches: (sess.historTournmnt ?? []).map(m => ({
                       player1: {

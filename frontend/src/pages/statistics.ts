@@ -1,7 +1,7 @@
 import { navigateTo } from "../router/router";
 import { getSavedUser } from "../utils/ui";
 import { AppUser } from "../utils/interface";
-import { getMatchHistory} from "../api/statistics";
+import { getMatchHistory, getTournaments } from "../api/statistics";
 import { setStatusMessage } from "../utils/ui";
 
 const statistics: (container: HTMLElement) => void = (container) => {
@@ -69,6 +69,7 @@ const statistics: (container: HTMLElement) => void = (container) => {
   `;
   
   loadStats(saved);
+  getTournaments(saved.userId);
 
   const msg = container.querySelector<HTMLParagraphElement>('#stats-msg')!;
   const tbody = container.querySelector<HTMLTableSectionElement>('#history')!;

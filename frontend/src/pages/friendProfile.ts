@@ -1,0 +1,145 @@
+import { navigateTo } from "../router/router";
+import { getSavedUser } from "../utils/ui";
+import { AppUser } from "../utils/interface";
+import { getMatchHistory} from "../api/statistics";
+import { setStatusMessage } from "../utils/ui";
+
+const friendProfile: (container: HTMLElement) => void = (container) => {
+  const saved = getSavedUser<AppUser>();
+	if (!saved) {
+	  navigateTo('/connection');
+	  return;
+	}
+  container.innerHTML = `
+
+	<div class="container-page my-10 space-y-6">
+	  <header class="rounded-2xl border bg-white shadow-sm px-6 py-5">
+		<h1 id="stats-title" class="text-2xl font-semibold tracking-tight">
+    	Statistics of
+    	<span id="stats-of" class="ml-2 text-gray-600 font-normal hidden">
+      	of '<span id="stats-username" class="inline-block max-w-[16rem] align-baseline truncate" title="">Username</span>'
+    	</span>
+  		</h1>
+	  </header>
+
+<!-- WINRATE -->
+	  <section class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+		<article class="rounded-2xl border bg-white shadow-sm p-5">
+		  <div class="text-sm text-gray-600">WINRATE</div>
+		  <div id="winrate" class="mt-1 text-2xl font-semibold">_</div>
+		</article>
+
+<!-- WINS -->
+		<article class="rounded-2xl border bg-white shadow-sm p-5">
+		  <div class="text-sm text-gray-600">Wins</div>
+		  <div id="wins" class="mt-1 text-2xl font-semibold">_</div>
+		</article>
+
+<!-- DEFEATS -->
+		<article class="rounded-2xl border bg-white shadow-sm p-5">
+		  <div class="text-sm text-gray-600">Defeats</div>
+		  <div id="defeats" class="mt-1 text-2xl font-semibold">_</div>
+		</article>
+
+<!-- TOTAL -->
+		<article class="rounded-2xl border bg-white shadow-sm p-5">
+		  <div class="text-sm text-gray-600">Total</div>
+		  <div id="total" class="mt-1 text-2xl font-semibold">_</div>
+		</article>
+	  </section>
+
+
+<!-- MATCH HISTORY -->
+	  <section class="rounded-2xl border bg-white shadow-sm p-5">
+		<h2 class="text-sm uppercase tracking-wider text-gray-500">Recent matches</h2>
+		<div class="mt-4 overflow-x-auto">
+		  <table class="min-w-full text-sm">
+			<thead>
+			  <tr class="text-left text-gray-500">
+				<th class="py-2 pr-4">Opponent</th>
+				<th class="py-2 pr-4">Score</th>
+				<th class="py-2 pr-4">Result</th>
+				<th class="py-2">Date</th>
+			  </tr>
+			</thead>
+			<tbody class="history divide-y divide-gray-100">
+			  <tr class="text-gray-400"><td class="py-3" colspan="4">No match history</td></tr>
+			</tbody>
+		  </table>
+		</div>
+	  </section>
+	  <p id="stats-msg" class="hidden text-sm text-red-600"></p>
+	</div>
+  `;
+  
+  loadStats(saved);
+
+  const msg = container.querySelector<HTMLParagraphElement>('#stats-msg')!;
+  const tbody = container.querySelector<HTMLTableSectionElement>('#history')!;
+
+  async function loadStats(saved: AppUser) {
+	  try {
+		const userId = saved.userId;
+		const history = await getMatchHistory(userId);
+
+		const wins = history.wins ?? 0;
+		const defeats = history.losses ?? 0;
+		const total = wins + defeats;
+		const winrate = total ? (wins / total) * 100 : 0;
+
+		const elWins = container.querySelector<HTMLElement>('#wins');
+		if (elWins)
+			elWins.textContent = String(wins);
+		const elDefeats = container.querySelector<HTMLElement>('#defeats');
+		if (elDefeats)
+			elDefeats.textContent = String(defeats);
+		const elTotal = container.querySelector<HTMLElement>('#total');
+		if (elTotal)
+			elTotal.textContent = String(total);
+		const elWinrate = container.querySelector<HTMLElement>('#winrate');
+		if (elWinrate)
+			elWinrate.textContent = `${winrate}%`;
+
+		if (tbody) {
+		  tbody.innerHTML= "";
+		  const rows = Array.isArray(history.history) ? history.history.slice(0, 10) : [];
+		  if (!rows.length) {
+			tbody.innerHTML = `<tr class="text-gray-400"><td class="py-3" colspan="4">No recent matches.</td></tr>`;
+		  } else {
+			for (const m of rows) {
+			  const tr = document.createElement('tr');
+			  const date = m.date;
+			  const result = m.result;
+			  let myScore = null;
+			  let hisScore = null;
+			  if (result === 'win') {
+				myScore = m.winnerScore;
+				hisScore = m.loserScore;
+			  } else {
+				myScore = m.loserScore;
+				hisScore = m.winnerScore;
+			  }
+			  tr.innerHTML = `
+			<td class="py-2 pr-4 whitespace-nowrap">${date}</td>
+			<td class="py-2 pr-4">${m.opponent}</td>
+			<td class="py-2 pr-4 font-medium">${myScore}–${hisScore}</td>
+			<td class="py-2">
+			  <span class="inline-flex items-center gap-1 text-xs ${result ? "text-green-700 bg-green-100" : "text-gray-700 bg-gray-100"} px-2 py-0.5 rounded-full">
+				<span class="h-2 w-2 rounded-full ${result ? "bg-green-500" : "bg-gray-400"}"></span>
+				${result ? "Win" : "Defeat"}
+			  </span>
+			</td>
+		  `;
+
+		  tbody.appendChild(tr);
+			}
+		  }
+		}
+	  } catch (error: any) {
+		setStatusMessage(msg, error?.message || "Can't load player stats", 'error');
+		tbody.innerHTML = `<li class="text-sm text-gray-500">-</li>`;
+	  }
+  }
+};
+
+export default friendProfile;

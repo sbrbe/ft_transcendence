@@ -23,7 +23,7 @@ const createTournamentTable =
 	`CREATE TABLE IF NOT EXISTS tournaments (
     tournamentId TEXT PRIMARY KEY,
 		userId TEXT NOT NULL,
-    snowtrace_link TEXT NOT NULL,
+    snowtraceLink TEXT NOT NULL,
 		players TEXT NOT NULL DEFAULT '[]'
 		)`;
 
@@ -34,8 +34,8 @@ export function saveValues(input: tournoiValues)
 
   if (!exists)
   {
-    const stmt = db.prepare("INSERT INTO tournaments (tournamentId, userId, snowtrace_link, players) VALUES (?, ?, ?, ?)");
-    stmt.run(input.tournamentId, input.userId, input.snowtrace_link, JSON.stringify(input.players ?? []));
+    const stmt = db.prepare("INSERT INTO tournaments (tournamentId, userId, snowtraceLink, players) VALUES (?, ?, ?, ?)");
+    stmt.run(input.tournamentId, input.userId, input.snowtraceLink, JSON.stringify(input.players ?? []));
 	console.log(`✅ tournamentId ${input.tournamentId} créé`);
   }
   else 
@@ -44,21 +44,45 @@ export function saveValues(input: tournoiValues)
   }
 }
 
-export function getValues(userId: string): Array<tournoiValues> {
+// export function getValues(userId: string): Array<tournoiValues> {
+//   const rows = db.prepare(`
+//     SELECT tournamentId, userId, snowtraceLink, players
+//     FROM tournaments
+//     WHERE userId = ?
+//     ORDER BY rowid DESC
+//   `).all(userId) as Array<{ tournamentId: string; userId: string; snowtraceLink: string; players: string }>;
+
+//   return rows.map(r => ({
+//     tournamentId: r.tournamentId,
+//     userId: r.userId,
+//     snowtraceLink: r.snowtraceLink,
+//     players: safeParsePlayers(r.players),
+//   }));
+//}
+
+type TournamentItem = {
+	tournmanentId: string;
+	snowtraceLink: number;
+	players: string[];
+};
+
+type TournamentHistory = {
+	history: TournamentItem[];
+};
+
+
+export function getValues(userId: string): TournamentHistory[] {
   const rows = db.prepare(`
-    SELECT tournamentId, userId, snowtrace_link, players
+    SELECT *
     FROM tournaments
     WHERE userId = ?
     ORDER BY rowid DESC
-  `).all(userId) as Array<{ tournamentId: string; userId: string; snowtrace_link: string; players: string }>;
+  `).all(userId) as TournamentHistory[];
 
-  return rows.map(r => ({
-    tournamentId: r.tournamentId,
-    userId: r.userId,
-    snowtrace_link: r.snowtrace_link,
-    players: safeParsePlayers(r.players),
-  }));
+  return rows;
 }
+
+
 
 function safeParsePlayers(json: string): string[] {
   try
