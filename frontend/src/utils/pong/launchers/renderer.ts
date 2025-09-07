@@ -30,12 +30,12 @@ export class GameRenderer {
 	  ctx.textAlign = 'center';
 	  const centerX = this.canvas.width / 2;
 	  let y = this.canvas.height / 2 - 60;
-	  ctx.fillText(`Gagnant : ${state.tracker?.winner?.name ?? '—'}`, centerX, y);
+	  ctx.fillText(`Winner : ${state.tracker?.winner?.name ?? '—'}`, centerX, y);
 	  y += 40;
-	  ctx.fillText(`Total échanges : ${state.tracker?.totalExchanges ?? 0}`, centerX, y);
+	  ctx.fillText(`Total exchanges : ${state.tracker?.totalExchanges ?? 0}`, centerX, y);
 	  y += 30;
-	  ctx.fillText(`Rallye max : ${state.tracker?.maxRally ?? 0}`, centerX, y);
-	  ctx.fillText('Appuyez sur [Espace] pour continuer', centerX, (y + 150));
+	  ctx.fillText(`Longest exchange : ${state.tracker?.maxRally ?? 0}`, centerX, y);
+	  ctx.fillText('Press [Space] to continue', centerX, (y + 150));
 	}
   
 	public clearRender()

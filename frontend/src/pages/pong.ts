@@ -57,7 +57,7 @@ const pong: (container: HTMLElement) => void = (container) => {
     }
     if (target.closest("#nav-game-configtourn")) {
       GAME_RUNTIME.stop();
-      pong_lcl_conftourn(container);
+      pong_lcl_conftourn(container, saved.username);
       return;
     }
     if (target.closest("#startTournamentBtn")) {

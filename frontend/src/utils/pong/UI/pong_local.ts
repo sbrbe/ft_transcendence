@@ -11,7 +11,7 @@ const pong_local: (container: HTMLElement) => void = (container) => {
       <img id="nav-game-configplay" src="/site/casual_bouton.png" alt="Match Libre"
            class="cursor-pointer rounded-lg shadow-md hover:opacity-90"
            style="width: 200px; height: 280px;">
-      <img id="nav-game-configtourn" src="/site/ranked_bouton.png" alt="Tournoi"
+      <img id="nav-game-configtourn" src="/site/tournament_bouton.png" alt="Tournoi"
            class="cursor-pointer rounded-lg shadow-md hover:opacity-90"
            style="width: 200px; height: 280px;">
     </div> 

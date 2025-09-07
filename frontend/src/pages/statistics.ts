@@ -47,19 +47,29 @@ const statistics: (container: HTMLElement) => void = (container) => {
 
 <!-- MATCH HISTORY -->
       <section class="rounded-2xl border bg-white shadow-sm p-5">
-        <h2 class="text-sm uppercase tracking-wider text-gray-500">Recent matches</h2>
-        <div class="mt-4 overflow-x-auto">
-          <table class="min-w-full text-sm">
-            <thead>
-              <tr class="text-left text-gray-500">
-                <th class="py-2 pr-4">Opponent</th>
-                <th class="py-2 pr-4">Score</th>
-                <th class="py-2 pr-4">Result</th>
-                <th class="py-2">Date</th>
+      <h2 class="text-sm uppercase tracking-wider text-gray-500">Recent matches</h2>
+      <div class="mt-4 overflow-x-auto">
+        <div class="max-h-[12rem] overflow-y-auto pr-10" style="scrollbar-gutter: stable;">
+          <table class="min-w-full text-sm table-fixed">
+            <colgroup>
+              <col class="w-1/2" />
+              <col class="w-1/6" />
+              <col class="w-1/6" />
+              <col class="w-1/6" />
+            </colgroup>
+
+            <thead class="sticky top-0 bg-white">
+              <tr class="text-gray-500">
+                <th class="py-2 pr-4 text-left">Opponent</th>
+                <th class="py-2 px-20 text-center">Score</th>
+                <th class="py-2 px-20 text-center">Result</th>
+                <th class="py-2 px-20 text-center">Date</th>
               </tr>
             </thead>
-            <tbody class="history divide-y divide-gray-100">
-              <tr class="text-gray-400"><td class="py-3" colspan="4">No match history</td></tr>
+              <tbody class="history divide-y divide-gray-100 [&>tr]:h-12">
+               <tr class="text-gray-400">
+                <td class="py-3 text-center" colspan="4">No match history</td>
+              </tr>
             </tbody>
           </table>
         </div>
@@ -83,7 +93,6 @@ const statistics: (container: HTMLElement) => void = (container) => {
           </table>
         </div>
       </section>
-      <p id="stats-msg" class="hidden text-sm text-red-600"></p>
     </div>
   `;
   
@@ -135,15 +144,16 @@ const statistics: (container: HTMLElement) => void = (container) => {
             const hisScore = isWin ? m.loserScore : m.winnerScore;
 
             tr.innerHTML = `
-              <td class="py-2 pr-4">${m.opponent}</td>
-              <td class="py-2 pr-4 font-medium">${hisScore} – ${myScore}</td>
-              <td class="py-2">
-                <span class="inline-flex items-center gap-1 text-xs ${isWin ? "text-green-700 bg-green-100" : "text-red-700 bg-red-100"} px-2 py-0.5 rounded-full">
-                <span class="h-2 w-2 rounded-full ${isWin ? "bg-green-500" : "bg-red-400"}"></span>
-                  ${isWin ? "Win" : "Defeat"}
-                </span>
-              </td>
-              <td class="py-2 pr-4 whitespace-nowrap">${date}</td>
+              <td class="py-2 pr-4 text-left">${m.opponent}</td>
+              <td class="py-2 px-20 font-medium text-center">${hisScore} – ${myScore}</td>
+              <td class="py-2 px-20">
+                <div class="flex justify-center">
+                  <span class="inline-flex items-center gap-1 text-xs ${isWin ? "text-green-700 bg-green-100" : "text-red-700 bg-red-100"} px-2 py-0.5 rounded-full">
+                    <span class="h-2 w-2 rounded-full ${isWin ? "bg-green-500" : "bg-red-400"}"></span>
+                    ${isWin ? "Win" : "Defeat"}
+                  </span>
+                </div>
+              <td class="py-2 px-20 whitespace-nowrap text-center">${date}</td> 
             `;
             tbodyMatches.appendChild(tr);
             }

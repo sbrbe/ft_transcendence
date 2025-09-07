@@ -78,7 +78,7 @@ export class GameTournament implements Disposable{
     private async showNextMatchScreen() {
       const label = (await this.computeNextLabel());
       this.renderer?.clearRender();
-      this.renderer?.drawMessage(`Prochain match : ${label}\n\n[ESPACE] pour commencer`);
+      this.renderer?.drawMessage(`Next match : ${label}\n\n[SPACE] to start`);
     }
 
     private isMovementKey(code: string) {
@@ -119,7 +119,7 @@ export class GameTournament implements Disposable{
           if (msg.type === 'tournament_end') {
             this.betweenStage = 'end';
             this.renderer.clearRender();
-            this.renderer.drawMessage('Tournoi terminé !\n\n\n\nAppuez sur [ESPACE] pour QUITTER !');
+            this.renderer.drawMessage('Tournoi finished !\n\n\n\nPress [SPACE] to QUIT !');
           }
         },
         '/game/tournament'

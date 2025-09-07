@@ -1,13 +1,12 @@
 import { AppUser } from "src/utils/interface";
 
 // src/pages/pong_lcl_conftourn.ts
-const pong_lcl_conftourn: (container: HTMLElement) => void = (container) => {
-	container.innerHTML = `  
-	 <div class="min-h-[70vh] w-full flex items-center justify-center py-10">
+const pong_lcl_conftourn = (container: HTMLElement, savedName: string) => {
+  container.innerHTML = `
+    <div class="min-h-[70vh] w-full flex items-center justify-center py-10">
       <div id="pong_lcl_conftourn"
            class="w-full max-w-xl rounded-2xl border bg-white shadow-sm p-6 sm:p-8">
 
-        <!-- Header -->
         <div class="text-center mb-6">
           <h1 class="text-2xl font-bold tracking-tight">PONG – Tournament</h1>
           <p class="text-sm text-gray-500 mt-1">Configure your local tournament.</p>
@@ -52,8 +51,9 @@ const pong_lcl_conftourn: (container: HTMLElement) => void = (container) => {
           <div id="tournamentPlayers" class="grid grid-cols-1 sm:grid-cols-2 gap-4">
             ${Array.from({ length: 16 }, (_, i) => {
               const index = i + 1;
-              // caché par défaut au-delà de 4
               const hidden = index > 4 ? 'hidden' : '';
+              // joueur 1 = placeholder = savedName, les autres = "Joueur X"
+              const placeholder = index === 1 ? savedName : `Player ${index}`;
               return `
                 <div class="player-row ${hidden}" data-index="${index}">
                   <label for="playerName${index}" class="text-sm text-gray-700 block mb-1">Player ${index}</label>
@@ -61,15 +61,15 @@ const pong_lcl_conftourn: (container: HTMLElement) => void = (container) => {
                     id="playerName${index}"
                     name="playerName${index}"
                     type="text"
-                    class="w-full border rounded-lg px-3 py-2 focus:ring-2 focus:ring-blue-500 focus:outline-none"
-                    value="Joueur ${index}">
+                    class="w-full border rounded-lg px-3 py-2 focus:ring-2 focus:ring-blue-500 focus:outline-none placeholder-gray-400"
+                    value=""
+                    placeholder="${placeholder}">
                 </div>
               `;
             }).join("")}
           </div>
         </section>
 
-        <!-- Actions -->
         <div class="pt-6 flex items-center justify-center">
           <button id="startTournamentBtn"
                   class="px-5 py-2.5 rounded-lg bg-blue-600 text-white font-medium hover:bg-blue-700
@@ -80,6 +80,7 @@ const pong_lcl_conftourn: (container: HTMLElement) => void = (container) => {
       </div>
     </div>
   `;
+
   
 	const radios = container.querySelectorAll<HTMLInputElement>('input[name="tournamentSize"]');
 	const playerRows = container.querySelectorAll<HTMLDivElement>(".player-row");
@@ -115,14 +116,14 @@ const pong_lcl_conftourn: (container: HTMLElement) => void = (container) => {
 	  container.querySelectorAll<HTMLInputElement>('#tournamentPlayers input[type="text"]')
 	);
   
-	const players: TournamentPlayer[] = inputs.slice(0, size).map((inp, i) => {
-	  const raw = (inp.value ?? "").trim();
-	  const name = raw.length > 0 ? raw : `Joueur ${i + 1}`;
-	  return { id: `${i + 1}`, name };
-	});
-
+  const players: TournamentPlayer[] = inputs.slice(0, size).map((inp, i) => {
+    const raw = (inp.value ?? "").trim();
+    const placeholder = (inp.placeholder ?? "").trim();
+    const name = raw.length > 0 ? raw : (placeholder.length > 0 ? placeholder : `Player ${i + 1}`);
+    return { id: `${i + 1}`, name };
+  });
+  
   players[0].id = saved.userId;
-  players[0]. name = saved.username;
   
 	return (players);
   }
