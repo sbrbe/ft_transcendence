@@ -1,11 +1,6 @@
 import { refreshOnce } from "./A2F";
 import { logout } from "./auth";
 
-/*
-	Fonction pour faire une recherche de joueurs qui renvoie le profil du joueur contenant le username, le userId, l'avatar
-	et l'historique de match.
-	On affichera que le username et l'avatar
-*/
 export async function searchUser(username: string, retried = false) {
 	const res = await fetch(`/users/friends/searchUser/${encodeURIComponent(username)}`, {
 		method: 'GET',
@@ -33,10 +28,6 @@ export async function searchUser(username: string, retried = false) {
 }
 
 
-/**
- * Envoie une demande d'ami à un player donné.
- * Attend un 201 ; si erreur -> lève une exception.
- */
 export async function sendFriendRequest(userId: string, friendUsername: string, retried = false) {
 	const res = await fetch('/users/friends/invite', {
 		method: 'POST',
@@ -65,10 +56,6 @@ export async function sendFriendRequest(userId: string, friendUsername: string, 
 	}
 }
 
-/**
- * Accepte une demande d'ami.
- * Attend un 200 ; si erreur -> lève une exception.
- */
 export async function acceptRequest(userId: string, requestId: number, retried = false) {
 	const res = await fetch('/users/friends/accept', {
 		method: 'PUT',
@@ -97,10 +84,6 @@ export async function acceptRequest(userId: string, requestId: number, retried =
 	}
 }
 
-/**
- * Rejette une demande d'ami.
- * Attend un 200 ; si erreur -> lève une exception.
- */
 export async function rejectRequest(userId: string, requestId: number, retried = false) {
 		const res = await fetch('/users/friends/reject', {
 		method: 'PUT',
@@ -129,10 +112,6 @@ export async function rejectRequest(userId: string, requestId: number, retried =
 	}
 }
 
-/**
- * Bloque un player.
- * Attend un 200 ; si erreur -> lève une exception.
- */
 export async function removeFriend(userId: string, friendUsername: string, retried = false) {
 			const res = await fetch('/users/friends/remove', {
 		method: 'PUT',

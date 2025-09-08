@@ -54,7 +54,6 @@ async function createRequest(user: User, friend: User) {
 
 	const res = db.prepare(`INSERT INTO friendships (userId, friendId, status) VALUES (?, ?, 'pending')`)
 		.run(user.userId, friend.userId);
-	console.log(`FRIEND REQUEST = ${res.lastInsertRowid}`);
 }
 
 export async function acceptRequest(
@@ -69,7 +68,6 @@ export async function acceptRequest(
 			}
 			const res = db.prepare(`UPDATE friendships SET status = 'accepted', updatedAt = CURRENT_TIMESTAMP WHERE id = ?`)
 			.run(requestId);
-			console.log(`ACCEPT REQUEST = ${res.changes}`);
 			return reply.status(200).send({ message: 'Friend request accepted' });
 		} catch (error: any) {
 			return reply.status(500).send({ error: error.message });
@@ -88,7 +86,6 @@ export async function rejectRequest(
 		}
 		const res = db.prepare(`DELETE FROM friendships WHERE id = ?`)
 			.run(requestId);
-		console.log(`REJECT REQUEST = ${res.changes}`);
 		return reply.status(200).send({ message: 'Friend request rejected' });
 	} catch (error: any) {
 		return reply.status(500).send({ error: error.message });
@@ -110,7 +107,6 @@ export async function removeFriend(
 			if (res.changes === 0){
 				return reply.status(404).send({ error: 'Friendship not found '});
 			}
-			console.log(`REMOVE USER = ${res.changes}`);
 			return reply.status(200).send({ message: 'Player removed from friends list'});
 		} catch (error: any) {
 			return reply.status(500).send({ error: error.message });
@@ -134,7 +130,6 @@ export async function getPendingRequest(
 				ORDER BY f.createdAt DESC
 				`);
 			const requests = stmt.all(userId, 'pending') as FriendsRequest[];
-			console.log('PENDING REQUEST: ', requests);
 			return reply.status(200).send(requests);
 		} catch (error: any) {
 			return reply.status(500).send({ error: error.message });

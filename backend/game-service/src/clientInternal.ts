@@ -17,7 +17,6 @@ const agent = new https.Agent({
 });
 
 export async function sendTournamentData(payload: DataBlockchain) {
-	console.log('PAYLOAD TOURNAMENT: ',payload);
 	const res = await fetch(`https://blockchain-service:3003/tournaments/summary`, {
 		method: 'POST',
 		agent,
@@ -36,5 +35,4 @@ export async function sendTournamentData(payload: DataBlockchain) {
 	if (!res.ok) {
 		throw new Error(`sendTournamentData: ${data.error || res.statusText}`);
 	}
-	console.log('Tournament data sent to blockchain-service');
 }

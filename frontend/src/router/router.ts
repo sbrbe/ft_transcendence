@@ -21,12 +21,6 @@ const routes: Record<string, () => Promise<{ default: RouteHandler }>> =
 
 let mountEl: HTMLElement;
 
-
-/**
- * Convertit le hash de l'URL en chemin de route.
- * Exemple : "#/accueil" => "/accueil"
- * Si rien n'est fourni (URL vide), on redirige vers "/".
- */
 function parseHash(): string {
 	const hash = window.location.hash || '/';
 	const path = hash.replace(/^#/, '');

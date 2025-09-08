@@ -51,7 +51,6 @@ export function createNavbar(onNavigate: (path: string) => void) {
 		onNavigate(a.dataset.route || '/');
 	});
 
-  // Surbrillance du lien actif
 	const setActive = () => {
 		const current = location.hash.replace(/^#/, '') || '/';
 		nav.querySelectorAll<HTMLAnchorElement>('a[data-route]').forEach(a => {
@@ -61,7 +60,6 @@ export function createNavbar(onNavigate: (path: string) => void) {
 	};
 	window.addEventListener('hashchange', setActive);
 
-	// Rendu dynamique (public ↔ connecté)
 	const renderRight = async () => {
 	const right = nav.querySelector<HTMLDivElement>('#nav-right')!;
 	const user = getSavedUser<{ username: string; avatarPath?: string }>();
@@ -95,11 +93,9 @@ export function createNavbar(onNavigate: (path: string) => void) {
       </button>
     `;
 
-	// Fallback si l'image échoue
 	const img = right.querySelector<HTMLImageElement>('#btn-profile-img')!;
 	img.addEventListener('error', () => { img.src = '/avatar/default.png'; }, { once: true });
 
-	// Menu profil (lazy import)
 	const btn = right.querySelector<HTMLButtonElement>('#btn-profile')!;
 	const { attachProfileMenu } = await import('./profileMenu');
 	const { open } = attachProfileMenu(btn, getSavedUser()!, {
@@ -116,14 +112,11 @@ export function createNavbar(onNavigate: (path: string) => void) {
 	return nav;
 }
 
-/* ---------------- Helpers ---------------- */
 
 function resolveAvatarSrc(input?: string | null): string {
 	if (!input) return '/avatar/default.png';
 	const s = input.trim();
-	// URL absolue / data / blob
 	if (/^(https?:|data:|blob:)/i.test(s)) return s;
-	// normalise (supprime / initiaux)
 	const p = s.replace(/^\/+/, '');
 	if (p === 'default.png') return '/avatar/default.png';
 	if (p.startsWith('avatar/')) return '/' + p;

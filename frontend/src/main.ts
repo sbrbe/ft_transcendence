@@ -5,27 +5,25 @@ import { initRouter, navigateTo } from './router/router';
 
 function bootstrap() 
 {
-  const app = document.getElementById('app')!;
-  app.innerHTML = ''; // reset
+	const app = document.getElementById('app')!;
+	app.innerHTML = '';
 
-  // Layout de base
-  const header = document.createElement('header');
-  const main = document.createElement('main');
-  const footer = document.createElement('footer');
+	const header = document.createElement('header');
+	const main = document.createElement('main');
+	const footer = document.createElement('footer');
 
-  header.className = 'border-b bg-white';
-  main.className = 'flex-1 py-8';
-  footer.className = 'border-t bg-white';
+	header.className = 'border-b bg-white';
+	main.className = 'flex-1 py-8';
+	footer.className = 'border-t bg-white';
 
-  header.appendChild(createNavbar((path) => navigateTo(path)));
-  footer.appendChild(createFooter());
+	header.appendChild(createNavbar((path) => navigateTo(path)));
+	footer.appendChild(createFooter());
 
-  app.append(header, main, footer);
+	app.append(header, main, footer);
 
-  // Router
-  initRouter({
-    mount: main
-  });
+	initRouter({
+		mount: main
+	});
 }
 
 bootstrap();

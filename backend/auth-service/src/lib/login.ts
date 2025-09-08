@@ -37,7 +37,6 @@ export async function login(
 			const user = await userLogin(email, password);
 			if (!user)
 				return reply.status(404).send({ error: 'User not found'});
-			console.log('USER = ', user);
 //			const code = await createTwoFactorCode(user.userId);
 //			await sendTwoFactorCode(user.userId, user.email, code);
 			return reply.status(200).send({ userId: user.userId, message: '2FA code sent by mail'} );
@@ -50,7 +49,6 @@ async function userLogin(email: string, password: string) {
 	const user = getUserByEmail(email) as authUser | undefined ;
 	if (!user)
 		return false;
-	console.log('getUserbyEmail = ', user);
 	const passwordMatch = await bcrypt.compare(password, user.hashedPassword);
 	if (!passwordMatch)
 		throw new Error('Wrong password');

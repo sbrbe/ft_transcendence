@@ -10,16 +10,12 @@ export interface ListAvatarsResponse {
 	avatars: string[];
 }
 
-/** [API] uploadAvatar :
- * POST /users/uploadAvatar/:userId — envoie FormData("file")
- */
 export async function uploadAvatar(
 	userId: string,
 	file: File,
 	retried = false
 ): Promise<UploadAvatarResponse> {
-	// Validation front rapide (évite un aller/retour serveur inutile)
-	const allowed = new Set(['image/png', 'image/jpeg', 'image/jpg', 'image/webp']);
+            	const allowed = new Set(['image/png', 'image/jpeg', 'image/jpg', 'image/webp']);
 	if (!allowed.has(file.type)) {
 		throw new Error('Unsupported file type (PNG/JPEG/WEBP only)');
 	}
@@ -30,7 +26,7 @@ export async function uploadAvatar(
 	const res = await fetch(`/users/uploadAvatar/${encodeURIComponent(userId)}`, {
 		method: 'POST',
 		credentials: 'include',
-		body: form, // ne PAS définir Content-Type, le navigateur gère le boundary
+		body: form,
 	});
 
 	if (res.status === 401 && !retried) {
@@ -49,9 +45,6 @@ export async function uploadAvatar(
 	return data as UploadAvatarResponse;
 }
 
-/** [API] listUserAvatars :
- * GET /users/avatars/:userId → { avatars: string[] }
- */
 export async function listUserAvatars(
 	userId: string,
 	retried = false
@@ -67,7 +60,6 @@ export async function listUserAvatars(
 		await logout();
 	}
 
-	// Si l’endpoint n’existe pas encore (404), on renvoie une liste vide
 	if (res.status === 404) {
 		return [];
 	}
@@ -82,7 +74,6 @@ export async function listUserAvatars(
 	return Array.isArray(data.avatars) ? data.avatars : [];
 }
 
-/** Helper : détecte si l’URL pointe vers un avatar uploadé côté serveur */
 export function isUploadedAvatar(url?: string | null): boolean {
 	return !!url && url.startsWith('/static/avatars/');
 }

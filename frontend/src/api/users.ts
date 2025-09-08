@@ -16,10 +16,6 @@ interface UpdatedUserResponse {
 	avatarPath: string;
 }
 
-/** [API] createUserProfile :
- * POST /users/register — crée le profil utilisateur côté users-service.
- * N'envoie que les champs profil (pas l'email ni le mdp).
- */
 export async function createUserProfile(userId: string, d: RegisterFormData): Promise<void> {
 	const res = await fetch('/users/register', {
 		method: 'POST',
@@ -39,10 +35,6 @@ export async function createUserProfile(userId: string, d: RegisterFormData): Pr
 	}
 }
 
-/** [API] updateUser :
- * PUT /users/:userId — met à jour le profil (first/last/username/avatarPath).
- * N'envoie que les champs non vides pour éviter d'écraser des valeurs.
- */
 export async function updateUser(
 	userId: string,
 	partial: UpdateUserPartial,

@@ -9,10 +9,6 @@ export interface A2FUser {
 	avatarPath?: string;
 };
 
-/**
- * Vérifie un code 2FA (6 chiffres) pour un utilisateur donné.
- * Attend un 200/204 ; si erreur -> lève une exception.
- */
 export async function verify2FA(userId: string, code: string): Promise<void> {
 	const res = await fetch('/auth/2fa/verify', {
 		method: 'POST',
@@ -30,11 +26,6 @@ export async function verify2FA(userId: string, code: string): Promise<void> {
 	}
 }
 
-/**
- * Récupère le profil complet à partir de 2 microservices:
- *  - users-service:  /users/getUser/:userId
- *  - auth-service:   /auth/getEmail/:userId
- */
 export async function fetchUser(userId: string, retried = false): Promise<A2FUser> {
 	const [userRes, authRes] = await Promise.all([
 		fetch(`/users/getUser/${encodeURIComponent(userId)}`, { method: 'GET', credentials: 'include' }),
@@ -64,10 +55,6 @@ export async function fetchUser(userId: string, retried = false): Promise<A2FUse
 	};
 }
 
-/**
- * Lance une requete pour refresh les JWT lorsque l'accessToken est expiré.
- * Retourne le nouvel accessToken
- */
 
 let refreshPromise: Promise<boolean> | null = null;
 

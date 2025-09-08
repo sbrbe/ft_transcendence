@@ -7,7 +7,6 @@ export async function getMatchHistory(
 		const { userId } = req.params;
 		try {
 			const matches = getMatches(userId);
-			console.log('MATCHES : ', matches);
 			if (!matches) {
 				return reply.status(400).send({ error: 'History not found' });
 			}
@@ -16,9 +15,7 @@ export async function getMatchHistory(
 				result: m.winner === userId ? 'win' : 'lose',
 				opponent: m.winner === userId ? m.loserName : m.winnerName,
 			}));
-			console.log('HISTORY: ', history);
 			const { wins, losses } = getWinLossCounts(userId);
-			console.log('WINS :', wins, 'LOSSES: ', losses);
 			return reply.status(200).send({ history, wins, losses });
 		} catch (error: any) {
 			return reply.status(500).send({ error: error.message });

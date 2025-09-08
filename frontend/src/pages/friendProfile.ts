@@ -29,26 +29,22 @@ const friendId = params.get('friendId')!;
 			</h1>
 		</header>
 
-<!-- WINRATE -->
 			<section class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
 				<article class="rounded-2xl border bg-white shadow-sm p-5">
 					<div class="text-sm text-gray-600">WINRATE</div>
 					<div id="winrate" class="mt-1 text-2xl font-semibold">_</div>
 				</article>
 
-<!-- WINS -->
 				<article class="rounded-2xl border bg-white shadow-sm p-5">
 					<div class="text-sm text-gray-600">Wins</div>
 					<div id="wins" class="mt-1 text-2xl font-semibold">_</div>
 				</article>
 
-<!-- DEFEATS -->
 				<article class="rounded-2xl border bg-white shadow-sm p-5">
 					<div class="text-sm text-gray-600">Defeats</div>
 					<div id="defeats" class="mt-1 text-2xl font-semibold">_</div>
 				</article>
 
-<!-- TOTAL -->
 				<article class="rounded-2xl border bg-white shadow-sm p-5">
 					<div class="text-sm text-gray-600">Total</div>
 					<div id="total" class="mt-1 text-2xl font-semibold">_</div>
@@ -56,7 +52,6 @@ const friendId = params.get('friendId')!;
 			</section>
 
 
-<!-- MATCH HISTORY -->
 			<section class="rounded-2xl border bg-white shadow-sm p-5">
 			<h2 class="text-sm uppercase tracking-wider text-gray-500">Recent matches</h2>
 			<div class="mt-4 overflow-x-auto">
@@ -86,7 +81,6 @@ const friendId = params.get('friendId')!;
 				</div>
 			</section>
 
-<!-- TOURNAMENT HISTORY -->
 			<section class="rounded-2xl border bg-white shadow-sm p-5">
 				<h2 class="text-sm uppercase tracking-wider text-gray-500">Recent tournaments</h2>
 				<div class="mt-4 overflow-x-auto">

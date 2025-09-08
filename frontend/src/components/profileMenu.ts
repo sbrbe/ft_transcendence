@@ -6,23 +6,14 @@ interface AttachOptions {
 	onLogoutSuccess?: () => void;
 }
 
-/**
- * Menu profil simple et lisible.
- * - Overlay pour fermer en cliquant à l’extérieur
- * - Menu positionné près du trigger
- * - Liens vers /profil, /statistiques, /amis
- * - Déconnexion via api/auth.logout()
- */
 export function attachProfileMenu(
 	trigger: HTMLElement,
 	user: AppUser,
 	opts: AttachOptions = {}
 ) {
-	// --------- Overlay (clic extérieur) ---------
 	const overlay = document.createElement('div');
 	overlay.className = 'fixed inset-0 z-40 bg-black/20 backdrop-blur-[1px] hidden';
 
-	// --------- Conteneur du menu ---------
 	const menu = document.createElement('div');
 	menu.className = [
 		'fixed z-50 w-80 max-w-[92vw]',
@@ -69,7 +60,6 @@ export function attachProfileMenu(
 	document.body.appendChild(overlay);
 	document.body.appendChild(menu);
 
-	//avatar
 	const pmImg = menu.querySelector<HTMLImageElement>('#pm-avatar')!;
 	pmImg.addEventListener('error', () => { pmImg.src = '/avatar/default.png'; }, { once: true });
 
@@ -86,17 +76,14 @@ export function attachProfileMenu(
 		menu.classList.add('hidden');
 	}
 
-	// Click extérieur
 	overlay.addEventListener('click', close);
 
-	// Repositionnement si scroll/resize
 	const onWinChange = () => {
 	if (!menu.classList.contains('hidden')) positionMenu(trigger, menu);
 	};
 	window.addEventListener('resize', onWinChange);
 	window.addEventListener('scroll', onWinChange, true);
 
-	// Navigation interne
 	menu.addEventListener('click', (e) => 
 	{
 	const a = (e.target as HTMLElement).closest('a[data-route]') as HTMLAnchorElement | null;
@@ -108,14 +95,13 @@ export function attachProfileMenu(
 	});
 
 
-	// Déconnexion
 	const logoutBtn = menu.querySelector<HTMLButtonElement>('#logoutBtn')!;
 	logoutBtn.addEventListener('click', async () => {
 		try 
 		{
 			logoutBtn.disabled = true;
 			logoutBtn.classList.add('opacity-70', 'cursor-wait');
-			await logout(); // -> nettoie le storage + dispatch "auth:changed"
+			await logout();
 			close();
 			opts.onLogoutSuccess?.();
 			navigateTo('/home');
@@ -142,8 +128,6 @@ export function attachProfileMenu(
 		}
 	};
 }
-
-/* ---------------- Helpers ---------------- */
 
 function positionMenu(trigger: HTMLElement, menu: HTMLElement) {
 	const r = trigger.getBoundingClientRect();

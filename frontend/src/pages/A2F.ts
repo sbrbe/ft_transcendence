@@ -41,7 +41,6 @@ const A2F: (container: HTMLElement) => void = (container) => {
 	if (!pendingUserId) setStatusMessage(msgEl, 'Session expired. Please login again.', 'error');
 	setTimeout(() => codeEl.focus(), 0);
 
-	// Force 6 chiffres
 	codeEl.addEventListener('input', () => 
 	{
 		codeEl.value = codeEl.value.replace(/\D/g, '').slice(0, 6);
@@ -70,7 +69,6 @@ const A2F: (container: HTMLElement) => void = (container) => {
 			const user = await fetchUser(pendingUserId) as AppUser;
 			setLoggedInUser(user);
 
-			// Notifie la navbar (si elle écoute `auth:changed`)
 			window.dispatchEvent(new CustomEvent('auth:changed', { detail: user }));
 
 			clearPendingUserId();

@@ -3,11 +3,6 @@ import { loginUser } from '../api/auth';
 import { setPendingUserId } from '../utils/ui';
 import { bindPasswordToggle, setStatusMessage, clearStatusMessage, lockButton } from '../utils/ui';
 
-/**
- * [UI][ROUTER] Login:
- * Rend la page de connexion dans `container`, branche les handlers d’UI,
- * gère la navigation interne et le submit du formulaire.
- */
 const Login: (container: HTMLElement) => void = (container) => {
 	container.innerHTML = `
 		<div class="container-page my-10">

@@ -37,32 +37,9 @@ export function saveValues(input: tournoiValues)
 	{
 		const stmt = db.prepare("INSERT INTO tournaments (tournamentId, userId, snowtraceLink, players, date) VALUES (?, ?, ?, ?, ?)");
 		stmt.run(input.tournamentId, input.userId, input.snowtraceLink, JSON.stringify(input.players ?? []), new Date().toISOString().slice(0, 10));
-	console.log(`✅ tournamentId ${input.tournamentId} créé`);
 	}
 	else 
 	{
-		console.log(`⚠️ tournamentId ${input.tournamentId} existe déjà`);
+		return;
 	}
-}
-// VERIFIER SI ON S'EN SERT
-type TournamentItem = {
-	tournmanentId: string;
-	snowtraceLink: number;
-	players: string[];
-};
-
-type TournamentHistory = {
-	history: TournamentItem[];
-};
-
-
-export function getValues(userId: string): TournamentHistory[] {
-	const rows = db.prepare(`
-		SELECT *
-		FROM tournaments
-		WHERE userId = ?
-		ORDER BY rowid DESC
-	`).all(userId) as TournamentHistory[];
-
-	return rows;
 }

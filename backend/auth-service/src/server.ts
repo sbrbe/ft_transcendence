@@ -10,7 +10,6 @@ const app : FastifyInstance = fastify( {
 		key: fs.readFileSync('/run/certs/auth-service.key'),
 		cert: fs.readFileSync('/run/certs/auth-service.crt'),
 		ca: fs.readFileSync('/run/certs/ca.crt'),
-	//	requestCert: true,
 		rejectUnauthorized: false,
 	}
 });
@@ -26,7 +25,6 @@ app.decorate('db', db);
 
 app.register(registerAllRoutes, { prefix: '/auth'});
 
-// 🔎 GET /ma-route
 app.get('/auth/ma-route', async (request: FastifyRequest, reply: FastifyReply) => {
 	try {
 		const users = await app.db.prepare('SELECT * FROM auth').all();
@@ -46,15 +44,6 @@ app.get('/auth/health', async (_req, reply) => {
 	return reply.status(200).send({ status: 'ok' });
 });
 
-/*
-registerInternal(app, {
-	prefix: '/internal',
-	allowedCallers: ['auth-service'],
-	routes: [
-		setOnlineStatusRoute,
-	]
-});
-*/
 
 await app.ready();
 

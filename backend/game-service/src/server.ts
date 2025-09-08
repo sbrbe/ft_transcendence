@@ -11,7 +11,6 @@ const app : FastifyInstance = fastify( {
 		key: fs.readFileSync('/run/certs/game-service.key'),
 		cert: fs.readFileSync('/run/certs/game-service.crt'),
 		ca: fs.readFileSync('/run/certs/ca.crt'),
-//		requestCert: true,
 		rejectUnauthorized: false,
 	}
 });
@@ -42,22 +41,6 @@ app.get('/game/ping', async () => {
 app.get('/game/health', async (req, reply) => {
 	return reply.status(200).send({ status: 'ok' });
 });
-
-/*
-app.get('/game/match', async () => {
-  const rows = getAllMatches();
-  return rows;
-});
-*/
-/*
-registerInternal(app, {
-	prefix: '/internal',
-	allowedCallers: ['auth-service'],
-	routes: [
-		setOnlineStatusRoute,
-	]
-});
-*/
 
 attachWs(app);
 await app.ready();

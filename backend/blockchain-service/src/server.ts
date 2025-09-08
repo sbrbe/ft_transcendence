@@ -11,7 +11,6 @@ const app : FastifyInstance = fastify( {
 		key: fs.readFileSync('/run/certs/blockchain-service.key'),
 		cert: fs.readFileSync('/run/certs/blockchain-service.crt'),
 		ca: fs.readFileSync('/run/certs/ca.crt'),
-	//	requestCert: true,
 		rejectUnauthorized: false,
 	}
 });
@@ -43,26 +42,6 @@ app.get('/blockchain/ping', async () => {
 app.get('/users/health', async (req, reply) => {
 	return reply.status(200).send({ status: 'ok' });
 });
-
-// app.get('/blockchain/ma-route', async (request: FastifyRequest, reply: FastifyReply) => {
-// 	try {
-// 		const rows = getValues("rot13");
-// 		return reply.send({ rows });
-// 	} catch (err: any) {
-// 		return reply.status(500).send({ error: err.message });
-// 	}
-// });
-
-
-
-// registerInternal(app, {
-// 	prefix: '/internal',
-// 	allowedCallers: ['game-service'],
-// 	routes: [
-// 		postTournamentSummaryRoute,
-// 	]
-// });
-
 
 await app.ready();
  

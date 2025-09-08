@@ -13,13 +13,11 @@ export const avatarUploadRoute: FastifyPluginAsync = async (app: FastifyInstance
 		('/uploadAvatar/:userId', { preHandler: app.authenticate }, async (req, reply) => {
 	const { userId } = req.params;
 
-	// Autorisation: le user authentifié doit correspondre au paramètre
 	const auth = await req.accessJwtVerify<{ sub: string }>();
 	if (!auth || auth.sub !== userId) {
 		return reply.status(403).send({ error: 'Forbidden' });
 	}
 
-	// Récupère la première part "file"
 	const parts = req.parts();
 	let filePart: MultipartFile | null = null;
 	for await (const part of parts) {
@@ -27,14 +25,12 @@ export const avatarUploadRoute: FastifyPluginAsync = async (app: FastifyInstance
 	}
 	if (!filePart) return reply.status(400).send({ error: 'No file uploaded' });
 
-	// MIME autorisés
 	const contentType = filePart.mimetype || '';
 	const allowed = ['image/png', 'image/jpeg', 'image/jpg', 'image/webp'];
 	if (!allowed.includes(contentType)) {
 		return reply.status(415).send({ error: 'Unsupported media type' });
 	}
 
-	// Dossier par utilisateur
 	const userDir = path.join(app.avatarsDir, userId);
 	fs.mkdirSync(userDir, { recursive: true });
 
@@ -46,7 +42,6 @@ export const avatarUploadRoute: FastifyPluginAsync = async (app: FastifyInstance
 	await new Promise<void>((res, rej) => { ws.on('finish', res); ws.on('error', rej); });
 
 	try {
-		// Fichier final .webp (nom horodaté + uuid)
 		const processedName = `${Date.now()}-${id}.webp`;
 		const processedPath = path.join(userDir, processedName);
 

@@ -30,6 +30,5 @@ async function createUser(email: string, password: string) {
 	const hashedPassword = await bcrypt.hash(password, 10);
 	const stmt = db.prepare('INSERT INTO auth (userId, email, hashedPassword) VALUES (?, ?, ?)');
 	const info = stmt.run(userId, email, hashedPassword);
-	console.log(`CREATE_AUTH log : ${info.lastInsertRowid}`);
 	return (userId);
 }

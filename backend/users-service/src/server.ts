@@ -12,7 +12,6 @@ const app : FastifyInstance = fastify( {
 		key: fs.readFileSync('/run/certs/users-service.key'),
 		cert: fs.readFileSync('/run/certs/users-service.crt'),
 		ca: fs.readFileSync('/run/certs/ca.crt'),
-//		requestCert: true,
 		rejectUnauthorized: false,
 	}
 });
@@ -30,7 +29,7 @@ initDB();
 
 app.register(registerAllRoutes, { prefix: '/users'});
 
-// 🔎 GET /ma-route
+// GET /ma-route
 app.get('/users/ma-route', async (request: FastifyRequest, reply: FastifyReply) => {
 	try {
 		const users = await db.prepare('SELECT * FROM users').all();
@@ -49,14 +48,6 @@ app.get('/users/ping', async () => {
 app.get('/users/health', async (req, reply) => {
 	return reply.status(200).send({ status: 'ok' });
 });
-
-// registerInternal(app, {
-// 	prefix: '/internal',
-// 	allowedCallers: ['auth-service'],
-// 	routes: [
-// 		setOnlineStatusRoute,
-// 	]
-// });
 
 await app.ready();
 

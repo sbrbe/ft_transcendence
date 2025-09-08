@@ -15,14 +15,12 @@ export function cookieOptions(path: string) {
 
 export async function signAccessToken(reply: FastifyReply, userId: string) {
 	const token = await reply.accessJwtSign({ sub: userId });
-	console.log('IN ACCESS TOKEN');
 	return token;
 }
 
 export async function signRefreshToken(reply: FastifyReply, userId: string) {
 	const jti = uuidv4();
 	const token = await reply.refreshJwtSign({ sub: userId, jti });
-	console.log('IN REFRESH TOKEN');
 	const expiresAt = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000);
 	await insertRefreshToken(jti, userId, token, expiresAt)
 
@@ -58,7 +56,6 @@ export async function rotateRefresh(req: FastifyRequest, reply:FastifyReply) {
 
 	const payload = await req.refreshJwtVerify<{ sub: string; jti: string }> ({ onlyCookie: true });
 	const record = getRefreshToken(payload.jti);
-	console.log('RECORD = ', record);
 	if (!record || record.revoked || record.expiresAt.getTime() < Date.now()) {
 		return reply.status(401).send('Invalid or expired refresh token')
 	}

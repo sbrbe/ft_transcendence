@@ -38,9 +38,7 @@ export async function createTwoFactorCode(
 
 export function verifyTwoFactorCode(
 	userId: string,
-	code: string,
-	ipAddress?: string,
-	userAgent?: string) {
+	code: string) {
 		if (!/^\d{6}$/.test(code)) {
 			return { success: false, error: "invalid format" };
 		}

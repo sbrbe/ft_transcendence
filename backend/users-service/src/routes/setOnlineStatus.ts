@@ -37,7 +37,6 @@ export async function setOnlineStatusRoute(app: FastifyInstance) {
 		const { userId, online } = req.body as { userId: string, online: boolean };
 
 		const user = getUserById(userId);
-		console.log('SET STATUS = ', online);
 		if (!user) {
 			return reply.status(400).send({ success: false, error: 'User not found' });
 		}

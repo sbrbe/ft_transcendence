@@ -80,8 +80,6 @@ export default async function getTournament(app: FastifyInstance) {
 			if (!history) {
 				return reply.status(400).send({ error: 'Tournament history not found' });
 			}
-			console.log('HISTORY: ', history);
-			console.log('PLAYERS: ', history)
 			return reply.status(200).send(history)
 		} catch (error: any) {
 			return reply.status(500).send({ error: error.message });
@@ -96,7 +94,6 @@ function getTournamentHistory(userId: string): TournamentHistory {
 		WHERE userId = ?
 		ORDER BY rowid DESC
 		`).all(userId) as Row[];
-	console.log('ROWS: ', rows);
 	const history: TournamentItem[] = rows.map((r) => ({
 		tournamentId: r.tournamentId,
 		snowtraceLink: r.snowtraceLink,

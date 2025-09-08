@@ -8,9 +8,6 @@ interface EmailUpdateResponse {
 	userId: string; 
 }
 
-/** [API] createAuthAccount :
- * POST /auth/register → userId (création de compte auth).
- */
 export async function createAuthAccount(email: string, password: string): Promise<string> {
 	const res = await fetch('/auth/register', {
 		method: 'POST',
@@ -27,10 +24,6 @@ export async function createAuthAccount(email: string, password: string): Promis
 	return String(data.userId);
 }
 
-/** [API] deleteAuthAccount :
- * DELETE /auth/delete/:userId (rollback best effort).
- * En cas d'erreur, on ignore (ne bloque pas le flux d'inscription).
- */
 export async function deleteAuthAccount(userId: string): Promise<void> {
 	try {
 		await fetch(`/auth/delete/${encodeURIComponent(userId)}`, {
@@ -41,17 +34,13 @@ export async function deleteAuthAccount(userId: string): Promise<void> {
 	}
 }
 
-/** [API] loginUser :
- * POST /auth/login → { userId }.
- * Renvoie une Error si statut non OK ou si userId manquant.
- */
 export async function loginUser(
 	email: string,
 	password: string
 ): Promise<{ userId: string }> {
 	const res = await fetch('/auth/login', {
 		method: 'POST',
-		credentials: 'include', // décommente si cookies
+		credentials: 'include', 
 		headers: { 'Content-type': 'application/json' },
 		body: JSON.stringify({ email, password }),
 	});
@@ -62,9 +51,6 @@ export async function loginUser(
 	return { userId: String(data.userId) };
 }
 
-/** [API] updateEmail :
- * PUT /auth/email/:userId — met à jour l’email côté auth-service.
- */
 export async function updateEmail(
 	userId: string,
 	email: string,
@@ -92,9 +78,6 @@ export async function updateEmail(
 	return data as EmailUpdateResponse;
 }
 
-/** [API] updatePassword :
- * POST /auth/password/:userId — change le mot de passe (204 attendu).
- */
 export async function updatePassword(
 	userId: string,
 	oldPassword: string,
@@ -121,11 +104,6 @@ export async function updatePassword(
 	}
 }
 
-/** [API] logout (robuste) :
- * 1) POST /users/logout (cookies)
- * 2) si NOK et userId dispo → retente avec body { userId }
- * 3) nettoie le client dans tous les cas
- */
 export async function logout() {
 	const user = getSavedUser<AppUser>();
 

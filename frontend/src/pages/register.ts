@@ -6,13 +6,6 @@ import { bindPasswordToggle, setStatusMessage, clearStatusMessage, lockButton } 
 import { getInputValue } from '../utils/dom';
 import { validateRegister, casing } from '../api/validateData';
 
-/**
- * [UI][ROUTER] Register :
- * Rend le formulaire de création de compte, gère l’UI (toggle password),
- * valide les champs et orchestre l’enchaînement des appels API :
- * 1) création compte auth → 2) création profil users → redirection /connexion.
- * En cas d’échec en 2), effectue un rollback en supprimant le compte auth.
- */
 const Register: (container: HTMLElement) => void = (container) => {
 	container.innerHTML = `
 		<div class="container-page my-10">

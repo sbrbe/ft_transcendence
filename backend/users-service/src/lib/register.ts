@@ -25,13 +25,11 @@ async function createUser(userId: string, username: string, lastName: string,
 	firstName: string) {
 
 	const existingUser = getUserByUsername(username);
-	console.log(existingUser);
 	if (existingUser)
 		throw new Error('Username already used');
 	const avatarPath = '/avatar/default.png';
 	const stmt = db.prepare(`INSERT INTO users (userId, lastName, firstName, username, avatarPath)
 		VALUES (?, ?, ?, ?, ?)`);
 	const info = stmt.run(userId, lastName, firstName, username, avatarPath);
-	console.log(`CREATE_USERS log : ${info.lastInsertRowid}`);
 	return (username);
 }

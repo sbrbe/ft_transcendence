@@ -70,7 +70,6 @@ export default async function postTournamentSummaryRoute(app: FastifyInstance) {
 		try
 			{
 				const summary = req.body as TSSummary;
-				console.log('RECEIVED PAYLOAD: ', summary);
 				const r = await sendTournamentSummary(summary);
 				const players = addPlayers(summary.matches);
 		

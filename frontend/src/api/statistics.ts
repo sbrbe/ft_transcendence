@@ -80,6 +80,5 @@ export async function getTournaments(userId: string, retried = false): Promise<T
 	if (!res.ok) {
 		throw new Error(data.error || res.statusText);
 	}
-	console.log('HISTORY RECEIVED: ', data);
 	return { history: data.history };
 }
