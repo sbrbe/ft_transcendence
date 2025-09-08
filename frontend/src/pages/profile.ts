@@ -3,7 +3,7 @@ import { getSavedUser, setLoggedInUser } from '../utils/ui';
 import { AppUser } from '../utils/interface';
 import { updateEmail, updatePassword } from '../api/auth';
 import { updateUser } from '../api/users';
-import { setStatusMessage, lockButton, escapeAttr, escapeHtml } from '../utils/ui';
+import { setStatusMessage, lockButton, bindPasswordToggle, escapeHtml } from '../utils/ui';
 import { validateRegister, casing } from '../api/validateData';
 import { initChangeAvatar } from '../features/changeAvatar';
 import { initUploadAvatar } from '../features/uploadAvatar';
@@ -117,31 +117,52 @@ const ProfilePage: (container: HTMLElement) => void = (container) => {
 				</section>
 
 				<!-- Security -->
-				<section class="rounded-2xl border bg-white shadow-sm p-6">
-					<h2 class="text-sm uppercase tracking-wider text-gray-500 mb-4">Security</h2>
-					<form id="pwd-form" class="space-y-4" novalidate>
-						<label class="block">
-							<span class="text-sm text-gray-700">Old password</span>
-							<input id="pf-oldpwd" type="password"
-								class="mt-1 w-full border px-3 py-2 rounded-lg focus:ring-2 focus:ring-blue-500">
-						</label>
-						<label class="block">
-							<span class="text-sm text-gray-700">New password</span>
-							<input id="pf-newpwd" type="password"
-								class="mt-1 w-full border px-3 py-2 rounded-lg focus:ring-2 focus:ring-blue-500">
-						</label>
-						<label class="block">
-							<span class="text-sm text-gray-700">Confirm new password</span>
-							<input id="pf-newpwd2" type="password"
-								class="mt-1 w-full border px-3 py-2 rounded-lg focus:ring-2 focus:ring-blue-500">
-						</label>
-						<div class="flex items-center justify-between gap-4">
-							<p id="pwd-msg" class="text-sm min-h-5" aria-live="polite"></p>
-							<button id="pwd-save" type="submit"
-								class="px-4 py-2 rounded-lg bg-red-600 text-white hover:bg-red-700">Save</button>
-						</div>
-					</form>
-				</section>
+<section class="rounded-2xl border bg-white shadow-sm p-6">
+  <h2 class="text-sm uppercase tracking-wider text-gray-500 mb-4">Security</h2>
+  <form id="pwd-form" class="space-y-4" novalidate>
+    <label class="block">
+      <span class="text-sm text-gray-700">Old password</span>
+      <div class="relative">
+        <input id="pf-oldpwd" type="password"
+               class="mt-1 w-full border px-3 py-2 rounded-lg focus:ring-2 focus:ring-blue-500 pr-10"
+               autocomplete="current-password" placeholder="********">
+        <button type="button" id="toggleOldPwd"
+                class="absolute inset-y-0 right-0 my-auto mr-2 text-xs text-gray-500 hover:text-gray-700 toggle-pwd"
+                data-target="pf-oldpwd" aria-label="Show password">Show</button>
+      </div>
+    </label>
+
+    <label class="block">
+      <span class="text-sm text-gray-700">New password</span>
+      <div class="relative">
+        <input id="pf-newpwd" type="password"
+               class="mt-1 w-full border px-3 py-2 rounded-lg focus:ring-2 focus:ring-blue-500 pr-10"
+               autocomplete="new-password" placeholder="********">
+        <button type="button" id="toggleNewPwd"
+                class="absolute inset-y-0 right-0 my-auto mr-2 text-xs text-gray-500 hover:text-gray-700 toggle-pwd"
+                data-target="pf-newpwd" aria-label="Show password">Show</button>
+      </div>
+    </label>
+
+    <label class="block">
+      <span class="text-sm text-gray-700">Confirm new password</span>
+      <div class="relative">
+        <input id="pf-newpwd2" type="password"
+               class="mt-1 w-full border px-3 py-2 rounded-lg focus:ring-2 focus:ring-blue-500 pr-10"
+               autocomplete="new-password" placeholder="********">
+        <button type="button" id="toggleNewPwd2"
+                class="absolute inset-y-0 right-0 my-auto mr-2 text-xs text-gray-500 hover:text-gray-700 toggle-pwd"
+                data-target="pf-newpwd2" aria-label="Show password">Show</button>
+      </div>
+    </label>
+
+    <div class="flex items-center justify-between gap-4">
+      <p id="pwd-msg" class="text-sm min-h-5" aria-live="polite"></p>
+      <button id="pwd-save" type="submit"
+              class="px-4 py-2 rounded-lg bg-red-600 text-white hover:bg-red-700">Save</button>
+    </div>
+  </form>
+</section>
 			</div>
 		</div>
 	`;
@@ -188,6 +209,13 @@ const ProfilePage: (container: HTMLElement) => void = (container) => {
 		saveBtn: container.querySelector<HTMLButtonElement>('#pwd-save')!,
 		msg: container.querySelector<HTMLParagraphElement>('#pwd-msg')!,
 	};
+	
+	const toggleOldPwd = container.querySelector<HTMLButtonElement>('#toggleOldPwd')!;
+	(bindPasswordToggle(pwd.old, toggleOldPwd));
+	const toggleNewPwd = container.querySelector<HTMLButtonElement>('#toggleNewPwd')!;
+	(bindPasswordToggle(pwd.n1, toggleNewPwd));
+	const toggleNewPwd2 = container.querySelector<HTMLButtonElement>('#toggleNewPwd2')!;
+	(bindPasswordToggle(pwd.n2, toggleNewPwd2));
 
 	profile.card.avatar.addEventListener('error', () => {
 		profile.card.avatar.src = '/avatar/default.png';
