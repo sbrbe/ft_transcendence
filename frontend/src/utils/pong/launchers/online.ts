@@ -68,57 +68,67 @@ export class GameOnline implements Disposable{
 	this.mobileTouchAttached = false;
   }
 	
-	private keyDownHandler = (e: KeyboardEvent) => {
-	  const code = e.code;
-	  
-	  if (code === 'Space') {
-		if (this.betweenStage === 'winner') {
-		  e.preventDefault();
-		  this.betweenStage = 'idle';
-		  return;
-		}
-		if (this.betweenStage === 'endOln') {
-		  e.preventDefault();
-		  this.betweenStage = 'idle';
-		  window.location.href = "/#/home";
-		  return;
-		}
-	  }
-	  
-	  // Empêche le scroll avec les flèches
-	  if (code === 'ArrowUp' || code === 'ArrowDown') e.preventDefault();
-	  
-	  if (this.online) {
-		if (code === 'ArrowUp' || code === 'ArrowDown') {
-		  e.preventDefault();
-		  this.online.sendKey(code, true);
-		  return;
-		}
-	  }
-	};
-	
-	private keyUpHandler = (e: KeyboardEvent) => {
-	  const code = e.code;
-	  
-	  // Espace “between stages” (tournoi)
-	  if (code === 'Space' && (this.betweenStage === 'winner')) {
+private normalizePaddleKey(e: KeyboardEvent): 'ArrowUp' | 'ArrowDown' | null {
+	const { code, key } = e;
+	const k = key.toLowerCase();
+  
+	if (code === 'ArrowUp' || code === 'ArrowDown') return code;
+	if (k === 'z') return 'ArrowUp';   // Z = monter
+	if (k === 's') return 'ArrowDown'; // A = descendre
+	return null;
+  }
+  
+  private keyDownHandler = (e: KeyboardEvent) => {
+	const code = e.code;
+  
+	if (code === 'Space') {
+	  if (this.betweenStage === 'winner') {
 		e.preventDefault();
+		this.betweenStage = 'idle';
 		return;
 	  }
-	  
-	  if (code === 'ArrowUp' || code === 'ArrowDown') e.preventDefault();
-	  
-	  if (this.online) {
-		if (code === 'ArrowUp' || code === 'ArrowDown' || code === 'KeyW' || code === 'KeyS') {
-		  e.preventDefault();
-		  this.online.sendKey(code, false);
-		  return;
-		}
+	  if (this.betweenStage === 'endOln') {
+		e.preventDefault();
+		this.betweenStage = 'idle';
+		window.location.href = "/#/home";
+		return;
 	  }
-	};
-	
+	}
   
-	// Boutons : handlers tactile
+	// Empêche le scroll avec les flèches
+	if (code === 'ArrowUp' || code === 'ArrowDown') e.preventDefault();
+  
+	if (this.online) {
+	  const norm = this.normalizePaddleKey(e);
+	  if (norm) {
+		e.preventDefault();
+		this.online.sendKey(norm, true);
+		return;
+	  }
+	}
+  };
+  
+  private keyUpHandler = (e: KeyboardEvent) => {
+	const code = e.code;
+  
+	if (code === 'Space' && (this.betweenStage === 'winner')) {
+	  e.preventDefault();
+	  return;
+	}
+  
+	if (code === 'ArrowUp' || code === 'ArrowDown') e.preventDefault();
+  
+	if (this.online) {
+	  const norm = this.normalizePaddleKey(e);
+	  if (norm) {
+		e.preventDefault();
+		this.online.sendKey(norm, false);
+		return;
+	  }
+	}
+  };
+  
+  // Boutons : handlers tactile
 	private btnUpDownHandler = (ev: Event) => {
 	  ev.preventDefault();
 	  if (!this.online) return;

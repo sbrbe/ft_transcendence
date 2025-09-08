@@ -119,9 +119,13 @@ const pong_lcl_conftourn = (container: HTMLElement, savedName: string) => {
   const players: TournamentPlayer[] = inputs.slice(0, size).map((inp, i) => {
     const raw = (inp.value ?? "").trim();
     const placeholder = (inp.placeholder ?? "").trim();
-    const name = raw.length > 0 ? raw : (placeholder.length > 0 ? placeholder : `Player ${i + 1}`);
+    let name = raw.length > 0 ? raw : (placeholder.length > 0 ? placeholder : `Player ${i + 1}`);
+    if (name.length > 20) {
+      name = name.slice(0, 20);
+    }
     return { id: `${i + 1}`, name };
   });
+  
   
   players[0].id = saved.userId;
   

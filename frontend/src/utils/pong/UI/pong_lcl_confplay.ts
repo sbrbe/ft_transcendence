@@ -18,14 +18,14 @@ const pong_lcl_confplay: (container: HTMLElement) => void = (container) => {
           <div class="sm:col-span-2">
             <select id="modeSelect"
                     class="w-full border rounded-lg px-3 py-2 focus:ring-2 focus:ring-blue-500 focus:outline-none">
-              <option value="2v2" selected>2 vs 2</option>
-              <option value="1v1">1 vs 1</option>
+              <option value="1v1" selected>1 vs 1</option>
+              <option value="2v2">2 vs 2</option>
             </select>
           </div>
         </div>
 
         <!-- Configuration 2v2 -->
-        <section id="custom-config_2vs2" class="mb-6">
+        <section id="custom-config_2vs2" class="mb-6 hidden">
           <h2 class="text-sm uppercase tracking-wider text-gray-500 mb-3">Setup  2 vs 2</h2>
           <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div>
@@ -64,7 +64,7 @@ const pong_lcl_confplay: (container: HTMLElement) => void = (container) => {
         </section>
 
         <!-- Configuration 1v1 -->
-        <section id="custom-config_1vs1" class="mb-6 hidden">
+        <section id="custom-config_1vs1" class="mb-6">
           <h2 class="text-sm uppercase tracking-wider text-gray-500 mb-3">Setup 1 vs 1</h2>
           <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div>

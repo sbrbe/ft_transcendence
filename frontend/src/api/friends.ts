@@ -184,3 +184,32 @@ export async function loadFriendsList(userId: string, retried = false) {
 	}
 	return data;
 }
+
+//   A SUPRIMER SI BUG JUSTE LA FONCTION ET VRARIABLE EN DESSOUS
+//    SINON RIEN D INCHANGER
+
+let lastCount = 0;
+
+export async function loadNotifRequest(userId: string, retried = false) {
+	const res = await fetch(`users/friends/request-pending/${encodeURIComponent(userId)}`, {
+		method: 'GET',
+		credentials: 'include',
+		headers: { Accept: 'application/json' }
+	});
+	const data = await res.json();
+
+	if (res.status === 401 && !retried) {
+		const ok = await refreshOnce();
+		if (ok) {
+			return loadPendingRequest(userId, true);
+		} else {
+			await logout();
+		}
+	}
+	if (!res.ok) throw new Error(data?.error || res.statusText)
+
+	const newCount = Array.isArray(data) ? data.length : 0
+	if (newCount !== lastCount) lastCount = newCount
+	console.log(lastCount);
+	return { list: data, count: lastCount }
+}

@@ -107,8 +107,11 @@ function legendForMode(mode: number) {
 		case 1:
 		  return `
 			<span class="inline-flex items-center gap-2 mr-4 whitespace-nowrap text-xs">
-			  <span>Player 1:</span> <kbd class="px-1 border rounded">↑</kbd> / <kbd class="px-1 border rounded">↓</kbd>
-			</span>
+      <span>Player 1:</span>
+        <kbd class="px-1 border rounded">↑</kbd>/<kbd class="px-1 border rounded">↓</kbd>
+      <span class="opacity-60">ou</span>
+        <kbd class="px-1 border rounded">Z</kbd>/<kbd class="px-1 border rounded">S</kbd>
+      </span>
 		  `;
 		case 2:
 		  return `
