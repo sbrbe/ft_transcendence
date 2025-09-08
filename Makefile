@@ -1,27 +1,27 @@
-PORJETC_NAME=transcendence
+PROJECT_NAME=transcendence
 
 all : build up
 
 build:
-	docker compose -p $(PORJETC_NAME) build 
+	docker compose -p $(PROJECT_NAME) build 
 
 up:
-	docker compose -p $(PORJETC_NAME)  up
+	docker compose -p $(PROJECT_NAME)  up
 
 down:
-	docker compose -p $(PORJETC_NAME) down
+	docker compose -p $(PROJECT_NAME) down
 
 clean:
-	docker compose -p $(PORJETC_NAME) down -v
+	docker compose -p $(PROJECT_NAME) down -v
 
 fclean :
-	docker compose -p $(PORJETC_NAME) down -v --rmi all
+	docker compose -p $(PROJECT_NAME) down -v --rmi all
 
 logs:
-	docker compose -p $(PORJETC_NAME) logs -f
+	docker compose -p $(PROJECT_NAME) logs -f
 
 shell:
-	docker exec -it $(docker ps -qf "name=$(PORJETC_NAME)_$(service)_1") shell
+	docker exec -it $(docker ps -qf "name=$(PROJECT_NAME)_$(service)_1") shell
 
 re: fclean build up
 
