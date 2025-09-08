@@ -13,6 +13,11 @@ export interface buildTournament {
     players: contender[];
 }
 
+export interface match {
+    P1: string;
+    P2: string;
+}
+
 export interface infoMatch {
     tracked: Tracker[]
 }
@@ -21,7 +26,7 @@ export class Tournament {
    // private id: UUID
     private canvasH: number;
     private canvasW: number;
-    private finish: boolean = false;
+    public newConf: boolean = false;
     private matchs: GameLogic[] = [];
     private confs: gameConfig[] = [];
     private currentMatchId: number =0;
@@ -44,6 +49,7 @@ export class Tournament {
 
     private buildConfs(list: contender[])
     {
+       
         this.currentMatchId = 0;
         this.confs = [];
         this.winner = [];
@@ -59,10 +65,32 @@ export class Tournament {
                 });
             }
         }
+        this.newConf = true;
     }
-    
+    public getConf(): match[]
+    {
+        const info: match[] = [];
+
+        for (let i = 0; i < this.confs.length; i++) 
+        {
+            info.push({
+                P1 :  this.confs[i].playerSetup[0].name,
+                P2 : this.confs[i].playerSetup[1].name,
+            });
+        }
+        return info; 
+    }
+
+    public getConfStr(): string {
+    return this.confs
+        .map(c => `[${c.playerSetup[0].name} v ${c.playerSetup[1].name}]`)
+        .join("\n\n");
+}
+
+        
     public playLocal(): GameState
     {
+        this.newConf = false
         this.matchs[this.currentMatchId].update();
         let info = this.matchs[this.currentMatchId].getGameState();
       

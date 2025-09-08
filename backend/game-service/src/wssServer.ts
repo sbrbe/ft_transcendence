@@ -306,7 +306,7 @@ export function attachWs(app: FastifyInstance) {
            case 'info_players': {
              try {
                if (sess.t) {
-                 const res = sess.t.getNextMatch(); 
+                const res = sess.t.getNextMatch();
                  const player1 = res[0];
                  const player2 = res[1] ?? 'WINNER';
                  if (!player1)
@@ -326,16 +326,27 @@ export function attachWs(app: FastifyInstance) {
                     console.error("❌ Erreur POST /tournaments/summary :", err);
                   }
                    break;
-                 }     
-                 const player = `${player1} VS ${player2}`;
-           
-                 safeSend(sess.ws, { type: 'info_players', player });
+                 }
+                   const list = sess.t.getConf();
+                   const player = `Next match ${player1} VS ${player2}`;
+                 safeSend(sess.ws, { type: 'info_players', player , list});
                }
              } catch (err) {
                console.error('info_players error', err);
              }
              break;
-           }        
+           }
+           case 'info_tournament':
+           {
+              try {
+                const list = sess.t?.getConf();
+                safeSend(sess.ws, { type: 'info_tournament', list});
+              }
+              catch (err){
+                console.error('info_tournament error', err);
+              }
+              break;
+           }     
            default: break;
          }
        });
@@ -435,7 +446,6 @@ export function attachWs(app: FastifyInstance) {
       Envoi Mat
       ========= */
    
-     // Appelle ceci dans ton onState / quand snap.running devient false
    async function maybeSendTournamentSummary(snap: GameState, sess: LocalSession) {
      try {
        if (!snap)

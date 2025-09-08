@@ -1,4 +1,5 @@
 import { buildTournament } from "../../../../shared/engine_play/src/tournament_logic";
+import { ServerMatch } from "./tournament"
 
 export class OnlineClient {
   private ws: WebSocket | null = null;
@@ -107,7 +108,50 @@ export class OnlineClient {
       this.ws.send(JSON.stringify({ type: 'info_players' }));
     });
   }
+
+  sendInfoTournament(): any {
+    return new Promise((resolve) => {
+      if (!this.ws || this.ws.readyState !== WebSocket.OPEN) {
+        resolve(null);
+        return;
+      }
   
+      const listener = (ev: MessageEvent) => {
+        let msg: any;
+        try { msg = JSON.parse(ev.data); } catch { return; }
+        if (msg.type === 'info_tournament') {
+          this.ws?.removeEventListener('message', listener);
+          resolve(msg.player ?? null);
+        }
+      };
+      this.ws.addEventListener('message', listener);
+  
+      this.ws.send(JSON.stringify({ type: 'info_tournament' }));
+    });
+  }
+// Dans OnlineClient
+getInfoTournament(): Promise<ServerMatch[] | null> {
+  return new Promise((resolve) => {
+    if (!this.ws || this.ws.readyState !== WebSocket.OPEN) {
+      resolve(null);
+      return;
+    }
+
+    const listener = (ev: MessageEvent) => {
+      let msg: any;
+      try { msg = JSON.parse(ev.data); } catch { return; }
+
+      if (msg.type === 'info_tournament') {
+        this.ws?.removeEventListener('message', listener);
+        // >>> ICI on renvoie la liste reçue (pas "player")
+        resolve((msg.list as ServerMatch[]) ?? null);
+      }
+    };
+
+    this.ws.addEventListener('message', listener);
+    this.ws.send(JSON.stringify({ type: 'info_tournament' }));
+  });
+}
 
   sendConfTournament(config: buildTournament) {
     if (!this.ws || this.ws.readyState !== WebSocket.OPEN) return;

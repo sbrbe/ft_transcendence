@@ -94,30 +94,40 @@ function ensureGameCanvasStyle() {
 }
 
 function legendForMode(mode: number) {
-  // mode 0: J1 Z/S — J2 ↑/↓
-  // mode 1: J1 ↑/↓ (solo ? ou switch ?) -> d'après ta demande: "jouer 1 flèche/fleche"
-  // mode 2: J1 Z/S — J2 ↑/↓ — J3 I/K — J4 R/F
-  switch (mode) {
-    case 0:
-      return `
-        <span class="title">Contrôles</span>
-        <div class="row"><span>Joueur 1</span><span><kbd>Z</kbd> / <kbd>S</kbd></span></div>
-        <div class="row"><span>Joueur 2</span><span><kbd>Flèche ↑</kbd> / <kbd>Flèche ↓</kbd></span></div>
-      `;
-    case 1:
-      return `
-        <span class="title">Contrôles</span>
-        <div class="row"><span>Joueur 1</span><span><kbd>Flèche ↑</kbd> / <kbd>Flèche ↓</kbd></span></div>
-      `;
-    case 2:
-      return `
-        <span class="title">Contrôles</span>
-        <div class="row"><span>Joueur 1</span><span><kbd>Z</kbd> / <kbd>S</kbd></span></div>
-        <div class="row"><span>Joueur 2</span><span><kbd>Flèche ↑</kbd> / <kbd>Flèche ↓</kbd></span></div>
-        <div class="row"><span>Joueur 3</span><span><kbd>E</kbd> / <kbd>D</kbd></span></div>
-        <div class="row"><span>Joueur 4</span><span><kbd>I</kbd> / <kbd>K</kbd></span></div>
-      `;
-  }
+	switch (mode) {
+		case 0:
+		  return `
+			<span class="inline-flex items-center gap-2 mr-4 whitespace-nowrap text-xs">
+			  <span>Player 1:</span> <kbd class="px-1 border rounded">Z</kbd> / <kbd class="px-1 border rounded">S</kbd>
+			</span>
+			<span class="inline-flex items-center gap-2 mr-4 whitespace-nowrap text-xs">
+			  <span>Player 2:</span> <kbd class="px-1 border rounded">↑</kbd> / <kbd class="px-1 border rounded">↓</kbd>
+			</span>
+		  `;
+		case 1:
+		  return `
+			<span class="inline-flex items-center gap-2 mr-4 whitespace-nowrap text-xs">
+			  <span>Player 1:</span> <kbd class="px-1 border rounded">↑</kbd> / <kbd class="px-1 border rounded">↓</kbd>
+			</span>
+		  `;
+		case 2:
+		  return `
+			<span class="inline-flex items-center gap-2 mr-4 whitespace-nowrap text-xs">
+			  <span>Player 1:</span> <kbd class="px-1 border rounded">Z</kbd> / <kbd class="px-1 border rounded">S</kbd>
+			</span>
+			<span class="inline-flex items-center gap-2 mr-4 whitespace-nowrap text-xs">
+			  <span>Player 2:</span> <kbd class="px-1 border rounded">↑</kbd> / <kbd class="px-1 border rounded">↓</kbd>
+			</span>
+			<span class="inline-flex items-center gap-2 mr-4 whitespace-nowrap text-xs">
+			  <span>Player 3:</span> <kbd class="px-1 border rounded">E</kbd> / <kbd class="px-1 border rounded">D</kbd>
+			</span>
+			<span class="inline-flex items-center gap-2 mr-4 whitespace-nowrap text-xs">
+			  <span>Player 4:</span> <kbd class="px-1 border rounded">I</kbd> / <kbd class="px-1 border rounded">K</kbd>
+			</span>
+		  `;
+	  }
+	  
+	  
 }
 
 function upsertLegend(container: HTMLElement, mode: number) {
