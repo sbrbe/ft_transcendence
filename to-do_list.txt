@@ -1,6 +1,4 @@
 
-Faire l'arbre de tournoi
-
 Quand projet terminé, penser à passer les ports des conteneurs en expose dans le docker compose pour éviter 
 qu'on puisse y accéder depuis l'extérieur de docke
 

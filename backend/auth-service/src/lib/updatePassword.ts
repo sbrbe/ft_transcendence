@@ -28,12 +28,11 @@ async function updatePasswordService(userId: string, oldPassword: string, newPas
 		throw new Error ('Password too weak');
 
 	const match = await bcrypt.compare(oldPassword, user.hashedPassword);
-	console.log('oldpassword_hashed = ', user.hashedPassword, 'oldpassword = ', oldPassword);
 	if (!match)
 		throw new Error('Old password incorrect');
 	const hashNewPass = await bcrypt.hash(newPassword, 10);
-	const stmt = db.prepare('UPDATE auth SET password = ?, hashedPassword = ? WHERE userId = ?');
-	const res = stmt.run(newPassword, hashNewPass, userId);
+	const stmt = db.prepare('UPDATE auth SET hashedPassword = ? WHERE userId = ?');
+	const res = stmt.run(hashNewPass, userId);
 	return res.changes > 0;
 }
 

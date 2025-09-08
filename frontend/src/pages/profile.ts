@@ -4,7 +4,7 @@ import { AppUser } from '../utils/interface';
 import { updateEmail, updatePassword } from '../api/auth';
 import { updateUser } from '../api/users';
 import { setStatusMessage, lockButton, escapeAttr, escapeHtml } from '../utils/ui';
-
+import { validateRegister, casing } from '../api/validateData';
 import { initChangeAvatar } from '../features/changeAvatar';
 import { initUploadAvatar } from '../features/uploadAvatar';
 
@@ -189,7 +189,6 @@ const ProfilePage: (container: HTMLElement) => void = (container) => {
 		msg: container.querySelector<HTMLParagraphElement>('#pwd-msg')!,
 	};
 
-	// fallback preview identité si l’image casse
 	profile.card.avatar.addEventListener('error', () => {
 		profile.card.avatar.src = '/avatar/default.png';
 	}, { once: true });
@@ -207,12 +206,11 @@ const ProfilePage: (container: HTMLElement) => void = (container) => {
 
 		let uploaded: string[] = [];
 		try {
-			uploaded = await listUserAvatars(saved.userId); // via API, gère 401→refresh
+			uploaded = await listUserAvatars(saved.userId);
 		} catch (e) {
 			console.warn('[avatars] listUserAvatars failed:', e);
 		}
 
-		// Fallback: si l'avatar courant est un upload, on l'inclut même si la liste est vide
 		const fallback = isUploadedAvatar(saved.avatarPath) ? [saved.avatarPath as string] : [];
 
 		const merged = Array.from(new Set<string>([...fallback, ...uploaded, ...defaults]));
@@ -234,9 +232,6 @@ const ProfilePage: (container: HTMLElement) => void = (container) => {
 		});
 	})();
 
-
-
-	/* ---------- Annuler (réinitialise seulement les champs texte) ---------- */
 	profile.cancelBtn.addEventListener('click', () => {
 		const user = getSavedUser<AppUser>() ?? saved;
 		profile.firstName.value = user.firstName || '';
@@ -246,7 +241,6 @@ const ProfilePage: (container: HTMLElement) => void = (container) => {
 		setStatusMessage(profile.msg);
 	});
 
-	/* ---------- Enregistrer (infos de base + email) ---------- */
 	profileForm.addEventListener('submit', async (e) => {
 		e.preventDefault();
 
@@ -257,11 +251,25 @@ const ProfilePage: (container: HTMLElement) => void = (container) => {
 			username: profile.username.value.trim(),
 		};
 
+		const { ok, errors, cleaned } = validateRegister({
+			firstName: data.firstName,
+			lastName: data.lastName,
+			username: data.username,
+		});
+		 if (!ok) {
+			const errMsg = errors.firstName || errors.lastName || errors.username || 'Fields invalids';
+			setStatusMessage(profile.msg, errMsg, 'error');
+			return;
+		}
+
+		data.firstName = casing(cleaned.firstName);
+		data.lastName = casing(cleaned.lastName);
+		data.username = casing(cleaned.username);
+		
 		lockButton(profile.saveBtn, true, 'Saving…');
 		setStatusMessage(profile.msg);
 
 		try {
-			// avatar est géré automatiquement par la feature
 			const updatedUser = await updateUser(saved.userId, {
 				firstName: data.firstName,
 				lastName: data.lastName,
@@ -269,11 +277,10 @@ const ProfilePage: (container: HTMLElement) => void = (container) => {
 			});
 			const updatedEmail = await updateEmail(saved.userId, data.email);
 
-			// récupère ce qui a pu changer via les features (avatar, etc.)
 			const latest = getSavedUser<AppUser>() || saved;
 
 			const merged: AppUser = {
-				...latest, // conserve les champs existants (dont avatarPath déjà synchronisé)
+				...latest,
 				userId: saved.userId,
 				firstName: updatedUser.firstName,
 				lastName: updatedUser.lastName,
@@ -284,7 +291,6 @@ const ProfilePage: (container: HTMLElement) => void = (container) => {
 			setLoggedInUser(merged);
 			window.dispatchEvent(new CustomEvent('auth:changed', { detail: merged }));
 
-			// rafraîchir la carte identité
 			profile.card.username.textContent = merged.username || '';
 			profile.card.email.textContent = merged.email || '';
 			profile.card.firstName.textContent = merged.firstName || '';
@@ -298,7 +304,6 @@ const ProfilePage: (container: HTMLElement) => void = (container) => {
 		}
 	});
 
-	/* ---------- Changer mot de passe ---------- */
 	pwdForm.addEventListener('submit', async (e) => {
 		e.preventDefault();
 		setStatusMessage(pwd.msg);

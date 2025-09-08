@@ -15,7 +15,6 @@ export function initChangeAvatar(opts: ChangeAvatarOptions) {
 	const saved = getSavedUser<AppUser>();
 	if (!saved) return;
 
-	// capture des valeurs non null
 	const userId = saved.userId;
 	const currentAvatar = saved.avatarPath || undefined;
 

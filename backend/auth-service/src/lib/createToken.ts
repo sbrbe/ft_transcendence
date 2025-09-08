@@ -8,8 +8,8 @@ export function cookieOptions(path: string) {
 	return {
 		path,
 		httpOnly: true,
-		sameSite: 'lax' as const,
-		domain: 'localhost',
+		sameSite: 'none' as const,
+		secure: true,
 	}
 }
 

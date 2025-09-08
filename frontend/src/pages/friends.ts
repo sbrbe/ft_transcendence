@@ -219,6 +219,7 @@ const friends: (container: HTMLElement) => void = (container) => {
 						setStatusMessage(msg, error?.message || 'Failed to accept request', 'error');
 					} 
 					finally {
+						renderFriendsList(saved);
 						lockButton(btn, false);
 						renderFriendsList(saved);
 					}

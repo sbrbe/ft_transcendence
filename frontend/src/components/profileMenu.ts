@@ -46,7 +46,7 @@ export function attachProfileMenu(
 
     <nav class="p-2">
       <a href="#/profil" data-route="/profil"
-         class="block px-3 py-2 rounded-lg text-sm text-gray-800 hover:bg-gray-100">Profil</a>
+         class="block px-3 py-2 rounded-lg text-sm text-gray-800 hover:bg-gray-100">Profile</a>
 
       <a href="#/statistiques" data-route="/statistics"
          class="block px-3 py-2 rounded-lg text-sm text-gray-800 hover:bg-gray-100">Statistics</a>

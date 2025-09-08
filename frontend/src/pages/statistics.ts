@@ -77,23 +77,26 @@ const statistics: (container: HTMLElement) => void = (container) => {
 
 <!-- TOURNAMENT HISTORY -->
 			<section class="rounded-2xl border bg-white shadow-sm p-5">
-				<h2 class="text-sm uppercase tracking-wider text-gray-500">Recent tournaments</h2>
-				<div class="mt-4 overflow-x-auto">
-					<table class="min-w-full text-sm">
-						<thead>
-							<tr class="text-left text-gray-500">
-								<th class="py-2 pr-4">Players</th>
-								<th class="py-2 pr-4">Link to blockchain</th>
-								<th class="py-2">Date</th>
-							</tr>
-						</thead>
-						<tbody class="tournament divide-y divide-gray-100">
-							<tr class="text-gray-400"><td class="py-3" colspan="4">No tournament history</td></tr>
-						</tbody>
-					</table>
-				</div>
-			</section>
-		</div>
+			  <h2 class="text-sm uppercase tracking-wider text-gray-500">Recent tournaments</h2>
+        <div class="mt-4 overflow-x-auto">
+          <div class="max-h-[12rem] overflow-y-auto pr-10" style="scrollbar-gutter: stable;">
+          <table class="min-w-full text-sm">
+            <thead>
+              <tr class="text-left text-gray-500">
+                <th class="py-2 pr-4">Players</th>
+                <th class="py-2 px-20 text-center">Link to blockchain</th>
+                <th class="py-2 px-20 text-center">Date</th>
+              </tr>
+            </thead>
+            <tbody class="tournament divide-y divide-gray-100 [&>tr]:h-12">
+              <tr class="text-gray-400">
+               <td class="py-3" colspan="4">No tournament history</td>
+               </tr>
+            </tbody>
+          </table>
+        </div>
+      </section>
+    </div>
 	`;
 	
 	loadStats(saved);
@@ -106,35 +109,33 @@ const statistics: (container: HTMLElement) => void = (container) => {
 
 
 	async function loadStats(saved: AppUser) {
-			try {
-				const userId = saved.userId;
-				const history = await getMatchHistory(userId);
+		try {
+			const userId = saved.userId;
+			const history = await getMatchHistory(userId);
+			const wins = history.wins ?? 0;
+			const defeats = history.losses ?? 0;
+			const total = wins + defeats;
+			const winrate = total ? (wins / total) * 100 : 0;
 
-				const wins = history.wins ?? 0;
-				const defeats = history.losses ?? 0;
-				const total = wins + defeats;
-				const winrate = total ? (wins / total) * 100 : 0;
+			const elWins = container.querySelector<HTMLElement>('#wins');
+			if (elWins)
+				elWins.textContent = String(wins);
+			const elDefeats = container.querySelector<HTMLElement>('#defeats');
+			if (elDefeats)
+				elDefeats.textContent = String(defeats);
+			const elTotal = container.querySelector<HTMLElement>('#total');
+			if (elTotal)
+				elTotal.textContent = String(total);
+			const elWinrate = container.querySelector<HTMLElement>('#winrate');
+			if (elWinrate)
+				elWinrate.textContent = `${winrate}%`;
 
-				const elWins = container.querySelector<HTMLElement>('#wins');
-				if (elWins)
-						elWins.textContent = String(wins);
-				const elDefeats = container.querySelector<HTMLElement>('#defeats');
-				if (elDefeats)
-						elDefeats.textContent = String(defeats);
-				const elTotal = container.querySelector<HTMLElement>('#total');
-				if (elTotal)
-						elTotal.textContent = String(total);
-				const elWinrate = container.querySelector<HTMLElement>('#winrate');
-				if (elWinrate)
-						elWinrate.textContent = `${winrate}%`;
-
-				if (tbodyMatches) {
-					tbodyMatches.innerHTML = "";
-					const rows = Array.isArray(history.history) ? history.history.slice(0, 10) : [];
-
-					if (!rows.length) {
-					 tbodyMatches.innerHTML = `<tr class="text-gray-400"><td class="py-3" colspan="4">No recent matches.</td></tr>`;
-					} else {
+			if (tbodyMatches) {
+				tbodyMatches.innerHTML = "";
+				const rows = Array.isArray(history.history) ? history.history.slice(0, 10) : [];
+				if (!rows.length) {
+					tbodyMatches.innerHTML = `<tr class="text-gray-400"><td class="py-3" colspan="4">No recent matches.</td></tr>`;
+				} else {
 					for (const m of rows) {
 						const tr = document.createElement('tr');
 						const date = m.date;
@@ -156,39 +157,61 @@ const statistics: (container: HTMLElement) => void = (container) => {
 							<td class="py-2 px-20 whitespace-nowrap text-center">${escapeHtml(date)}</td> 
 						`;
 						tbodyMatches.appendChild(tr);
-						}
 					}
 				}
-				} catch (error: any) {
-					setStatusMessage(msg, error?.message || "Can't load player stats", 'error');
-					tbodyMatches.innerHTML = `<li class="text-sm text-gray-500">-</li>`;
-				}
+			}
+			} catch (error: any) {
+				setStatusMessage(msg, error?.message || "Can't load player stats", 'error');
+				tbodyMatches.innerHTML = `<li class="text-sm text-gray-500">-</li>`;
+			                                               }
 	}
 
-	async function loadTournament(saved: AppUser) {
+	async function loadTournament(saved: AppUser) 
+	{
 		const userId = saved.userId;
 		try {
 			const userId = saved.userId;
 			const history = await getTournaments(userId);
-				if (tbodyTournament) {
+
+			if (tbodyTournament) 
+			{
 				tbodyTournament.innerHTML = "";
 				const rows = Array.isArray(history.history) ? history.history.slice(0, 10) : [];
-				if (!rows.length) {
-				tbodyTournament.innerHTML = `<tr class="text-gray-400"><td class="py-3" colspan="4">No recent tournament.</td></tr>`;
+				if (!rows.length) 
+				{
+					tbodyTournament.innerHTML = `<tr class="text-gray-400"><td class="py-3" colspan="4">No recent tournament.</td></tr>`;
 				} else {
-					for (const m of rows) {
-					const tr = document.createElement('tr');
-					const players = Array.isArray(m.players) ? m.players.filter(Boolean).join(', ') : String(m.players ?? '');
-					const href = typeof m.snowtraceLink === 'string' ? m.snowtraceLink : '';
-					tr.innerHTML = `
-						<td class="py-2 pr-4">${escapeHtml(players)}</td>
-						<td class="py-2 pr-4">
-							<a href="${encodeURI(href)}" target="_blank" rel="noopener noreferrer"
-							class="text-blue-600 hover:underline">View on Snowtrace</a>
-						</td>
-						<td class="py-2 pr-4 whitespace-nowrap">${escapeHtml(m.date)}</td>
-					`;
-					tbodyTournament.appendChild(tr);
+					for (const m of rows) 
+					{
+						const tr = document.createElement('tr');
+						const playersArr = Array.isArray(m.players)
+							? m.players.filter(Boolean).map((p: string) => escapeHtml(p))
+							: String(m.players ?? '').split(',').map(s => escapeHtml(s.trim())).filter(Boolean);
+						const playersCount = playersArr.length;
+						const playersListHtml = playersCount
+							? playersArr.map(p => `<li class="leading-6">${p}</li>`).join('')
+							: `<li class="text-gray-400 italic">No player</li>`;
+						const href = typeof m.snowtraceLink === 'string' ? m.snowtraceLink : '';
+
+						tr.innerHTML = `
+							<td class="py-2 pr-4 text-left align-top">
+								<details class="group">
+									<summary class="inline-flex items-center gap-2 cursor-pointer select-nonehover:underline">
+										<span class="font-medium">Player's list</span>
+										<span class="transition-transform group-open:-rotate-180">▾</span>
+									</summary>
+									<ul class="mt-2 max-h-40 overflow-y-auto list-disc pl-6 text-gray-700">
+										${playersListHtml}
+									</ul>
+								</details>
+							</td>
+							<td class="py-2 px-20 font-medium text-center">
+								<a href="${encodeURI(href)}" target="_blank" rel="noopener noreferrer"
+									class="text-blue-600 hover:underline text-center">View on Snowtrace</a>
+							</td>
+							<td class="py-2 px-20 whitespace-nowrap text-center">${m.date}</td>
+						`;
+						tbodyTournament.appendChild(tr);
 					}
 				}
 			}
