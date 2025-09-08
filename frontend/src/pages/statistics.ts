@@ -122,7 +122,7 @@ const statistics: (container: HTMLElement) => void = (container) => {
 				elTotal.textContent = String(total);
 			const elWinrate = container.querySelector<HTMLElement>('#winrate');
 			if (elWinrate)
-				elWinrate.textContent = `${winrate}%`;
+				elWinrate.textContent = `${Math.round(winrate)}%`;
 
 			if (tbodyMatches) {
 				tbodyMatches.innerHTML = "";
@@ -139,23 +139,23 @@ const statistics: (container: HTMLElement) => void = (container) => {
 						const hisScore = isWin ? m.loserScore : m.winnerScore;
 
 						tr.innerHTML = `
-							<td class="py-2 pr-4 text-left">${escapeHtml(m.opponent)}</td>
-							<td class="py-2 px-20 font-medium text-center">${escapeHtml(hisScore)} – ${escapeHtml(myScore)}</td>
+							<td class="py-2 pr-4 text-left">${m.opponent}</td>
+							<td class="py-2 px-10 font-medium text-center">${hisScore} – ${myScore}</td>
 							<td class="py-2 px-20">
 								<div class="flex justify-center">
-									<span class="inline-flex items-center gap-1 text-xs ${escapeHtml(isWin ? "text-green-700 bg-green-100" : "text-red-700 bg-red-100")} px-2 py-0.5 rounded-full">
-										<span class="h-2 w-2 rounded-full ${escapeHtml(isWin ? "bg-green-500" : "bg-red-400")}"></span>
-										${escapeHtml(isWin ? "Win" : "Defeat")}
+									<span class="inline-flex items-center gap-1 text-xs ${isWin ? "text-green-700 bg-green-100" : "text-red-700 bg-red-100"} px-2 py-0.5 rounded-full">
+										<span class="h-2 w-2 rounded-full ${isWin ? "bg-green-500" : "bg-red-400"}"></span>
+										${isWin ? "Win" : "Defeat"}
 									</span>
 								</div>
-							<td class="py-2 px-20 whitespace-nowrap text-center">${escapeHtml(date)}</td> 
+							<td class="py-2 px-20 whitespace-nowrap text-center">${date}</td> 
 						`;
 						tbodyMatches.appendChild(tr);
 					}
 				}
 			}
 			} catch (error: any) {
-				setStatusMessage(msg, error?.message || "Can't load player stats", 'error');
+				setStatusMessage(msg, "Can't load player stats", 'error');
 				tbodyMatches.innerHTML = `<li class="text-sm text-gray-500">-</li>`;
 			                                               }
 	}
@@ -210,7 +210,7 @@ const statistics: (container: HTMLElement) => void = (container) => {
 				}
 			}
 		} catch (error: any) {
-			setStatusMessage(msg, error?.message || "Can't load player stats", 'error');
+			setStatusMessage(msg, "Can't load player stats", 'error');
 			tbodyTournament.innerHTML = `<li class="text-sm text-gray-500">-</li>`;
 		}
 	}

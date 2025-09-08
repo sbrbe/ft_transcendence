@@ -15,7 +15,7 @@ export async function loginVerify(
 		const app = req.server as FastifyInstance;
 
 		try {
-//			await verifyTwoFactorCode(userId, code);
+			await verifyTwoFactorCode(userId, code);
 			const user = getUserById(userId)
 			if (!user) {
 				return reply.status(404).send({ error: 'User not found' });
@@ -37,8 +37,8 @@ export async function login(
 			const user = await userLogin(email, password);
 			if (!user)
 				return reply.status(404).send({ error: 'User not found'});
-//			const code = await createTwoFactorCode(user.userId);
-//			await sendTwoFactorCode(user.userId, user.email, code);
+			const code = await createTwoFactorCode(user.userId);
+			await sendTwoFactorCode(user.userId, user.email, code);
 			return reply.status(200).send({ userId: user.userId, message: '2FA code sent by mail'} );
 		} catch (error: any) {
 			return reply.status(400).send({ error: error.message } );

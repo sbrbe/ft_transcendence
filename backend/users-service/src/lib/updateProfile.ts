@@ -1,6 +1,6 @@
 import { FastifyRequest, FastifyReply } from "fastify";
 import { db } from '../init_db.js';
-import { getUserById } from "./utils.js";
+import { getUserById, getUserByUsername } from "./utils.js";
 import { UserUpdate } from "../types/fastify.js";
 
 export async function updateProfile(
@@ -10,9 +10,14 @@ export async function updateProfile(
 		const { lastName, firstName, username, avatarPath } = req.body;
 
 		if (!lastName && !firstName && !username && !avatarPath) {
-			return reply.status(400).send({ error: 'No fields to update' });
+			return reply.status(200).send();
 		}
 		try {
+			if (username) {
+				const existingUsername = getUserByUsername(username);
+				if (existingUsername)
+					return reply.status(400).send('Username already used');
+			}
 			const res = await updateUser(userId, { lastName, firstName, username, avatarPath });
 			if (!res) {
 				return reply.status(404).send( { error: 'User not found' });

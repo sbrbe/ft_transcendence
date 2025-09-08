@@ -76,7 +76,7 @@ const A2F: (container: HTMLElement) => void = (container) => {
 		} 
 		catch (err: any) 
 		{
-			setStatusMessage(msgEl, err?.message || 'Checking 2FA failed', 'error');
+			setStatusMessage(msgEl, 'Checking 2FA failed', 'error');
 		} 
 		finally 
 		{

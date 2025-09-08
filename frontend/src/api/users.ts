@@ -65,10 +65,9 @@ export async function updateUser(
 			await logout();
 		}
 	}
-
 	const data = await res.json();
 	if (!res.ok) {
-		throw new Error(`Update user error: ${ data.error || res.statusText}`);
+		throw new Error(`Update error`);
 	}
 	return data as UpdatedUserResponse;
 }

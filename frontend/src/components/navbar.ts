@@ -53,7 +53,7 @@ export function createNavbar(onNavigate: (path: string) => void) {
 
 	const setActive = () => {
 		const current = location.hash.replace(/^#/, '') || '/';
-		nav.querySelectorAll<HTMLAnchorElement>('a[data-route]').forEach(a => {
+		nav.querySelectorAll<HTMLAnchorElement>('a[data-route][data-nav]').forEach(a => {
 		const isActive = a.dataset.route === current || (current === '/' && a.dataset.route === '/accueil');
 		a.classList.toggle('bg-gray-100', isActive);
 		});

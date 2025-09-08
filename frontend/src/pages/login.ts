@@ -73,7 +73,7 @@ const Login: (container: HTMLElement) => void = (container) => {
 			setPendingUserId(userId);
 			navigateTo('/a2f');
 		} catch (err: any) {
-			setStatusMessage(msgEl, err?.message || 'Connection failed', 'error');
+			setStatusMessage(msgEl, 'Connection failed', 'error');
 		} finally {
 			lockButton(submitBtn, false);
 		}

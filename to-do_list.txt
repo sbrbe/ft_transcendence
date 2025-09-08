@@ -1,7 +1,6 @@
-
+Remettre le 2FA
 Changer les messages d'erreurs
 
-Mettre show/hide sur update password
 Quand projet terminé, penser à passer les ports des conteneurs en expose dans le docker compose pour éviter 
 qu'on puisse y accéder depuis l'extérieur de docke
 

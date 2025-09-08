@@ -4,7 +4,7 @@ import { GameLogic } from '../../../../shared/engine_play/src/game_logic';
 export class GameRenderer {
   private ctx: CanvasRenderingContext2D;
   private startTime: number;
-
+  private namesTimerArmed = false;
   // --- Bump score animation ---
   private prevScore = { A: 0, B: 0 };
   private bumpStart: { A: number | null; B: number | null } = { A: null, B: null };
@@ -92,31 +92,27 @@ export class GameRenderer {
     });
 
     const exchanges = state.tracker?.totalExchanges ?? 0;
-this.isStarting(
-  state.ball.height,
-  state.ball.width,
-  state.ball.x,
-  state.ball.y,
-  exchanges,
-  state.scores
-);
 
-    // Noms au lancement (3s)
+    // (ré)armer l’affichage des noms au début du match / manche
+    this.isStarting(
+      state.ball.height,
+      state.ball.width,
+      state.ball.x,
+      state.ball.y,
+      exchanges,
+      state.scores
+    );
+
+    // --- Noms pendant 3s
     const elapsed = (performance.now() - this.startTime) / 1000;
     this.ctx.font = "20px Arial";
     this.ctx.fillStyle = "white";
     if (elapsed < 3) {
-      let x: number;
       state.paddles.forEach((paddle, index) => {
         if (!paddle) return;
-        if (index % 2 === 0) {
-          this.ctx.textAlign = "left";
-          x = paddle.x;
-        } else {
-          this.ctx.textAlign = "right";
-          x = paddle.x + paddle.width;
-        }
-        this.ctx.fillText(paddle.name.substring(0, 10), x, paddle.y - 15);
+        this.ctx.textAlign = index % 2 === 0 ? "left" : "right";
+        const x = index % 2 === 0 ? paddle.x : (paddle.x + paddle.width);
+        this.ctx.fillText(paddle.name.substring(0, 19), x, paddle.y - 15); // 19 max
       });
     }
 
@@ -188,18 +184,16 @@ this.isStarting(
     score: { A: number; B: number }
   ) {
     const scores_echanges = score.A + score.B + echanges;
-  
-    const cx = this.canvas.width / 2 - BallW / 2;
-    const cy = this.canvas.height / 2 - BallH / 2;
-    const eps = 0.5;
-  
-    const ballIsCentered = Math.abs(BallX - cx) <= eps && Math.abs(BallY - cy) <= eps;
-  
-    if (ballIsCentered && scores_echanges === 0) {
+
+    if (scores_echanges === 0 && !this.namesTimerArmed) {
       this.startTime = performance.now();
       this.bumpStart = { A: null, B: null };
       this.prevScore = { ...score };
+      this.namesTimerArmed = true;
+      return;
+    }
+    if (scores_echanges > 0) {
+      this.namesTimerArmed = false;
     }
   }
-  
 }

@@ -1,5 +1,5 @@
 import { navigateTo } from '../router/router';
-import { getSavedUser, setLoggedInUser } from '../utils/ui';
+import { clearStatusMessage, getSavedUser, setLoggedInUser } from '../utils/ui';
 import { AppUser } from '../utils/interface';
 import { updateEmail, updatePassword } from '../api/auth';
 import { updateUser } from '../api/users';
@@ -271,7 +271,7 @@ const ProfilePage: (container: HTMLElement) => void = (container) => {
 
 	profileForm.addEventListener('submit', async (e) => {
 		e.preventDefault();
-
+		clearStatusMessage(profile.msg);
 		const data: ProfileForm = {
 			firstName: profile.firstName.value.trim(),
 			lastName: profile.lastName.value.trim(),
@@ -297,39 +297,43 @@ const ProfilePage: (container: HTMLElement) => void = (container) => {
 		lockButton(profile.saveBtn, true, 'Saving…');
 		setStatusMessage(profile.msg);
 
+		let updatedUser = { firstName: saved.firstName, lastName: saved.lastName, username: saved.username };
+		let updatedEmail = { email: saved.email };
+
 		try {
-			const updatedUser = await updateUser(saved.userId, {
-				firstName: data.firstName,
+  			updatedUser = await updateUser(saved.userId, {
+  				firstName: data.firstName,
 				lastName: data.lastName,
 				username: data.username,
 			});
-			const updatedEmail = await updateEmail(saved.userId, data.email);
-
-			const latest = getSavedUser<AppUser>() || saved;
-
-			const merged: AppUser = {
-				...latest,
-				userId: saved.userId,
-				firstName: updatedUser.firstName,
-				lastName: updatedUser.lastName,
-				username: updatedUser.username,
-				email: updatedEmail.email,
-			};
-
-			setLoggedInUser(merged);
-			window.dispatchEvent(new CustomEvent('auth:changed', { detail: merged }));
-
-			profile.card.username.textContent = merged.username || '';
-			profile.card.email.textContent = merged.email || '';
-			profile.card.firstName.textContent = merged.firstName || '';
-			profile.card.lastName.textContent = merged.lastName || '';
-
-			setStatusMessage(profile.msg, '✅ Infos updated', 'success');
-		} catch (err: any) {
-			setStatusMessage(profile.msg, `❌ ${err?.message || 'Error while updating'}`, 'error');
-		} finally {
-			lockButton(profile.saveBtn, false);
+		} catch (e) {
+  			console.warn('updateUser failed', e);
 		}
+
+		try {
+			updatedEmail = await updateEmail(saved.userId, data.email);
+		} catch (e) {
+				console.warn('updateEmail failed', e);
+		}
+
+		const latest = getSavedUser<AppUser>() || saved;
+
+		const merged: AppUser = {
+			...latest,
+			userId: saved.userId,
+			firstName: updatedUser.firstName,
+			lastName: updatedUser.lastName,
+			username: updatedUser.username,
+			email: updatedEmail.email,
+		};
+
+		setLoggedInUser(merged);
+		window.dispatchEvent(new CustomEvent('auth:changed', { detail: merged }));
+		profile.card.username.textContent = merged.username || '';
+		profile.card.email.textContent = merged.email || '';
+		profile.card.firstName.textContent = merged.firstName || '';
+		profile.card.lastName.textContent = merged.lastName || '';
+		setStatusMessage(profile.msg, 'Infos updated', 'success');
 	});
 
 	pwdForm.addEventListener('submit', async (e) => {
@@ -340,8 +344,9 @@ const ProfilePage: (container: HTMLElement) => void = (container) => {
 		const newPwd = pwd.n1.value.trim();
 		const newPwd2 = pwd.n2.value.trim();
 
-		if (!oldPwd || !newPwd) return setStatusMessage(pwd.msg, '❌ Fields required.', 'error');
-		if (newPwd !== newPwd2) return setStatusMessage(pwd.msg, '❌ Passwords dont match.', 'error');
+		if (!oldPwd || !newPwd) return setStatusMessage(pwd.msg, 'Fields required.', 'error');
+		if (oldPwd === newPwd) return setStatusMessage(pwd.msg, 'Same old and new password', 'error')
+		if (newPwd !== newPwd2) return setStatusMessage(pwd.msg, 'Passwords dont match.', 'error');
 
 		lockButton(pwd.saveBtn, true, 'Updating…');
 
@@ -350,7 +355,7 @@ const ProfilePage: (container: HTMLElement) => void = (container) => {
 			setStatusMessage(pwd.msg, '✅ Password updated !', 'success');
 			pwd.old.value = ''; pwd.n1.value = ''; pwd.n2.value = '';
 		} catch (err: any) {
-			setStatusMessage(pwd.msg, `❌ ${err?.message || 'Error while updating pasword'}`, 'error');
+			setStatusMessage(pwd.msg, `❌ Error while updating pasword`, 'error');
 		} finally {
 			lockButton(pwd.saveBtn, false);
 		}

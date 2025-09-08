@@ -120,7 +120,7 @@ const Register: (container: HTMLElement) => void = (container) => {
 		catch (err: any) 
 		{
 			if (createdUserId) await deleteAuthAccount(createdUserId);
-			setStatusMessage(msgEl, `Erreur : ${err?.message ?? 'Failed to create'}`, 'error');
+			setStatusMessage(msgEl, `'Failed to create account'}`, 'error');
 		} 
 		finally 
 		{

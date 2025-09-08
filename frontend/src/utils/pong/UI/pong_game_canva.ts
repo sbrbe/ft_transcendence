@@ -27,7 +27,7 @@ function ensureGameCanvasStyle() {
 
   #gameCanvas {
     background: #000;
-    border: 2px solid red;
+    border: 2px solid blue;
     z-index: 20;
     aspect-ratio: 4 / 3;
     width: min(calc(100vw * var(--canvas-scale)),

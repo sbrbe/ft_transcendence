@@ -149,12 +149,12 @@ const friends: (container: HTMLElement) => void = (container) => {
 					addBtn.className = "px-3 py-1.5 rounded-lg bg-gray-300 text-white text-sm cursor-not-allowed";
 
 				} catch (err: any) {
-					setStatusMessage(addMsg, err?.message || "Friend request failed", "error");
+					setStatusMessage(addMsg, "Friend request failed", "error");
 					lockButton(addBtn, false);
 				}
 			});
 			} catch (error: any) {
-				setStatusMessage(addMsg, error.message || 'Player search failed', 'error');
+				setStatusMessage(addMsg, 'Player search failed', 'error');
 			}
 			finally {
 				lockButton(searchBtn, false);
@@ -240,7 +240,7 @@ const friends: (container: HTMLElement) => void = (container) => {
 						setStatusMessage(msg, 'Friend request declined', 'success');
 					} 
 					catch (error: any) {
-						setStatusMessage(msg, error?.message || 'Failed to decline request', 'error');
+						setStatusMessage(msg, 'Failed to decline request', 'error');
 					} 
 					finally {
 						lockButton(btn, false);
@@ -251,7 +251,7 @@ const friends: (container: HTMLElement) => void = (container) => {
 			list.appendChild(frag);
 		} 
 		catch (error: any) {
-			setStatusMessage(msg, error?.message || "Can't load pending request", 'error');
+			setStatusMessage(msg, "Can't load pending request", 'error');
 			list.innerHTML = `<li class="text-sm text-gray-500">-</li>`;
 		}
 	};
@@ -266,7 +266,7 @@ const friends: (container: HTMLElement) => void = (container) => {
 			data = await loadFriendsList(saved.userId) as Friend[];
 		} 
 		catch (e: any) {
-			setStatusMessage(msg, e?.message || "Can't load friends list", 'error');
+			setStatusMessage(msg, "Can't load friends list", 'error');
 			listEl.innerHTML = `<li class="text-sm text-gray-500">—</li>`;
 			return;
 		}
@@ -347,7 +347,7 @@ const friends: (container: HTMLElement) => void = (container) => {
 				}
 			} 
 			catch (err: any) {
-				setStatusMessage(msg, err?.message || 'Failed to remove friend', 'error');
+				setStatusMessage(msg, 'Failed to remove friend', 'error');
 				lockButton(btn, false);
 			}
 		});
@@ -359,7 +359,6 @@ const friends: (container: HTMLElement) => void = (container) => {
 			const li = profileBtn.closest('li')!;
 			const friendId = li.getAttribute('data-id')!;
 			const friend = data.find(x => x.friendId === friendId);
-			const friendUsername = friend?.friendUsername ?? '';
 
 			navigateTo(`/friend-profile?friendId=${encodeURIComponent(friendId)}`);
 		});
