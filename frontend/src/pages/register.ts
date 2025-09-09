@@ -85,18 +85,18 @@ const Register: (container: HTMLElement) => void = (container) => {
 	const msgEl = container.querySelector<HTMLParagraphElement>('#formMsg')!;
 	const submitBtn = container.querySelector<HTMLButtonElement>('#submitBtn')!;
 	const togglePwdBtn = container.querySelector<HTMLButtonElement>('#togglePwd')!;
+	const toggleConfPwdBtn = container.querySelector<HTMLButtonElement>('#toggleConfPwd')!;
 	const pwd1 = container.querySelector<HTMLInputElement>('#password')!;
 	const pwd2 = container.querySelector<HTMLInputElement>('#confirmPassword')!;
 
 	bindPasswordToggle(pwd1, togglePwdBtn);
-	bindPasswordToggle(pwd2, togglePwdBtn);
+	bindPasswordToggle(pwd2, toggleConfPwdBtn);
 
 	type Rule = { id: string; label: string; test: (v: string) => boolean };
 
 	const nameRules: Rule[] = [
 		{ id: "len",     label: "2–30 characters",									test: v => v.trim().length >= 2 && v.trim().length <= 30 },
 		{ id: "charset", label: "No digits, special chars", 						test: v => /^[A-Za-zÀ-ÖØ-öø-ÿ]+(?:[ '\-][A-Za-zÀ-ÖØ-öø-ÿ]+)*$/.test(v.trim()) },
-	//	{ id: "trim",    label: "No leading/trailing spaces",						test: v => v === v.trim() },
 	];
 
 	const usernameRules: Rule[] = [
