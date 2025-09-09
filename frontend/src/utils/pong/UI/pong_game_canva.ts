@@ -165,8 +165,11 @@ const game_canvas = (container: HTMLElement, mode: number) => {
     );
   }
 
-  // Met à jour la légende des touches selon le mode
   upsertLegend(layer, mode);
+  const wrapper = document.getElementById("game_canvas");
+  if (wrapper) {
+    wrapper.scrollIntoView({ behavior: "smooth", block: "start" });
+  }
 };
 
 export default game_canvas;

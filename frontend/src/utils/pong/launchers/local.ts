@@ -9,12 +9,13 @@ export class GameLocal implements Disposable{
   private renderer: GameRenderer; 
   private game: GameLogic | null = null;
   private rafId: number | null = null;
-  
+  private conf_re: any;
   private betweenStage: 'idle' | 'winner' | 'endLcl' = 'idle';
 
   constructor(conf: { mode: "1v1" | "2v2"; players: ("human" | "cpu")[] }) {
     this.canvas = document.getElementById('gameCanvas') as HTMLCanvasElement;
     this.renderer = new GameRenderer(this.canvas);
+    this.conf_re = conf;
     this.startLocalFromConf(conf);
   }
 
@@ -31,6 +32,14 @@ export class GameLocal implements Disposable{
         e.preventDefault();
         window.location.href = "/#/home";
         this.betweenStage = 'idle';
+        return;
+      }
+    }
+    if (code === 'Enter') {
+      if (this.betweenStage === 'endLcl') {
+        e.preventDefault();
+        this.betweenStage = 'idle';
+        this.startLocalFromConf(this.conf_re);
         return;
       }
     }
@@ -89,6 +98,7 @@ export class GameLocal implements Disposable{
       } else {
         this.betweenStage = 'endLcl';
         this.renderer.endScreen(state as unknown as GameState);
+        this.renderer.drawMessage("\n\n\n\n\n\nPress [ENTER] for rematch");
       }
     };
   

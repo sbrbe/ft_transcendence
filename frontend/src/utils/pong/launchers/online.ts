@@ -9,9 +9,9 @@ export class GameOnline implements Disposable{
 	private betweenStage: 'idle' | 'winner' |'next' | 'end' | 'endOln'  = 'idle';
 	private canvas: HTMLCanvasElement;
 	private renderer: GameRenderer;
-	// en haut de la classe
   private online: OnlineClient | null = null;
   private mobileTouchAttached = false;
+  private playerConf: any;
 
 
 
@@ -22,6 +22,7 @@ export class GameOnline implements Disposable{
 		id: playerId,
 		name: userName
 	  };
+	this.playerConf = playerInfo;
 	this.startOnline(playerInfo);
 	// Boutons mobile (assure-toi que ces IDs existent dans ton HTML)
 	this.btnUp = document.getElementById('btn-up') as HTMLButtonElement | null;
@@ -94,7 +95,15 @@ private normalizePaddleKey(e: KeyboardEvent): 'ArrowUp' | 'ArrowDown' | null {
 		return;
 	  }
 	}
-  
+	if (code === 'Enter') {
+		if (this.betweenStage === 'endOln') {
+		  e.preventDefault();
+		  this.betweenStage = 'idle';
+		  this.startOnline(this.playerConf);
+		  return;
+		}
+	  }
+
 	// Empêche le scroll avec les flèches
 	if (code === 'ArrowUp' || code === 'ArrowDown') e.preventDefault();
   
@@ -166,6 +175,7 @@ private normalizePaddleKey(e: KeyboardEvent): 'ArrowUp' | 'ArrowDown' | null {
 		  if (!snap.running) {
 			this.betweenStage = 'endOln';
 			this.renderer.endScreen(snap);
+			this.renderer.drawMessage("\n\n\n\n\n\nPress [ENTER] for rematch");
 		  }
 		},
 		// onInfo (optionnel)
