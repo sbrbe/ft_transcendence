@@ -17,8 +17,9 @@ export class Paddle {
   interaction(ball: Ball)
   {
     const bHitY: number = ball.y + ball.height/2;
-    const pddCenter: number = this.y + this.height/2;
-    let normalizeContact = (bHitY - pddCenter) / (this.height / 2);  
+    
+    const pddCenter: number = (this.y-10) + (this.height + 10)/2;
+    let normalizeContact = (bHitY - pddCenter) / (this.height +20 / 2); 
 
     normalizeContact = Math.max(-1, Math.min(1, normalizeContact));
     const angle = normalizeContact * ( Math.PI / 3);

@@ -68,8 +68,8 @@ export class Ball {
         if (paddle.x < this.x)
         {
             if (this.x <= paddle.x +paddle.width && 
-                this.y <= paddle.y +paddle.height &&
-                this.y + this.height >= paddle.y)
+                this.y <= paddle.y +paddle.height + 10 &&
+                this.y + this.height >= paddle.y - 10)
             {
                 paddle.interaction(this);
                 tracker.recordHit();
@@ -80,8 +80,8 @@ export class Ball {
         else
         {
             if (this.x +this.width >= paddle.x  && 
-            this.y <= paddle.y + paddle.height &&
-            this.y + this.height>= paddle.y)
+            this.y <= paddle.y + paddle.height + 10 &&
+            this.y + this.height>= paddle.y - 10)
             {
                 paddle.interaction(this);
                 tracker.recordHit();

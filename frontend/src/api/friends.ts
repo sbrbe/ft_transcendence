@@ -185,9 +185,6 @@ export async function loadFriendsList(userId: string, retried = false) {
 	return data;
 }
 
-//   A SUPRIMER SI BUG JUSTE LA FONCTION ET VRARIABLE EN DESSOUS
-//    SINON RIEN D INCHANGER
-
 let lastCount = 0;
 
 export async function loadNotifRequest(userId: string, retried = false) {
@@ -210,6 +207,5 @@ export async function loadNotifRequest(userId: string, retried = false) {
 
 	const newCount = Array.isArray(data) ? data.length : 0
 	if (newCount !== lastCount) lastCount = newCount
-	console.log(lastCount);
 	return { list: data, count: lastCount }
 }
