@@ -27,9 +27,14 @@ async function createUser(userId: string, username: string, lastName: string,
 	const existingUser = getUserByUsername(username);
 	if (existingUser)
 		throw new Error('Username already used');
-	const avatarPath = '/avatar/default.png';
-	const stmt = db.prepare(`INSERT INTO users (userId, lastName, firstName, username, avatarPath)
+	try {
+		const avatarPath = '/avatar/default.png';
+		const stmt = db.prepare(`INSERT INTO users (userId, lastName, firstName, username, avatarPath)
 		VALUES (?, ?, ?, ?, ?)`);
-	const info = stmt.run(userId, lastName, firstName, username, avatarPath);
+		const info = stmt.run(userId, lastName, firstName, username, avatarPath);
 	return (username);
+	} catch (error: any) {
+		throw new Error('Server error');
+	}
+	
 }

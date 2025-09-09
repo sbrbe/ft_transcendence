@@ -22,10 +22,10 @@ export default async function getUserRoute(app: FastifyInstance) {
 					type: 'object',
 					required: ['lastName', 'firstName', 'username', 'avatarPath'],
 					properties: {
-						lastName: { type: 'string', minLength: 1, maxLength: 20 },
-						firstName: { type: 'string', minLength: 1, maxLength: 20 },
+						lastName: { type: 'string', minLength: 1, maxLength: 30 },
+						firstName: { type: 'string', minLength: 1, maxLength: 30 },
 						username: { type: 'string', minLength: 1, maxLength: 20 },
-						avatarPath: { type: 'string', minLength: 1, maxLength: 20 }
+						avatarPath: { type: 'string', minLength: 1 }
 					}
 				},
 				404: {

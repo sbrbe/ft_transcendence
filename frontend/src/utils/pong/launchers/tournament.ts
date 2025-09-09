@@ -257,7 +257,7 @@ export class GameTournament implements Disposable{
 		header.innerHTML = `
 			<div class="flex items-center gap-2">
 				<span class="inline-flex h-2 w-2 rounded-full animate-pulse bg-blue-500/70"></span>
-				<span class="uppercase tracking-wider text-xs text-gray-500">Tournoi</span>
+				<span class="uppercase tracking-wider text-xs text-gray-500">Tournament</span>
 			</div>
 			<div class="text-xs text-gray-400">Real-time updates</div>
 		`;
@@ -397,7 +397,7 @@ export class GameTournament implements Disposable{
 				if (msg.type === 'tournament_end') {
 					this.betweenStage = 'end';
 					this.renderer.clearRender();
-					this.renderer.drawMessage('Tournoi finished, winner: ' + this.name + '!\n\n\n\nPress [SPACE] to QUIT !');
+					this.renderer.drawMessage('Tournament finished, winner: ' + this.name + '!\n\n\n\nPress [SPACE] to QUIT !');
 					this.infoTourn();
 				}
 			},

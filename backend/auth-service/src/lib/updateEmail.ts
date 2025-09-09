@@ -1,5 +1,6 @@
 import { FastifyReply, FastifyRequest } from 'fastify';
 import { db } from '../init_db.js';
+import { getUserByEmail } from './utils.js';
 
 export async function updateEmail(
 	req: FastifyRequest,
@@ -8,6 +9,11 @@ export async function updateEmail(
 		const { email } = req.body as { email: string };
 
 		try {
+			const existingEmail = getUserByEmail(email);
+			console.log('EMAIL = ', existingEmail);
+			if (existingEmail) {
+				return reply.status(400).send({ error: 'Email already used'});
+			}
 			const res = updateEmailService(userId, email);
 			if (!res){
 				return reply.status(404).send({ error: 'User not found' });

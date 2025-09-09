@@ -34,6 +34,12 @@ export default async function updateEmailRoute(app: FastifyInstance){
 						email: { type: 'string', format: 'email' }
 					}
 				},
+				400: {
+					type: 'object',
+					properties: {
+						error: { type: 'string' }
+					}
+				},
 				404: {
 					type: 'object',
 					properties: {

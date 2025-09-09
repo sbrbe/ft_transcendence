@@ -25,10 +25,13 @@ async function createUser(email: string, password: string) {
 		throw new Error ('Email already used');
 	if (!strongPasswordRegex.test(password))
 		throw new Error ('Password too weak');
-
-	const userId = uuidv4();
-	const hashedPassword = await bcrypt.hash(password, 10);
-	const stmt = db.prepare('INSERT INTO auth (userId, email, hashedPassword) VALUES (?, ?, ?)');
-	const info = stmt.run(userId, email, hashedPassword);
-	return (userId);
+	try {
+		const userId = uuidv4();
+		const hashedPassword = await bcrypt.hash(password, 10);
+		const stmt = db.prepare('INSERT INTO auth (userId, email, hashedPassword) VALUES (?, ?, ?)');
+		const info = stmt.run(userId, email, hashedPassword);
+		return (userId);
+	} catch (error: any) {
+		throw new Error('Server error');
+	}
 }

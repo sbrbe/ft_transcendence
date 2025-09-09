@@ -31,7 +31,7 @@ export async function createUserProfile(userId: string, d: RegisterFormData): Pr
 
 	const data = await res.json();
 	if (!res.ok) {
-		throw new Error(`Create user profile error: ${data.error || res.statusText}`);
+		throw new Error(data.error || res.statusText);
 	}
 }
 
@@ -67,7 +67,7 @@ export async function updateUser(
 	}
 	const data = await res.json();
 	if (!res.ok) {
-		throw new Error(`Update error`);
+		throw new Error(data?.error || res.statusText);
 	}
 	return data as UpdatedUserResponse;
 }

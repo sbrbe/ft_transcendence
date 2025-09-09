@@ -35,7 +35,7 @@ const Login: (container: HTMLElement) => void = (container) => {
 
 					<p class="text-center text-sm text-gray-500">
 						No account ?
-						<a href="#/inscription" data-route="/inscription" class="text-blue-600 hover:underline">Register</a>
+						<a href="#/register" data-route="/register" class="text-blue-600 hover:underline">Register</a>
 					</p>
 				</form>
 			</div>
@@ -66,7 +66,7 @@ const Login: (container: HTMLElement) => void = (container) => {
 		const password = pwdEl.value.trim();
 		if (!email || !password) return setStatusMessage(msgEl, 'Please enter your email and password.', 'error');
 
-		lockButton(submitBtn, true, 'Connection…');
+		lockButton(submitBtn, true, 'Connecting…');
 
 		try {
 			const { userId } = await loginUser(email, password); 

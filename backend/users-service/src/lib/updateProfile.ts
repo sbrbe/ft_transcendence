@@ -15,8 +15,8 @@ export async function updateProfile(
 		try {
 			if (username) {
 				const existingUsername = getUserByUsername(username);
-				if (existingUsername)
-					return reply.status(400).send('Username already used');
+				if (existingUsername?.userId !== userId)
+					return reply.status(400).send({ error: 'Username already used' });
 			}
 			const res = await updateUser(userId, { lastName, firstName, username, avatarPath });
 			if (!res) {
@@ -24,7 +24,7 @@ export async function updateProfile(
 			}
 			return reply.status(200).send(res);
 		} catch (error: any) {
-			return reply.status(500).send({ error: error.message });
+			return reply.status(500).send({ error: 'Server error' });
 		}
 }
 

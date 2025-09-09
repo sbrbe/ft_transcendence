@@ -1,21 +1,21 @@
 export const reName = /^[\p{L}\p{M}]+(?:[ '-][\p{L}\p{M}]+)*$/u;
 
-export const reUsername = /^[\p{L}\p{M}]{2,20}$/u;
+export const reUsername = /^(?![._-])(?!.*[._-]$)(?!.*(?:\.\.|__))\p{L}[\p{L}\p{M}0-9._-]{2,19}$/u;
 
 export const casing = (s: string) =>
 		 s ? s.charAt(0).toLocaleUpperCase('fr-FR') + s.slice(1).toLocaleLowerCase('fr-FR') : s;
 
- export type RegisterFields = {
+export type RegisterFields = {
 		firstName: string;
 		lastName: string;
 		username: string;
-	};
+};
 
 export type ValidationResult = {
 		ok: boolean;
 		errors: Partial<Record<keyof RegisterFields, string>>;
 		cleaned: RegisterFields;
-	};
+};
 
 export function clean(str: string): string {
 		return str
@@ -23,32 +23,32 @@ export function clean(str: string): string {
 			.replace(/\u200B|\u200C|\u200D|\uFEFF/g, '')
 			.replace(/\u2019/g, "'")
 			.trim();
-	}
+}
 
 export function validateName(field: string, value: string): string | null {
 		const cleaned = clean(value);
-		if (!cleaned) {
-			return (`Field ${field} is required`);
-		}
-		if (cleaned.length < 1) {
-			return (`${field} must have 2 characters minimum`);
-		}
+//		if (!cleaned) {
+//			return (`Field ${field} is required`);
+//		}
+//		if (cleaned.length < 1) {
+//			return (`${field} invalid`);
+//		}
 		if (cleaned.length >= 50) {
-			return (`${field} must have 50 characters maximum`);
+			return (`${field} invalid`);
 		}
 		if (!reName.test(cleaned)) {
-			return (`${field} can contain only letters, spaces or '-'`);
+			return (`${field} invalid`);
 		}
 		return null;
 	}
 
 export function validateUsername(value: string): string | null {
 		const cleaned = clean(value);
-		if (!cleaned) {
-			return ('Username required');
-		}
+//		if (!cleaned) {
+//			return ('Username required');
+//		}
 		if (!reUsername.test(cleaned)) {
-			return ('The username can contain only letters, have a length between 2 and 20 characters and no spaces');
+			return ('Username invalid');
 		}
 		return null;
 	}
@@ -62,11 +62,11 @@ export function validateRegister(fields: RegisterFields): ValidationResult {
 
 		const errors: ValidationResult['errors'] = {};
 
-		const error1 = validateName('firstName', cleaned.firstName);
+		const error1 = validateName('First Name', cleaned.firstName);
 		if (error1){
 			errors.firstName = error1;
 		}
-		const error2 = validateName('lastName', cleaned.lastName);
+		const error2 = validateName('Last Name', cleaned.lastName);
 		if (error2) {
 			errors.lastName = error2;
 		}

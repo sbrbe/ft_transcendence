@@ -19,7 +19,7 @@ export async function createAuthAccount(email: string, password: string): Promis
 	const data = await res.json();
 
 	if (!res.ok) {
-		throw new Error(`Auth error: ${data.error || res.statusText}` );
+		throw new Error(data.error || res.statusText);
 	}
 	return String(data.userId);
 }
@@ -73,7 +73,7 @@ export async function updateEmail(
 	const data = await res.json();
 
 	if (!res.ok) {
-		throw new Error(`Email update error : ${data?.error || res.statusText}`);
+		throw new Error(data?.error || res.statusText);
 	}
 	return data as EmailUpdateResponse;
 }
@@ -100,7 +100,7 @@ export async function updatePassword(
 
 	if (!res.ok) {
 		const data = await res.json();
-		throw new Error(`Password update error : ${data?.error || res.statusText}`);
+		throw new Error(data?.error || res.statusText);
 	}
 }
 

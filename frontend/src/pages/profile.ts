@@ -13,7 +13,6 @@ import { listUserAvatars, isUploadedAvatar } from '../api/avatar';
 interface ProfileForm {
 	firstName: string;
 	lastName: string;
-	email: string;
 	username: string;
 }
 
@@ -77,13 +76,6 @@ const ProfilePage: (container: HTMLElement) => void = (container) => {
 								value="${escapeHtml(saved.username)}">
 						</label>
 
-						<label class="block">
-							<span class="text-sm text-gray-700">Email</span>
-							<input id="pf-email" type="email"
-								class="mt-1 w-full border px-3 py-2 rounded-lg focus:ring-2 focus:ring-blue-500"
-								value="${escapeHtml(saved.email || '')}">
-						</label>
-
 						<div class="flex items-center justify-between gap-4">
 							<p id="pf-msg" class="text-sm min-h-5" aria-live="polite"></p>
 							<div class="flex items-center gap-3">
@@ -94,9 +86,26 @@ const ProfilePage: (container: HTMLElement) => void = (container) => {
 							</div>
 						</div>
 					</form>
+					<form id="email-form" class="space-y-5" novalidate>
+						<label class="block">
+							<span class="text-sm text-gray-700">Email</span>
+							<input id="email" type="email"
+								class="mt-1 w-full border px-3 py-2 rounded-lg focus:ring-2 focus:ring-blue-500"
+								value="${escapeHtml(saved.email || '')}">
+						</label>
+
+						<div class="flex items-center justify-between gap-4">
+							<p id="email-msg" class="text-sm min-h-5" aria-live="polite"></p>
+							<div class="flex items-center gap-3">
+								<button id="email-cancel" type="button"
+									class="px-4 py-2 rounded-lg border hover:bg-gray-50">Cancel</button>
+								<button id="email-save" type="submit"
+									class="px-4 py-2 rounded-lg bg-blue-600 text-white hover:bg-blue-700">Save</button>
+							</div>
+						</div>
+					</form>
 				</section>
 
-				<!-- Avatar -->
 				<section class="rounded-2xl border bg-white shadow-sm p-6">
 					<h2 class="text-sm uppercase tracking-wider text-gray-500 mb-2">Avatar</h2>
 					<p class="text-xs text-gray-500 mb-3">Choisissez un avatar prédéfini</p>
@@ -116,7 +125,6 @@ const ProfilePage: (container: HTMLElement) => void = (container) => {
 					</div>
 				</section>
 
-				<!-- Security -->
 <section class="rounded-2xl border bg-white shadow-sm p-6">
   <h2 class="text-sm uppercase tracking-wider text-gray-500 mb-4">Security</h2>
   <form id="pwd-form" class="space-y-4" novalidate>
@@ -169,6 +177,7 @@ const ProfilePage: (container: HTMLElement) => void = (container) => {
 
 	const pwdForm = container.querySelector<HTMLFormElement>('#pwd-form')!;
 	const profileForm = container.querySelector<HTMLFormElement>('#profile-form')!;
+	const emailForm = container.querySelector<HTMLFormElement>('#email-form')!;
 	const avatarGrid = container.querySelector<HTMLDivElement>("#avatar-grid")!;
 	
 	profileForm.addEventListener('keydown', (e: KeyboardEvent) => {
@@ -177,6 +186,14 @@ const ProfilePage: (container: HTMLElement) => void = (container) => {
 			e.preventDefault();
 		}
 	});
+
+	emailForm.addEventListener('keydown', (e: KeyboardEvent) => {
+		const t = e.target as HTMLElement | null;
+		if (e.key === 'Enter' && t && t.tagName !== 'BUTTON') {
+			e.preventDefault();
+		}
+	});
+
 
 	pwdForm.addEventListener('keydown', (e: KeyboardEvent) => {
 	const t = e.target as HTMLElement | null;
@@ -188,7 +205,6 @@ const ProfilePage: (container: HTMLElement) => void = (container) => {
 	const profile = {
 		firstName: container.querySelector<HTMLInputElement>('#pf-firstName')!,
 		lastName: container.querySelector<HTMLInputElement>('#pf-lastName')!,
-		email: container.querySelector<HTMLInputElement>('#pf-email')!,
 		username: container.querySelector<HTMLInputElement>('#pf-username')!,
 		saveBtn: container.querySelector<HTMLButtonElement>('#pf-save')!,
 		cancelBtn: container.querySelector<HTMLButtonElement>('#pf-cancel')!,
@@ -201,6 +217,13 @@ const ProfilePage: (container: HTMLElement) => void = (container) => {
 			lastName: container.querySelector<HTMLDivElement>('#pp-lastName')!,
 		},
 	};
+
+	const email = {
+		email: container.querySelector<HTMLInputElement>('#email')!,
+		saveBtn: container.querySelector<HTMLButtonElement>('#email-save')!,
+		cancelBtn: container.querySelector<HTMLButtonElement>('#email-cancel')!,
+		msg: container.querySelector<HTMLParagraphElement>('#email-msg')!,
+	}
 
 	const pwd = {
 		old: container.querySelector<HTMLInputElement>('#pf-oldpwd')!,
@@ -265,17 +288,15 @@ const ProfilePage: (container: HTMLElement) => void = (container) => {
 		profile.firstName.value = user.firstName || '';
 		profile.lastName.value = user.lastName || '';
 		profile.username.value = user.username || '';
-		profile.email.value = user.email || '';
 		setStatusMessage(profile.msg);
 	});
-
+/*------------------------------------------------------------------------------------*/
 	profileForm.addEventListener('submit', async (e) => {
 		e.preventDefault();
 		clearStatusMessage(profile.msg);
 		const data: ProfileForm = {
 			firstName: profile.firstName.value.trim(),
 			lastName: profile.lastName.value.trim(),
-			email: profile.email.value.trim(),
 			username: profile.username.value.trim(),
 		};
 
@@ -292,8 +313,7 @@ const ProfilePage: (container: HTMLElement) => void = (container) => {
 
 		data.firstName = casing(cleaned.firstName);
 		data.lastName = casing(cleaned.lastName);
-		data.username = casing(cleaned.username);
-		
+
 		lockButton(profile.saveBtn, true, 'Saving…');
 		setStatusMessage(profile.msg);
 
@@ -306,14 +326,10 @@ const ProfilePage: (container: HTMLElement) => void = (container) => {
 				lastName: data.lastName,
 				username: data.username,
 			});
-		} catch (e) {
-  			console.warn('updateUser failed', e);
-		}
-
-		try {
-			updatedEmail = await updateEmail(saved.userId, data.email);
-		} catch (e) {
-				console.warn('updateEmail failed', e);
+		} catch (error:any) {
+			setStatusMessage(profile.msg, (error.message || `Failed to update profile`), 'error');
+			lockButton(profile.saveBtn, false);
+			return;
 		}
 
 		const latest = getSavedUser<AppUser>() || saved;
@@ -334,6 +350,51 @@ const ProfilePage: (container: HTMLElement) => void = (container) => {
 		profile.card.firstName.textContent = merged.firstName || '';
 		profile.card.lastName.textContent = merged.lastName || '';
 		setStatusMessage(profile.msg, 'Infos updated', 'success');
+		lockButton(profile.saveBtn, false);
+	});
+/*------------------------------------------------------------------------------------*/
+
+	email.cancelBtn.addEventListener('click', () => {
+		const user = getSavedUser<AppUser>() ?? saved;
+		email.email.value = user.email || '';
+		setStatusMessage(profile.msg);
+	});
+
+
+	emailForm.addEventListener('submit', async (e) => {
+		e.preventDefault();
+		clearStatusMessage(profile.msg);
+		const emailField = email.email.value.trim();
+
+		lockButton(email.saveBtn, true, 'Saving…');
+		setStatusMessage(email.msg);
+
+		let updatedEmail = { email: saved.email };
+
+		try {
+			updatedEmail = await updateEmail(saved.userId, emailField);
+		} catch (error:any) {
+			setStatusMessage(email.msg, (error.message || `Failed to update email`), 'error');
+			lockButton(email.saveBtn, false);
+			return;
+		}
+
+		const latest = getSavedUser<AppUser>() || saved;
+
+		const merged: AppUser = {
+			...latest,
+			userId: saved.userId,
+			email: updatedEmail.email,
+		};
+
+		setLoggedInUser(merged);
+		window.dispatchEvent(new CustomEvent('auth:changed', { detail: merged }));
+		profile.card.username.textContent = merged.username || '';
+		profile.card.email.textContent = merged.email || '';
+		profile.card.firstName.textContent = merged.firstName || '';
+		profile.card.lastName.textContent = merged.lastName || '';
+		setStatusMessage(email.msg, 'Infos updated', 'success');
+		lockButton(email.saveBtn, false);
 	});
 
 	pwdForm.addEventListener('submit', async (e) => {

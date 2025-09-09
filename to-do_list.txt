@@ -1,19 +1,4 @@
-Remettre le 2FA
-Changer les messages d'erreurs
+
 
 Quand projet terminé, penser à passer les ports des conteneurs en expose dans le docker compose pour éviter 
 qu'on puisse y accéder depuis l'extérieur de docke
-
-
-Major backend
-Minor frontend
-Minor backend database
-Major blockchain
-Major standard user management
-Major remote players
-Major multiple players
-Major AI
-Major 2FA et JWT
-Major Micro services
-Minor navigateurs
-
