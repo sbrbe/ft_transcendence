@@ -2,7 +2,7 @@ services:
 
   users-service:
     build: ./backend/users-service
-    ports:
+    expose:
       - "3001:3001"
     volumes:
       - user-db:/app/database
@@ -18,7 +18,7 @@ services:
 
   auth-service:
     build: ./backend/auth-service
-    ports:
+    expose:
     - "3002:3002"
     volumes:
     - auth-db:/app/database
@@ -36,7 +36,7 @@ services:
 
   blockchain-service:
     build: ./backend/blockchain-service
-    ports:
+    expose:
       - "3003:3003"
     volumes:
       - blockchain-db:/app/database  
@@ -56,7 +56,7 @@ services:
     build: 
       context: .
       dockerfile: backend/game-service/Dockerfile
-    ports:
+    expose:
       - "3004:3004"
     volumes:
       - game-db:/app/database  
@@ -77,7 +77,7 @@ services:
       - blockchain-service
       - game-service
     ports:
-      - "443:443"
+      - "8443:443"
       - "8080:8080"
     volumes:
     - ./nginx/pki/issued/nginx-4443.crt:/etc/nginx/mtls/server.crt:ro
