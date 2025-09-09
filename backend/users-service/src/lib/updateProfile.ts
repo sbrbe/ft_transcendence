@@ -15,7 +15,7 @@ export async function updateProfile(
 		try {
 			if (username) {
 				const existingUsername = getUserByUsername(username);
-				if (existingUsername?.userId !== userId)
+				if (existingUsername && existingUsername.userId !== userId)
 					return reply.status(400).send({ error: 'Username already used' });
 			}
 			const res = await updateUser(userId, { lastName, firstName, username, avatarPath });

@@ -338,9 +338,9 @@ export function attachProfileMenu(
 		const current = getSavedUser<AppUser>();
 		if (!current) { stopPolling(); return; }
 		try {
-			//const res = await loadNotifRequest(current.userId);
-			//const count = Array.isArray(res?.list) ? res.list.length : (Array.isArray(res) ? res.length : 0);
-			//setNotificationCount(count);
+			const res = await loadNotifRequest(current.userId);
+			const count = Array.isArray(res?.list) ? res.list.length : (Array.isArray(res) ? res.length : 0);
+			setNotificationCount(count);
 		} catch {}
 	}
 

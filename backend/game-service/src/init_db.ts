@@ -21,7 +21,7 @@ export let db: Database_type;
 export function initDB()
 {
 	try {
-		db = new Database('./database/database.db');
+		db = new Database('./database/database.db', { verbose: console.log});
 		db.exec(createMatchsTable);
 		console.log('✅ SQLite game-service Online connected')
 	} catch (err: any) {
