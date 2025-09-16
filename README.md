@@ -1,4 +1,4 @@
-# ft_transcendence — Pong Arena (42)
+# ft_transcendence — Pong (42)
 
 Un écosystème **Pong** full-stack, jouable **local** et **en ligne**, avec **moteur côté serveur**, **microservices**, **authentification avancée (JWT + 2FA)**, **IA**, **tournois multi-joueurs**, et **blockchain**.
 
