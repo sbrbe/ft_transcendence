@@ -4,8 +4,6 @@ Un écosystème **Pong** full-stack, jouable **local** et **en ligne**, avec **m
 
 > Accès par défaut :
 > - Local : https://localhost:8443/
-> - Local [voir DataBase] : https://localhost:8443/users/ma-route
-> - Local [voir DataBase] : https://localhost:8443/auth/ma-route
 > - Distant : https://<IP_DE_LA_MACHINE_QUI_A_LANCÉ_`make`>:8443/
 
 ---
